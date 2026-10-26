@@ -90,12 +90,30 @@ for sha in "${COMMITS[@]}"; do
     esac
     if git cat-file -e "$sha:$f" 2>/dev/null; then
       git checkout "$sha" -- "$f"
-      rebrand "$f"
-      echo "    took upstream + rebranded: $f"
+      echo "    took upstream: $f"
     else
       git checkout --ours -- "$f" 2>/dev/null || true
       echo "    kept fork version (not in upstream): $f"
     fi
+  done
+  git add -A
+
+  # Rebrand EVERY file the cherry-pick touched, not only the conflicted ones.
+  # A commit that creates a file (e.g. cli-bootstrap/payload.ts) never conflicts,
+  # so a conflict-only rebrand silently leaves upstream's LATCH_ names in place --
+  # which breaks the four-way secret-name coupling while still building.
+  git diff --cached --name-only | while read -r f; do
+    [[ -n "$f" ]] || continue
+    [[ -f "$f" ]] || continue
+    case "$f" in
+      assets/brand/*|apps/extension/public/*|apps/raycast/assets/*) continue ;;
+      scripts/sync-upstream-bitlatch.sh) continue ;;
+    esac
+    case "$f" in
+      *.ts|*.tsx|*.js|*.mjs|*.cjs|*.json|*.md|*.yml|*.yaml|*.css|*.html|*.swift|*.c|*.h|*.sh|*.plist|*.toml)
+        rebrand "$f"
+        ;;
+    esac
   done
   git add -A
 

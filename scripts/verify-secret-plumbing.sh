@@ -9,7 +9,12 @@
 #   2. cli.ts       --passwordenv <N>  the name the CLI reads the password from
 #   3. cli.ts       secrets object key  the name the parent writes the secret under
 #   4. index.ts     process.env.<N>    the fd variable naming the secret pipe
-set -euo pipefail
+#
+# Note: invariant 2 only exists once upstream #20 (4f7e028ef) lands, because
+# that commit introduces the `bw unlock --passwordenv` call. Before it, the
+# check reports invariant 2 as N/A rather than failing -- but invariant 3 is
+# still enforced, so a half-renamed secrets key is caught either way.
+set -uo pipefail
 
 PAYLOAD="apps/desktop/src/cli-bootstrap/payload.ts"
 INDEX="apps/desktop/src/cli-bootstrap/index.ts"
@@ -31,15 +36,25 @@ check() { # name expected actual
 
 echo "secret-plumbing invariants:"
 
-pw_payload=$(grep -o "'[A-Z_]*MASTER_PASSWORD'" "$PAYLOAD" | tr -d "'" | head -1)
-pw_cli_arg=$(grep -o "'--passwordenv', '[A-Z_]*'" "$CLI" | grep -o "'[A-Z_]*'" | tr -d "'" | head -1)
-pw_cli_obj=$(grep -o "[A-Z_]*MASTER_PASSWORD:" "$CLI" | tr -d ':' | head -1)
+pw_payload=$(grep -o "'[A-Z_]*MASTER_PASSWORD'" "$PAYLOAD" 2>/dev/null | tr -d "'" | head -1)
+pw_cli_arg=$(grep -o "'--passwordenv', '[A-Z_]*'" "$CLI" 2>/dev/null | grep -o "'[A-Z_]*'" | tr -d "'" | head -1)
+pw_cli_obj=$(grep -o "[A-Z_]*MASTER_PASSWORD:" "$CLI" 2>/dev/null | tr -d ':' | head -1)
 
-check "cli.ts --passwordenv matches payload.ts" "$pw_payload" "$pw_cli_arg"
+if [[ -z "$pw_payload" ]]; then
+  echo "  FAIL payload.ts declares no *_MASTER_PASSWORD secret name" >&2
+  fail=1
+fi
+
+# Invariant 2 is introduced by upstream #20; absent before it.
+if [[ -z "$pw_cli_arg" ]]; then
+  echo "  n/a  cli.ts --passwordenv (not present until upstream #20)"
+else
+  check "cli.ts --passwordenv matches payload.ts" "$pw_payload" "$pw_cli_arg"
+fi
 check "cli.ts secrets key matches payload.ts"  "$pw_payload" "$pw_cli_obj"
 
-fd_cli=$(grep -o "[A-Z_]*_SECRET_FD:" "$CLI" | tr -d ':' | head -1)
-fd_index=$(grep -o "process\.env\.[A-Z_]*_SECRET_FD" "$INDEX" | sed 's/process\.env\.//' | head -1)
+fd_cli=$(grep -o "[A-Z_]*_SECRET_FD:" "$CLI" 2>/dev/null | tr -d ':' | head -1)
+fd_index=$(grep -o "process\.env\.[A-Z_]*_SECRET_FD" "$INDEX" 2>/dev/null | sed 's/process\.env\.//' | head -1)
 check "cli.ts fd var matches index.ts" "$fd_cli" "$fd_index"
 
 if grep -q "'BW_SESSION'" "$PAYLOAD"; then
@@ -49,7 +64,7 @@ else
   fail=1
 fi
 
-if grep -nE '\bLATCH_|\bLatch\b|\bbitlatch\b' "$PAYLOAD" "$INDEX" "$CLI"; then
+if grep -nE '\bLATCH_|\bLatch\b|\bbitlatch\b' "$PAYLOAD" "$INDEX" "$CLI" 2>/dev/null; then
   echo "  FAIL upstream brand tokens remain in secret plumbing" >&2
   fail=1
 else
