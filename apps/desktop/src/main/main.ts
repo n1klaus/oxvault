@@ -123,26 +123,30 @@ lifecycle.startup = app
           if (window && !window.isDestroyed())
             window.webContents.send('strongroom:state', { ...vault.snapshot(), setupError });
         });
+    // Only signed macOS builds can tell which app is calling. Elsewhere any
+    // process that reads the token file could take passwords without a prompt.
     bridges = lifecycle.track(
-      await startBridges({
-        dataDir: app.getPath('userData'),
-        browserRoot: process.env.STRONGROOM_BROWSER_ROOT,
-        hostScript,
-        nativeHost:
-          process.platform === 'darwin' && app.isPackaged
-            ? join(
-                process.resourcesPath,
-                '../Helpers/LatchBridgeHost.app/Contents/MacOS/LatchBridgeHost',
-              )
-            : undefined,
-        vault,
-        websiteIcons,
-        macAutoFill,
-        showWindow,
-        handleRequest,
-        epoch: () => lifecycle.epoch,
-        assertRunning: () => lifecycle.assertRunning(),
-      }),
+      app.isPackaged && process.platform !== 'darwin'
+        ? { stop: async () => {}, browserConnection: () => 'unavailable' as const }
+        : await startBridges({
+            dataDir: app.getPath('userData'),
+            browserRoot: process.env.STRONGROOM_BROWSER_ROOT,
+            hostScript,
+            nativeHost:
+              process.platform === 'darwin' && app.isPackaged
+                ? join(
+                    process.resourcesPath,
+                    '../Helpers/LatchBridgeHost.app/Contents/MacOS/LatchBridgeHost',
+                  )
+                : undefined,
+            vault,
+            websiteIcons,
+            macAutoFill,
+            showWindow,
+            handleRequest,
+            epoch: () => lifecycle.epoch,
+            assertRunning: () => lifecycle.assertRunning(),
+          }),
     );
     session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) =>
       callback(false),
@@ -402,9 +406,7 @@ function installMenu() {
     },
     {
       label: 'File',
-      submenu: [
-        { label: 'New Login', accelerator: 'CmdOrCtrl+N', click: () => sendCommand('new') },
-      ],
+      submenu: [{ label: 'New Item', accelerator: 'CmdOrCtrl+N', click: () => sendCommand('new') }],
     },
     { role: 'editMenu' },
     {

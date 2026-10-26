@@ -377,7 +377,7 @@ export interface MacAutoFillState {
 export type Browser = 'safari' | 'chrome' | 'firefox';
 export type BrowserSetup = Record<Browser, { available: boolean; reason?: string }>;
 
-export type BrowserConnection = 'connected' | 'not-detected' | 'setup-error';
+export type BrowserConnection = 'connected' | 'not-detected' | 'setup-error' | 'unavailable';
 
 /** Vault health results. Only item names and counts leave the main process, never passwords. */
 export interface HealthSummary {

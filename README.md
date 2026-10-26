@@ -1,91 +1,88 @@
-# Strongroom
+<p align="center">
+  <img src="assets/brand/macos/icon-256.png" alt="Strongroom icon" width="88" />
+</p>
 
-An unofficial Bitwarden client for desktop, browser and the command line. It adds TOTP codes, vault health reports and Sends on top of the official `bw` CLI.
+<h1 align="center">Strongroom</h1>
 
-[![Check](https://github.com/bodencrouch/strongroom/actions/workflows/ci.yml/badge.svg)](https://github.com/bodencrouch/strongroom/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+<p align="center">
+  <strong>A modern, unofficial Bitwarden client.</strong>
+</p>
 
-Strongroom is a password manager front end for a Bitwarden vault you already have. It ships an Electron desktop app, a browser extension, a Raycast extension and a CLI. Your account and vault stay where they are. Sign-in and all vault encryption run inside the official Bitwarden CLI (`bw`), which you install yourself. Strongroom reads what `bw` has already decrypted.
+<p align="center">
+  <a href="https://strongroom.app">Website</a> ·
+  <a href="#highlights">Highlights</a> ·
+  <a href="#screenshots">Screenshots</a> ·
+  <a href="#installation">Installation</a> ·
+  <a href="#development">Development</a>
+</p>
 
-Strongroom is not made, reviewed or endorsed by Bitwarden. Bitwarden is a trademark of Bitwarden, Inc.
+<p align="center">
+  <img src="assets/readme/vault.webp" alt="Strongroom with a glass window over a macOS wallpaper: a clean sidebar, vault items, and a selected login with its password hidden. All accounts shown are demo data." width="1080" />
+</p>
 
-Docs site: <https://bodencrouch.github.io/strongroom/>
+Strongroom is an alternative client for your existing Bitwarden vault, designed around a cleaner interface and quicker workflows. Search from the keyboard, fill logins in your browser, and access credentials from Raycast. Keep your account and vault; there's nothing to migrate.
 
-## What it does
+Strongroom is an independent project, not affiliated with or endorsed by Bitwarden.
 
-- One-time codes (TOTP and Steam Guard) in the desktop app, the browser popup and `strongroom totp`.
-- Vault health: reused passwords, weak passwords, plain `http://` sites. Opt-in checks for leaked passwords and for sites that offer two-step login you have not turned on.
-- Folders, attachments, Sends, password, passphrase and username generators, import and export.
-- Browser fill on Chromium, Firefox and Safari, and macOS AutoFill.
+## Highlights
 
-[docs/FEATURES.md](docs/FEATURES.md) says which features run on your machine and which the Bitwarden server decides. [docs/PARITY.md](docs/PARITY.md) is the item-by-item status against the official clients, including the gaps.
+- ✨ **A more considered interface.** Clear layouts, system colors, and native vibrancy on macOS.
+- ⚡ **Keep your hands on the keyboard.** Jump to search with ⌘K / Ctrl+K, find a login, and copy what you need.
+- 🌐 **Fill where you browse.** Bring Strongroom to Chrome, Aside, and other browsers. [See browser availability](#browser-extensions).
+- 🚀 **Your vault in Raycast.** Search, unlock, and copy credentials straight from your launcher on Mac.
+- 👆 **Less typing, more control.** Unlock with Touch ID on Mac, choose when your vault locks, and configure generated passwords.
+- 🔑 **Keep Bitwarden underneath.** Your existing account and vault, with authentication and cryptography handled by the official Bitwarden CLI.
 
-## Install
+## Screenshots
 
-There is no tagged release yet. Build from source:
+<p align="center">
+  <img src="assets/readme/popup.webp" alt="Strongroom extension popup in light mode with demo vault items." width="49%" />
+  <img src="assets/readme/autofill.webp" alt="Strongroom autofill suggestions in light mode on a demo sign-in page." width="49%" />
+</p>
+
+<p align="center">
+  <img src="assets/readme/raycast.webp" alt="Strongroom vault search in Raycast with synthetic demo accounts on the macOS Golden Gate wallpaper." width="720" />
+</p>
+
+## Installation
+
+### Homebrew
 
 ```sh
+brew install bitwarden-cli
+brew install --cask dillionverma/tap/strongroom
+```
+
+### Direct download
+
+- <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/apple_dark.svg" /><img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/apple.svg" width="20" height="20" alt="" /></picture> **macOS 14+ · Apple Silicon:** [DMG](https://github.com/dillionverma/strongroom/releases/download/v0.3.5/Strongroom-0.3.5-mac-arm64.dmg)
+- <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/windows.svg" width="20" height="20" alt="" /> **Windows · x64:** [Installer](https://github.com/dillionverma/strongroom/releases/download/v0.3.5/Strongroom-0.3.5-win-x64.exe) · experimental
+- <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/linux.svg" width="20" height="20" alt="" /> **Linux · x64 / ARM64:** [AppImage & deb](https://github.com/dillionverma/strongroom/releases/tag/v0.3.5) · experimental
+
+### Browser extensions
+
+The extensions connect to the macOS app. Windows and Linux builds cannot yet check which app asks for a password, so they do not accept browser connections.
+
+- <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/chrome.svg" width="20" height="20" alt="" /> Chrome, <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/edge.svg" width="20" height="20" alt="" /> Edge, <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/brave.svg" width="20" height="20" alt="" /> Brave, <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/arc_browser.svg" width="20" height="20" alt="" /> Arc, Aside, <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/vivaldi.svg" width="20" height="20" alt="" /> Vivaldi & <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/chromium.svg" width="20" height="20" alt="" /> Chromium: [Download](https://github.com/dillionverma/strongroom/releases/download/v0.3.5/strongroom-0.3.5-chrome.zip) · [Setup](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world#load-unpacked)
+- <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/firefox.svg" width="20" height="20" alt="" /> **Firefox preview:** [Download](https://github.com/dillionverma/strongroom/releases/download/v0.3.5/strongroom-0.3.5-firefox.zip) · [Setup](https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/)
+
+### <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/raycast.svg" width="20" height="20" alt="" /> Raycast
+
+[Download source ZIP](https://github.com/dillionverma/strongroom/releases/download/v0.3.5/strongroom-0.3.5-raycast.zip) · [Setup](apps/raycast/README.md#install-from-source). Store installation coming soon.
+
+## Development
+
+```sh
+git clone https://github.com/dillionverma/strongroom.git
+cd strongroom
 pnpm install --frozen-lockfile
-pnpm run dev        # desktop app
-pnpm run check      # types, lint, format, 930 matcher tests
-pnpm run build      # desktop, extensions, Raycast
+pnpm run dev
 ```
 
-Requirements: Node.js 22.18, 24.11 or 26 and newer, `pnpm`, and the official [Bitwarden CLI](https://bitwarden.com/help/cli/) installed and signed in. Releases will be listed at <https://github.com/bodencrouch/strongroom/releases>.
+Run `pnpm run check` and `pnpm run build` before submitting changes.
 
-## Command line
+[Release workflow](.github/workflows/release.yml)
 
-Until the first tagged release, run the CLI as `node apps/cli/src/index.ts`. The npm package `strongroom` comes with that release. The examples below use the final name.
+## License
 
-```sh
-export BW_SESSION="$(bw unlock --raw)"
-strongroom totp github
-strongroom health --breaches --inactive-2fa
-strongroom attach ./receipt.pdf <item-id>
-strongroom send ./notes.txt --days 3
-```
-
-Run it with no arguments to print the usage text. Today that is `node apps/cli/src/index.ts`.
-
-## How it stays safe
-
-- Authentication and vault cryptography stay in `bw`. There is no custom crypto in this repo, and [AGENTS.md](AGENTS.md) forbids adding it.
-- The desktop app computes one-time codes in its main process (`totp` in `apps/desktop/src/main/vault.ts`). The window gets the current code and the seconds left. No shared item or draft type carries the stored secret. Sends links, text and passwords stay in the main process too (header comment in `Sends.tsx`).
-- Copied secrets clear from the clipboard after 30 seconds, and only if the clipboard still holds that value (`apps/desktop/src/main/lifecycle.ts`).
-- A locked vault rejects reads and fills immediately, including pending operations.
-- The browser extension and Raycast bridges ask you to approve access on packaged macOS builds only (`enforced` in `apps/desktop/src/main/external-access.ts`). On Linux and Windows the bridge relies on a token file that only your user can read, so any process running as you can ask it for a password. Safari's bridge checks the socket identity instead of prompting. Treat those platforms accordingly.
-- The CLI prints no passwords or one-time secrets and replaces `bw` errors with a generic message.
-
-Network calls are limited to a short list. Check it yourself:
-
-```sh
-grep -rn "https://" apps packages --include=*.ts --include=*.tsx
-```
-
-The calls that are not UI placeholders or URL handling:
-
-- `https://icons.bitwarden.net/<host>/icon.png`, Bitwarden's icon service, for site icons.
-- `https://api.pwnedpasswords.com/range/<prefix>`, only with the breach check on, and only the first 5 characters of a SHA-1 hash.
-- `https://api.2fa.directory/v3/totp.json`, only with the inactive two-step check on.
-- `https://vault.bitwarden.com` and `https://vault.bitwarden.eu` as server choices. A self-hosted address is yours to enter.
-
-## What is not built
-
-A client on top of `bw` cannot do everything. From [docs/PARITY.md](docs/PARITY.md):
-
-- Organization and collection items, and sharing with an organization.
-- Emergency access.
-- Single sign-on, device approval and passkey sign-in.
-- Changing the master password or KDF settings, and setting up two-step login.
-- Items that need master password re-prompt.
-- Admin Console, Provider Portal, Secrets Manager and billing.
-
-Attachments and file Sends depend on what your account or server allows. Strongroom sends the request and shows the answer. It does not change limits, and it does not get around them. Attachments are not yet run against a real server (see the PARITY notes).
-
-## Credit and license
-
-Strongroom starts from [dillionverma/bitlatch](https://github.com/dillionverma/bitlatch) at v0.3.5, MIT, copyright Dillion Verma. That notice stays in [LICENSE](LICENSE). Strongroom is [MIT](LICENSE) too.
-
-The passphrase generator uses the [EFF large word list](https://www.eff.org/deeplinks/2016/07/new-wordlists-random-passphrases), copyright the Electronic Frontier Foundation, licensed [CC BY 3.0 US](https://creativecommons.org/licenses/by/3.0/us/).
-
-Bugs and ideas: [issues](https://github.com/bodencrouch/strongroom/issues). To work on it, read [CONTRIBUTING.md](CONTRIBUTING.md). To report a vulnerability, read [SECURITY.md](SECURITY.md).
+[MIT](LICENSE).
