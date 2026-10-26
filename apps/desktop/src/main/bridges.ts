@@ -99,7 +99,7 @@ export async function startBridges({
         await handleRequest(request);
         return vault.snapshot().status;
       }
-      if (request.type === 'copy' || request.type === 'copyTotp') {
+      if (request.type === 'copy') {
         vault.requireBrowserItem(request.id, true);
         await handleRequest(request);
         return null;
@@ -123,7 +123,6 @@ export async function startBridges({
         const icon = await websiteIcons.get(item.website);
         return startedAt === epoch() && vault.snapshot().status === 'unlocked' ? icon : null;
       }
-      if (request.type === 'totp') return vault.totp(request.id);
       if (request.type === 'fill') return vault.fill(request.id, request.url);
       const unhandled: never = request;
       throw new UserError(`Unsupported browser request: ${String(unhandled)}`);
@@ -241,7 +240,7 @@ export async function startBridges({
     await launcherBridge.start().catch(() => {
       console.warn('Strongroom Raycast connection unavailable. Check the app signature.');
     });
-    if (existsSync(join(process.resourcesPath, '../PlugIns/StrongroomSafari.appex'))) {
+    if (existsSync(join(process.resourcesPath, '../PlugIns/LatchSafari.appex'))) {
       try {
         const container = await macAutoFill.sharedContainer();
         if (!container) throw new Error('Safari shared container unavailable');
@@ -260,9 +259,7 @@ export async function startBridges({
         await safariBridge?.stop().catch(() => undefined);
         if (safariBridge) transports.splice(transports.indexOf(safariBridge), 1);
         // Optional browser setup must not prevent access to the desktop vault.
-        console.warn(
-          'Strongroom Safari connection unavailable. Check signing and App Group setup.',
-        );
+        console.warn('Strongroom Safari connection unavailable. Check signing and App Group setup.');
       }
     }
     // Registration is setup, not proof that an extension is connected. A failure

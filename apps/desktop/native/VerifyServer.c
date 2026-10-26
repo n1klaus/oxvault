@@ -4,7 +4,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
-bool strongroom_verify_server(int fd) {
+bool latch_verify_server(int fd) {
   audit_token_t audit;
   socklen_t size = sizeof(audit);
   if (getsockopt(fd, SOL_LOCAL, LOCAL_PEERTOKEN, &audit, &size) != 0 || size != sizeof(audit))

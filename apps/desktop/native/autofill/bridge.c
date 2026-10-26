@@ -45,7 +45,7 @@ static napi_value invoke(napi_env env, napi_callback_info info) {
   napi_threadsafe_function callback;
   if (napi_create_threadsafe_function(env, args[2], NULL, resource, 1, 1,
       NULL, NULL, NULL, deliver, &callback) == napi_ok)
-    strongroom_invoke(operation, input, callback, finish);
+    latch_invoke(operation, input, callback, finish);
   free(operation); free(input);
   return undefined;
 }
@@ -54,6 +54,6 @@ NAPI_MODULE_INIT() {
   napi_value function;
   napi_create_function(env, "invoke", NAPI_AUTO_LENGTH, invoke, NULL, &function);
   napi_set_named_property(env, exports, "invoke", function);
-  if (strongroom_register_verified_socket(env, exports) != napi_ok) return NULL;
+  if (latch_register_verified_socket(env, exports) != napi_ok) return NULL;
   return exports;
 }

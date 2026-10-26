@@ -1,7 +1,7 @@
 import Darwin
 import Foundation
 
-@_silgen_name("strongroom_verify_server")
+@_silgen_name("latch_verify_server")
 private func verifyServer(_ fd: Int32) -> Bool
 
 private let maxMessageBytes = 1_048_576

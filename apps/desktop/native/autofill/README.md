@@ -42,7 +42,7 @@ Use the same Apple team and signing certificate for both. The build uses the mac
 ```sh
 STRONGROOM_SIGN_IDENTITY='Apple Development: Your Name (CERTIFICATE_ID)' \
 STRONGROOM_APP_PROFILE='/absolute/path/Strongroom.provisionprofile' \
-STRONGROOM_AUTOFILL_PROFILE='/absolute/path/StrongroomAutoFill.provisionprofile' \
+STRONGROOM_AUTOFILL_PROFILE='/absolute/path/LatchAutoFill.provisionprofile' \
 pnpm run package:autofill
 ```
 

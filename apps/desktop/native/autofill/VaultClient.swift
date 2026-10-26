@@ -1,7 +1,7 @@
 import Darwin
 import Foundation
 
-@_silgen_name("strongroom_verify_server")
+@_silgen_name("latch_verify_server")
 private func verifyServer(_ fd: Int32) -> Bool
 
 private final class SocketLease: @unchecked Sendable {
@@ -44,7 +44,7 @@ final class VaultClient {
   init(directory: URL? = nil) {
     self.directory =
       directory
-      ?? (Bundle.main.object(forInfoDictionaryKey: "StrongroomAppGroup") as? String)
+      ?? (Bundle.main.object(forInfoDictionaryKey: "LatchAppGroup") as? String)
       .flatMap { FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: $0) }
   }
 

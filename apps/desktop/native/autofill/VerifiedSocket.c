@@ -281,7 +281,7 @@ static napi_value stop_verified_socket(napi_env env, napi_callback_info info) {
   return undefined;
 }
 
-napi_status strongroom_register_verified_socket(napi_env env, napi_value exports) {
+napi_status latch_register_verified_socket(napi_env env, napi_value exports) {
   napi_value start, stop;
   napi_status status = napi_create_function(env, "startVerifiedSocket", NAPI_AUTO_LENGTH,
                                              start_verified_socket, NULL, &start);

@@ -31,6 +31,12 @@ exports.default = async function ({ appOutDir, electronPlatformName, packager })
     path.join(contents, 'Helpers/StrongroomBridgeHost.app'),
     { recursive: true },
   );
+  await mkdir(path.join(contents, 'Helpers'), { recursive: true });
+  await cp(
+    path.join(packager.projectDir, 'dist/native/LatchBridgeHost.app'),
+    path.join(contents, 'Helpers/LatchBridgeHost.app'),
+    { recursive: true },
+  );
   const infoPath = path.join(contents, 'Info.plist');
   const info = plist.parse(await readFile(infoPath, 'utf8'));
   info.CFBundleIconName = 'Strongroom';

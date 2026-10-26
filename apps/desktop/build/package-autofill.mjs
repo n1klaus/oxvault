@@ -65,9 +65,7 @@ if (host.team !== extension.team)
   throw new Error('Both profiles must belong to the same Apple team.');
 const group = `${host.team}.app.strongroom.vault`;
 const safariProfile = process.env.STRONGROOM_SAFARI_PROFILE;
-const safari = safariProfile
-  ? profile(safariProfile, 'app.strongroom.vault.safari', false)
-  : undefined;
+const safari = safariProfile ? profile(safariProfile, 'app.strongroom.vault.safari', false) : undefined;
 if (safari && safari.team !== host.team)
   throw new Error('Safari and Strongroom must use the same signing team.');
 const env = {
@@ -104,7 +102,7 @@ execFileSync(
   },
 );
 const app = join(root, 'release/mac-arm64/Strongroom.app');
-const appex = join(app, 'Contents/PlugIns/StrongroomAutoFill.appex');
+const appex = join(app, 'Contents/PlugIns/LatchAutoFill.appex');
 const signing = join(root, 'release/autofill-signing');
 await mkdir(signing, { recursive: true, mode: 0o700 });
 const shared = {
@@ -133,7 +131,7 @@ await writeFile(
 );
 const infoPath = join(app, 'Contents/Info.plist');
 const info = plist.parse(await readFile(infoPath, 'utf8'));
-info.StrongroomAppGroup = group;
+info.LatchAppGroup = group;
 await writeFile(infoPath, plist.build(info));
 await copyFile(resolve(appProfile), join(app, 'Contents/embedded.provisionprofile'));
 await copyFile(resolve(extensionProfile), join(appex, 'Contents/embedded.provisionprofile'));
@@ -157,9 +155,9 @@ function signNested(path, entitlements) {
   );
 }
 signNested(appex, extensionEntitlements);
-const bridgeHost = join(app, 'Contents/Helpers/StrongroomBridgeHost.app');
+const bridgeHost = join(app, 'Contents/Helpers/LatchBridgeHost.app');
 signNested(bridgeHost);
-const safariApp = join(app, 'Contents/PlugIns/StrongroomSafari.appex');
+const safariApp = join(app, 'Contents/PlugIns/LatchSafari.appex');
 if (safari && safariProfile) {
   const safariEntitlements = join(signing, 'safari.plist');
   await writeFile(
@@ -196,7 +194,5 @@ if (release) {
   const { notarizeRelease } = await import('./notarize-release.mjs');
   await notarizeRelease({ root, app, identity, notarizationProfile, env });
 } else {
-  console.log(
-    'Signed AutoFill build: release/mac-arm64/Strongroom.app. Not installed or notarized.',
-  );
+  console.log('Signed AutoFill build: release/mac-arm64/Strongroom.app. Not installed or notarized.');
 }
