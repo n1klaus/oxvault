@@ -1,11 +1,31 @@
-import { basename, join } from 'node:path';
-import { app, dialog, Menu, type BrowserWindow, type MenuItemConstructorOptions } from 'electron';
+import { dialog, Menu, type BrowserWindow, type MenuItemConstructorOptions } from 'electron';
 import type {
   ItemDetail,
   ItemMenuAction,
   MenuPosition,
   NativeConfirmation,
 } from '@strongroom/shared/types';
+
+const confirmations: Record<
+  NativeConfirmation,
+  { message: string; detail: string; buttons: [string, string] }
+> = {
+  trash: {
+    message: 'Move this item to Trash?',
+    detail: 'You can restore it from Trash. This does not delete it permanently.',
+    buttons: ['Cancel', 'Move to Trash'],
+  },
+  discard: {
+    message: 'Discard changes?',
+    detail: 'Your unsaved changes will be lost.',
+    buttons: ['Keep editing', 'Discard changes'],
+  },
+  deleteFolder: {
+    message: 'Delete this folder?',
+    detail: 'Its items move to No folder. They are not deleted.',
+    buttons: ['Cancel', 'Delete folder'],
+  },
+};
 
 export function installNativeInteractions(window: BrowserWindow) {
   let confirmation: AbortController | undefined;
@@ -100,61 +120,17 @@ export function installNativeInteractions(window: BrowserWindow) {
         });
       });
     },
-    /** Asks where to save a download. Returns null when the user cancels. */
-    async chooseSavePath(suggestedName: string): Promise<string | null> {
-      if (window.isDestroyed() || !window.isVisible()) return null;
-      const result = await dialog.showSaveDialog(window, {
-        defaultPath: join(app.getPath('downloads'), basename(suggestedName) || 'attachment'),
-      });
-      return result.canceled || !result.filePath ? null : result.filePath;
-    },
-    /** Asks which file to attach. Returns null when the user cancels. */
-    async chooseOpenPath(): Promise<string | null> {
-      if (window.isDestroyed() || !window.isVisible()) return null;
-      const result = await dialog.showOpenDialog(window, { properties: ['openFile'] });
-      return result.canceled || !result.filePaths[0] ? null : result.filePaths[0];
-    },
     async confirm(action: NativeConfirmation) {
       if (confirmation || window.isDestroyed() || !window.isVisible()) return false;
       const controller = new AbortController();
       confirmation = controller;
       try {
-        const copy = {
-          discard: {
-            message: 'Discard changes?',
-            detail: 'Your unsaved changes will be lost.',
-            buttons: ['Keep editing', 'Discard changes'],
-          },
-          trash: {
-            message: 'Move this item to Trash?',
-            detail: 'You can restore it from Trash. This does not delete it permanently.',
-            buttons: ['Cancel', 'Move to Trash'],
-          },
-          deleteFolder: {
-            message: 'Delete this folder?',
-            detail: 'Items in this folder move to No folder. They are not deleted.',
-            buttons: ['Cancel', 'Delete folder'],
-          },
-          deleteAttachment: {
-            message: 'Delete this attachment?',
-            detail: 'The file is removed from this item. This cannot be undone.',
-            buttons: ['Cancel', 'Delete attachment'],
-          },
-          deleteSend: {
-            message: 'Delete this Send?',
-            detail: 'The link stops working right away. This cannot be undone.',
-            buttons: ['Cancel', 'Delete Send'],
-          },
-          exportPlain: {
-            message: 'Export without encryption?',
-            detail:
-              'The file will hold every password and note in your vault as plain text. Anyone who can open it can read them. Keep it safe and delete it when you are done.',
-            buttons: ['Cancel', 'Export anyway'],
-          },
-        }[action];
+        const { message, detail, buttons } = confirmations[action];
         const result = await dialog.showMessageBox(window, {
           type: 'warning',
-          ...copy,
+          message,
+          detail,
+          buttons,
           defaultId: 0,
           cancelId: 0,
           noLink: true,
