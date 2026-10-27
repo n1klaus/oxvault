@@ -18,6 +18,7 @@ import { installNativeInteractions } from './native-interactions';
 import { WebsiteIcons } from './website-icons';
 import type { WindowCommand } from '@strongroom/shared/types';
 import { localEngine } from './engine';
+import { generateSshKey, importSshKey } from './ssh-keys';
 import { Vault, generatePassword } from './vault';
 import { touchIdSessionStore } from './biometrics';
 import { AccountHints } from './account-hint';
@@ -101,7 +102,7 @@ lifecycle.startup = app
     const sessions = touchIdSessionStore(app.getPath('userData'));
     const hints = new AccountHints(join(app.getPath('userData'), 'account-hint.json'));
     const [, hint] = await Promise.all([sessions.load(), hints.read()]);
-    vault = new Vault(engine.cli, sessions);
+    vault = new Vault(engine.cli, sessions, engine.sharedItems);
     lifecycle.attachVault(vault, () => {
       websiteIcons.clear();
       nativeInteractions?.cancelConfirmation();
@@ -306,6 +307,22 @@ async function handleRequest(request: DesktopRequest): Promise<unknown> {
       return vault.trash();
     case 'folders':
       return vault.folders();
+    case 'sharing':
+      return vault.sharing();
+    case 'generateSshKey':
+    case 'importSshKey': {
+      if (vault.snapshot().status !== 'unlocked')
+        throw new UserError('Unlock Strongroom to continue.');
+      const epoch = lifecycle.epoch;
+      const key =
+        request.type === 'generateSshKey'
+          ? await generateSshKey(app.getPath('userData'))
+          : await importSshKey(app.getPath('userData'), request.privateKey);
+      // A lock while ssh-keygen ran must not hand a private key to the window.
+      if (epoch !== lifecycle.epoch || vault.snapshot().status !== 'unlocked')
+        throw new UserError('Vault locked. Try again after unlocking.');
+      return key;
+    }
     case 'saveFolder':
       return vault.saveFolder(request.id, request.name);
     case 'deleteFolder':
@@ -377,8 +394,13 @@ async function mutateVault(
         return await vault.sync();
       case 'commitCapture':
         return await vault.commitCapture(request.url);
-      case 'save':
-        return await vault.save(request.draft);
+      case 'save': {
+        const { draft } = request;
+        // A new SSH key's public key and fingerprint always come from its private key.
+        if (draft.type === 5 && !draft.id && draft.sshKey)
+          draft.sshKey = await importSshKey(app.getPath('userData'), draft.sshKey.privateKey);
+        return await vault.save(draft);
+      }
       case 'setFavorite':
         return await vault.setFavorite(request.id, request.favorite);
       case 'delete':

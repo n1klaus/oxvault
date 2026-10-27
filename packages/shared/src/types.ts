@@ -54,7 +54,7 @@ export type WindowAppearance = Readonly<{
 export type VaultStatus = 'signed-out' | 'locked' | 'unlocked';
 
 export const lockTimeoutMinutes = [5, 15, 30, 60, 0] as const;
-/** Zero disables idle locking; sleep and screen lock always lock the vault. */
+/** Timed locking also locks on sleep and screen lock. Zero never locks until the user does. */
 export type LockTimeoutMinutes = (typeof lockTimeoutMinutes)[number];
 
 export interface PasswordOptions {
@@ -123,6 +123,9 @@ export interface ItemSummary {
   /** A short description such as a card's brand and last four or an identity's name. Empty for logins, notes, and restricted items. */
   subtitle: string;
   folderId: string | null;
+  /** Null for the personal vault. */
+  organizationId: string | null;
+  collectionIds: string[];
   type: number;
   favorite: boolean;
   hasPasskey: boolean;
@@ -162,6 +165,15 @@ export interface Folder {
   id: string;
   name: string;
 }
+export interface Organization {
+  id: string;
+  name: string;
+}
+export interface Collection {
+  id: string;
+  organizationId: string;
+  name: string;
+}
 
 export interface PasskeySummary {
   rpId: string;
@@ -171,6 +183,8 @@ export interface PasskeySummary {
 
 export interface ItemDetail extends ItemSummary {
   password: string;
+  /** The organization hides this item's password, history, and hidden fields from this account. */
+  passwordsHidden: boolean;
   card: CardFields | null;
   /** Fields of identities, SSH keys, bank accounts, driver's licenses, and passports. */
   details: Record<string, string> | null;
@@ -218,6 +232,12 @@ export const identityKeys = [
 /** Bitwarden's identity fields, with the CLI's nulls read as empty strings. */
 export type IdentityFields = Record<(typeof identityKeys)[number], string>;
 
+export interface SshKeyFields {
+  privateKey: string;
+  publicKey: string;
+  keyFingerprint: string;
+}
+
 /** Custom fields keep their position, so a linked or unknown field survives an edit untouched. */
 export type CustomFieldDraft =
   | { action: 'keep'; sourceIndex: number }
@@ -247,8 +267,8 @@ export type ItemDraft = {
   | { type: 2 }
   | { type: 3; card: CardFields }
   | { type: 4; identity: IdentityFields }
-  /** SSH keys keep their key material; only the shared fields change. */
-  | { type: 5 }
+  /** A new SSH key carries its key pair; an edit keeps the stored one. */
+  | { type: 5; sshKey?: SshKeyFields }
 );
 
 export interface FillCredential {
@@ -300,7 +320,7 @@ export interface MacAutoFillState {
 export type Browser = 'safari' | 'chrome' | 'firefox';
 export type BrowserSetup = Record<Browser, { available: boolean; reason?: string }>;
 
-export type BrowserConnection = 'connected' | 'not-detected' | 'setup-error';
+export type BrowserConnection = 'connected' | 'not-detected' | 'setup-error' | 'unavailable';
 
 export interface LatchApi {
   lockTimeout(): Promise<Result<LockTimeoutMinutes>>;
@@ -325,6 +345,11 @@ export interface LatchApi {
   items(): Promise<Result<ItemSummary[]>>;
   trash(): Promise<Result<ItemSummary[]>>;
   folders(): Promise<Result<Folder[]>>;
+  sharing(): Promise<Result<{ organizations: Organization[]; collections: Collection[] }>>;
+  /** A new Ed25519 key pair for an SSH key item. */
+  generateSshKey(): Promise<Result<SshKeyFields>>;
+  /** Reads a pasted private key into the fields an SSH key item stores. */
+  importSshKey(privateKey: string): Promise<Result<SshKeyFields>>;
   /** Creates a folder when `id` is null, otherwise renames it. */
   saveFolder(id: string | null, name: string): Promise<Result<Folder>>;
   deleteFolder(id: string): Promise<Result<void>>;
