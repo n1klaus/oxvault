@@ -3,6 +3,7 @@ import '@strongroom/shared/theme.css';
 import './popup.css';
 import { element, mark } from './content/render';
 import { itemDraft, uriMatchOptions } from '@strongroom/shared/item-drafts';
+import { identityRows } from '@strongroom/shared/item-fields';
 import { uriMatchSchema } from '@strongroom/shared/protocol';
 import { defaultPasswordOptions } from '@strongroom/shared/types';
 import type { BrowserVaultQuery } from '@strongroom/shared/protocol';
@@ -11,6 +12,7 @@ import type {
   BrowserSaveResult,
   BrowserUnlockState,
   BrowserVaultPage,
+  CopyTarget,
   ItemSummary,
   ItemDetail,
   ItemDraft,
@@ -46,6 +48,7 @@ const paths = {
   refresh: 'M15 7a6 6 0 1 0 0 5 M15 2v5h-5',
   back: 'M11 3 5 9l6 6 M5 9h11',
   note: 'M4 2h8l3 3v11H4z M7 7h5 M7 10h5 M7 13h3',
+  person: 'M9 9a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7 M2.5 16.5a6.5 6.5 0 0 1 13 0',
   copy: 'M6 6h10v11H6z M12 6V2H2v11h4',
 } satisfies Record<string, string>;
 function icon(name: keyof typeof paths) {
@@ -90,6 +93,8 @@ function clearView() {
   if (view.kind !== 'list' && view.item) {
     view.item.password = '';
     view.item.notes = '';
+    view.item.identity = null;
+    view.item.fields = [];
   }
   detail.querySelectorAll('input, textarea').forEach((node) => {
     if (node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement) node.value = '';
@@ -273,6 +278,7 @@ function tile(item: ItemSummary) {
   const node = element('span', 'tile');
   node.setAttribute('aria-hidden', 'true');
   if (item.type === 2) node.append(icon('note'));
+  else if (item.type === 4) node.append(icon('person'));
   else {
     node.textContent = (Array.from(item.name.trim())[0] ?? '?').toUpperCase();
     if (item.website) {
@@ -399,9 +405,11 @@ function renderDetail(item: ItemDetail) {
         ? 'In Trash'
         : item.type === 2
           ? 'Secure note'
-          : item.hasPasskey
-            ? 'Login · Passkey'
-            : 'Login',
+          : item.type === 4
+            ? 'Identity'
+            : item.hasPasskey
+              ? 'Login · Passkey'
+              : 'Login',
     ),
   );
   heading.append(tile(item), title);
@@ -409,7 +417,7 @@ function renderDetail(item: ItemDetail) {
   const actions = element('div', 'detail-actions');
   if (item.editable) {
     actions.append(
-      ...(item.type <= 2 ? [button('Edit', () => showEditor(itemDraft(item), item))] : []),
+      button('Edit', () => showEditor(itemDraft(item), item)),
       button(item.favorite ? 'Unfavorite' : 'Favorite', () => {
         void operation<ItemSummary>(
           { type: 'setFavorite', id: item.id, favorite: !item.favorite },
@@ -461,24 +469,8 @@ function renderDetail(item: ItemDetail) {
     detail.append(fillButton(item));
   if (item.type === 1) {
     addField(item, 'Username', item.username || 'No username', 'username');
-    const row = addField(
-      item,
-      'Password',
-      item.password ? '••••••••••••' : 'No password',
-      'password',
-    );
-    const value = row.querySelector('.field-value')!;
-    let revealed = false;
-    addTotp(item, row);
-    if (item.password)
-      row.append(
-        button('Reveal', () => {
-          revealed = !revealed;
-          value.textContent = revealed ? item.password : '••••••••••••';
-          const reveal = row.lastElementChild;
-          if (reveal) reveal.textContent = revealed ? 'Hide' : 'Reveal';
-        }),
-      );
+    if (item.password) addSecretField(item, 'Password', item.password, 'password');
+    else addField(item, 'Password', 'No password');
     for (const uri of item.uris) {
       const match =
         uriMatchOptions.find(
@@ -492,70 +484,39 @@ function renderDetail(item: ItemDetail) {
       );
     }
   }
+  for (const row of item.identity ? identityRows(item.identity) : []) {
+    if (row.secret) addSecretField(item, row.label, row.value, { identity: row.key });
+    else addField(item, row.label, row.value, { identity: row.key });
+  }
+  item.fields.forEach((field, index) => {
+    const label = field.name || 'Custom field';
+    if (field.kind === 'boolean') addField(item, label, field.value === 'true' ? 'Yes' : 'No');
+    else if (field.kind === 'linked')
+      addField(item, label, field.value ? `Linked to ${field.value}` : 'Linked field');
+    else if (!field.value) addField(item, label, 'Empty');
+    else {
+      const target = { custom: index, revisionDate: item.revisionDate };
+      if (field.kind === 'hidden') addSecretField(item, label, field.value, target);
+      else addField(item, label, field.value, target);
+    }
+  });
   addField(item, 'Notes', item.notes || 'No notes', 'notes');
   back.focus();
 }
-/**
- * Shows the current one-time code under the password row. The secret stays in
- * the desktop app. The countdown runs locally and the code is fetched again
- * only when it expires.
- */
-function addTotp(item: ItemDetail, after: Element) {
-  const version = viewVersion;
-  const lifetime = generation;
-  const row = element('div', 'field');
-  const text = element('div', 'field-text');
-  const label = element('span', 'field-label', 'Verification code');
-  const value = element('span', 'field-value', '');
-  text.append(label, value);
-  row.append(text);
-  let code = '';
-  let expiresAt = 0;
-  let timer: ReturnType<typeof setInterval> | undefined;
-  const copy = button('Copy', () => {
-    void operation(
-      { type: 'copyTotp', id: item.id },
-      () => feedback('Verification code copied'),
-      'Copying…',
-    );
+type CopyField = 'username' | 'password' | 'notes' | 'website' | CopyTarget;
+function addSecretField(item: ItemSummary, label: string, secret: string, field: CopyField) {
+  const row = addField(item, label, '••••••••••••', field);
+  const value = row.querySelector('.field-value')!;
+  let revealed = false;
+  const reveal = button('Reveal', () => {
+    revealed = !revealed;
+    value.textContent = revealed ? secret : '••••••••••••';
+    reveal.textContent = revealed ? 'Hide' : 'Reveal';
   });
-  copy.setAttribute('aria-label', 'Copy verification code');
-  row.append(copy);
-
-  function paint() {
-    const left = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
-    label.textContent = `Verification code · ${left}s`;
-    if (left === 0) void load();
-  }
-  async function load() {
-    if (timer) clearInterval(timer);
-    const response = await send<{ code: string; remaining: number } | null>({
-      type: 'totp',
-      id: item.id,
-    });
-    if (!current(version, lifetime) || (!row.isConnected && code)) return;
-    if (!response.ok || !response.value) {
-      row.remove();
-      return;
-    }
-    code = response.value.code;
-    expiresAt = Date.now() + response.value.remaining * 1000;
-    value.textContent = code.length === 6 ? `${code.slice(0, 3)} ${code.slice(3)}` : code;
-    if (!row.isConnected) after.after(row);
-    paint();
-    timer = setInterval(() => {
-      if (!current(version, lifetime) || !row.isConnected) clearInterval(timer);
-      else paint();
-    }, 1000);
-  }
-  void load();
+  reveal.setAttribute('aria-label', `Reveal ${label.toLowerCase()}`);
+  row.append(reveal);
 }
-function addField(
-  item: ItemSummary,
-  label: string,
-  value: string,
-  field?: 'username' | 'password' | 'notes' | 'website',
-) {
+function addField(item: ItemSummary, label: string, value: string, field?: CopyField) {
   const row = element('div', 'field');
   const text = element('div', 'field-text');
   text.append(element('span', 'field-label', label), element('span', 'field-value', value));
@@ -805,7 +766,11 @@ function itemRow(item: ItemSummary, canFill: boolean) {
     element(
       'span',
       'item-sub',
-      item.type === 2 ? 'Secure note' : item.username || item.website || 'Login',
+      item.type === 2
+        ? 'Secure note'
+        : item.type === 4
+          ? item.subtitle || 'Identity'
+          : item.username || item.website || 'Login',
     ),
   );
   row.append(tile(item), text);
@@ -834,7 +799,9 @@ function renderItems() {
           : 'Your vault';
   results.replaceChildren();
   const suggested =
-    query.scope === 'all' && !query.query.trim() && query.itemType !== 'note'
+    query.scope === 'all' &&
+    !query.query.trim() &&
+    (query.itemType === 'all' || query.itemType === 'login')
       ? (suggestions?.items ?? [])
       : [];
   const suggestedIds = new Set(suggested.map((item) => item.id));
@@ -951,7 +918,7 @@ scopes.addEventListener('click', (event) => {
 });
 itemType.addEventListener('change', () => {
   const type = itemType.value;
-  if (type !== 'all' && type !== 'login' && type !== 'note') return;
+  if (type !== 'all' && type !== 'login' && type !== 'note' && type !== 'identity') return;
   query.itemType = type;
   changeQuery();
 });
