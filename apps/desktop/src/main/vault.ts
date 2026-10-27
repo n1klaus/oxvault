@@ -1868,7 +1868,9 @@ function passkeysOf(cipher: Cipher): Fido2Credential[] {
 }
 /** Whether Strongroom will move an item to the trash. Type does not matter here. */
 function isRemovable(cipher: Cipher) {
-  return !isRestricted(cipher) && !cipher.login?.fido2Credentials?.length;
+  // Trashing does not rewrite the item and can be undone, so an item that holds
+  // a passkey may be removed. Only editing stays blocked for those.
+  return !isRestricted(cipher);
 }
 function isEditable(cipher: Cipher) {
   return (
