@@ -113,8 +113,19 @@ export interface VaultItem {
   name: string;
   username: string;
   website: string;
+  /** A card's brand and last four, an identity's name, and similar. */
+  subtitle: string;
   iconUrl?: string;
   type: number;
+}
+export type CopyField = Extract<LauncherRequest, { type: 'copy' }>['field'];
+/** A field Strongroom shows in Raycast. Secret rows hold a mask, never the value. */
+export interface DetailRow {
+  id: string;
+  label: string;
+  value: string;
+  secret: boolean;
+  copy: CopyField | null;
 }
 export interface SearchResult {
   status: string;
@@ -125,8 +136,8 @@ export interface SearchResult {
 export interface ItemDetail extends VaultItem {
   notes: string;
   hasPassword: boolean;
+  rows: DetailRow[];
 }
-export type CopyField = Extract<LauncherRequest, { type: 'copy' }>['field'];
 
 // Read the rotating token per request. Never persist vault data or secrets in Raycast.
 export async function request<T = void>(
