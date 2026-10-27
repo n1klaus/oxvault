@@ -1,21 +1,7 @@
 import { useLayoutEffect, useRef, useState, type FormEvent } from 'react';
 import { Check, Eye, EyeSlash as EyeOff, X } from '@phosphor-icons/react';
-import {
-  cardBrands,
-  cardMonths,
-  type Folder,
-  type FieldDraft,
-  type ItemDetail,
-  type ItemDraft,
-  type UriDraft,
-} from '@strongroom/shared/types';
-import {
-  emptyCard,
-  emptyIdentity,
-  emptySshKey,
-  itemDraft,
-  uriMatchOptions,
-} from '@strongroom/shared/item-drafts';
+import type { CardFields, ItemDetail, ItemDraft, UriDraft } from '@strongroom/shared/types';
+import { cardBrands, emptyCard, itemDraft, uriMatchOptions } from '@strongroom/shared/item-drafts';
 import { uriMatchSchema } from '@strongroom/shared/protocol';
 import type { Notifier } from './Toasts';
 import { Button } from '@/components/ui/button';
@@ -41,113 +27,44 @@ import {
 import { PasswordGenerator } from './PasswordGenerator';
 import './tasks.css';
 
-type ItemType = ItemDraft['type'];
-const typeLabels: Record<ItemType, string> = {
-  1: 'login',
-  2: 'secure note',
-  3: 'card',
-  4: 'identity',
-  5: 'SSH key',
+type DraftBase = Pick<ItemDraft, 'name' | 'notes' | 'favorite'>;
+const draftTypes: Record<
+  ItemDraft['type'],
+  { label: string; save: string; empty: (base: DraftBase) => ItemDraft }
+> = {
+  1: {
+    label: 'Login',
+    save: 'Save login',
+    empty: (base) => ({ ...base, type: 1, username: '', password: '', uris: [] }),
+  },
+  2: {
+    label: 'Secure note',
+    save: 'Save note',
+    empty: (base) => ({ ...base, type: 2 }),
+  },
+  3: {
+    label: 'Card',
+    save: 'Save card',
+    empty: (base) => ({ ...base, type: 3, card: emptyCard }),
+  },
 };
-const fieldTypeLabels = { 0: 'Text', 1: 'Hidden', 2: 'Boolean' } as const;
-
-function blankDraft(
-  type: ItemType,
-  base: Pick<ItemDraft, 'name' | 'notes' | 'favorite' | 'folderId' | 'fields'>,
-): ItemDraft {
-  switch (type) {
-    case 1:
-      return { ...base, type, username: '', password: '', uris: [] };
-    case 2:
-      return { ...base, type };
-    case 3:
-      return { ...base, type, ...emptyCard };
-    case 4:
-      return { ...base, type, ...emptyIdentity };
-    case 5:
-      return { ...base, type, ...emptySshKey };
-  }
-}
-
-/** A text input for a value that is hidden until the user reveals it. */
-function SecretInput({
-  id,
-  label,
-  value,
-  onChange,
-  disabled,
-  readOnly,
-  multiline,
-  autoComplete = 'off',
-}: {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  disabled: boolean;
-  readOnly?: boolean;
-  multiline?: boolean;
-  autoComplete?: string;
-}) {
-  const [shown, setShown] = useState(false);
-  const toggle = (
-    <InputGroupAddon align="inline-end">
-      <InputGroupButton
-        size="icon-sm"
-        aria-label={`${shown ? 'Hide' : 'Reveal'} ${label.toLowerCase()}`}
-        aria-pressed={shown}
-        onClick={() => setShown(!shown)}
-        disabled={disabled}
-      >
-        {shown ? <EyeOff /> : <Eye />}
-      </InputGroupButton>
-    </InputGroupAddon>
-  );
-  return (
-    <InputGroup>
-      {multiline ? (
-        <Textarea
-          id={id}
-          className="task-notes"
-          data-masked={!shown}
-          rows={4}
-          spellCheck={false}
-          value={value}
-          readOnly={readOnly}
-          onChange={(event) => onChange(event.target.value)}
-          disabled={disabled}
-        />
-      ) : (
-        <InputGroupInput
-          id={id}
-          type={shown ? 'text' : 'password'}
-          autoComplete={autoComplete}
-          value={value}
-          readOnly={readOnly}
-          onChange={(event) => onChange(event.target.value)}
-          disabled={disabled}
-        />
-      )}
-      {toggle}
-    </InputGroup>
-  );
-}
+const brandOptions = cardBrands.map((brand) => ({ value: brand, label: brand }));
+const monthName = new Intl.DateTimeFormat(undefined, { month: 'long' });
+const monthOptions = Array.from({ length: 12 }, (_, index) => {
+  const month = String(index + 1);
+  return {
+    value: month,
+    label: `${month.padStart(2, '0')} - ${monthName.format(new Date(2000, index))}`,
+  };
+});
 
 export function Editor({
   item,
-  folders,
-  defaultFolderId,
-  defaultType,
   onClose,
   onSaved,
   notify,
 }: {
   item: ItemDetail | null;
-  folders: Folder[];
-  /** The folder a new item starts in. */
-  defaultFolderId: string | null;
-  /** The type a new item starts as. */
-  defaultType: 1 | 2;
   onClose: () => void;
   onSaved: (item: ItemDetail) => void;
   notify: Notifier;
@@ -155,19 +72,13 @@ export function Editor({
   const [initial] = useState<ItemDraft>(() =>
     item
       ? itemDraft(item)
-      : blankDraft(defaultType, {
-          name: '',
-          notes: '',
-          favorite: false,
-          folderId: defaultFolderId,
-          fields: [],
-        }),
+      : { type: 1, name: '', username: '', password: '', uris: [], notes: '', favorite: false },
   );
   const [draft, setDraft] = useState(initial);
   const isNote = draft.type === 2;
-  const editing = Boolean(item);
   const [busy, setBusy] = useState(false);
   const [revealed, setRevealed] = useState(false);
+  const [codeRevealed, setCodeRevealed] = useState(false);
   const [error, setError] = useState('');
   const [discarding, setDiscarding] = useState(false);
   const [active, setActive] = useState(true);
@@ -230,41 +141,9 @@ export function Editor({
   function loginField(key: 'username' | 'password', value: string) {
     setDraft((current) => (current.type === 1 ? { ...current, [key]: value } : current));
   }
-  function bodyField(key: string, value: string) {
-    setDraft((current) => ({ ...current, [key]: value }) as ItemDraft);
-  }
-  function fieldRows(change: (rows: FieldDraft[]) => FieldDraft[]) {
-    setDraft((current) => ({ ...current, fields: change(current.fields ?? []) }));
-  }
-  function textField(key: string, label: string, props: { maxLength?: number } = {}) {
-    const id = `editor-${key}`;
-    return (
-      <Field key={key}>
-        <FieldLabel htmlFor={id}>{label}</FieldLabel>
-        <Input
-          id={id}
-          value={(draft as unknown as Record<string, string>)[key] ?? ''}
-          onChange={(event) => bodyField(key, event.target.value)}
-          autoComplete="off"
-          maxLength={props.maxLength ?? 500}
-          disabled={busy}
-        />
-      </Field>
-    );
-  }
-  function secretField(key: string, label: string, props: { maxLength?: number } = {}) {
-    const id = `editor-${key}`;
-    return (
-      <Field key={key}>
-        <FieldLabel htmlFor={id}>{label}</FieldLabel>
-        <SecretInput
-          id={id}
-          label={label}
-          value={(draft as unknown as Record<string, string>)[key] ?? ''}
-          onChange={(value) => bodyField(key, value.slice(0, props.maxLength ?? 500))}
-          disabled={busy}
-        />
-      </Field>
+  function cardField(key: keyof CardFields, value: string) {
+    setDraft((current) =>
+      current.type === 3 ? { ...current, card: { ...current.card, [key]: value } } : current,
     );
   }
   function uriRows(change: (rows: UriDraft[]) => UriDraft[]) {
@@ -339,7 +218,7 @@ export function Editor({
       >
         <DialogHeader className="task-header">
           <DialogTitle>
-            {item ? 'Edit' : 'New'} {typeLabels[draft.type]}
+            {item ? 'Edit' : 'New'} {draftTypes[draft.type].label.toLowerCase()}
           </DialogTitle>
           <DialogDescription>Saved in your personal Bitwarden vault.</DialogDescription>
           <Button
@@ -370,24 +249,21 @@ export function Editor({
                     value={draft.type}
                     disabled={busy}
                     onChange={(event) => {
-                      const type = Number(event.target.value) as ItemType;
-                      if (type === draft.type) return;
+                      const type = Number(event.target.value) as ItemDraft['type'];
                       setDraft(
-                        blankDraft(type, {
+                        draftTypes[type].empty({
                           name: draft.name,
                           notes: draft.notes,
                           favorite: draft.favorite,
-                          folderId: draft.folderId,
-                          fields: draft.fields,
                         }),
                       );
                     }}
                   >
-                    <option value="1">Login</option>
-                    <option value="2">Secure note</option>
-                    <option value="3">Card</option>
-                    <option value="4">Identity</option>
-                    <option value="5">SSH key</option>
+                    {Object.entries(draftTypes).map(([type, { label }]) => (
+                      <option key={type} value={type}>
+                        {label}
+                      </option>
+                    ))}
                   </select>
                 </Field>
               )}
@@ -403,102 +279,80 @@ export function Editor({
                   disabled={busy}
                 />
               </Field>
-              <Field>
-                <FieldLabel htmlFor="editor-folder">Folder</FieldLabel>
-                <select
-                  id="editor-folder"
-                  value={draft.folderId ?? ''}
-                  disabled={busy}
-                  onChange={(event) =>
-                    setDraft((current) => ({ ...current, folderId: event.target.value || null }))
-                  }
-                >
-                  <option value="">No folder</option>
-                  {folders.map((folder) => (
-                    <option key={folder.id} value={folder.id}>
-                      {folder.name}
-                    </option>
-                  ))}
-                </select>
-              </Field>
               {draft.type === 1 && (
                 <>
-                  {draft.type === 1 && (
-                    <Field>
-                      <FieldLabel>Websites</FieldLabel>
-                      {draft.uris.map((row, index) => (
-                        <div key={index} className="task-uri-row">
-                          {row.action === 'keep' ? (
-                            <p className="text-xs text-muted-foreground">
-                              {item?.uris[row.sourceIndex]?.uri ?? 'Empty imported URI'}. Imported
-                              matching rule is preserved. Edit it in Bitwarden or remove this row.
-                            </p>
-                          ) : (
-                            <>
-                              <Input
-                                aria-label={`Website ${index + 1}`}
-                                value={row.uri}
-                                placeholder="https://example.com"
-                                maxLength={2048}
-                                disabled={busy}
-                                onChange={(event) =>
-                                  uriRows((rows) =>
-                                    rows.map((entry, i) =>
-                                      i === index ? { ...row, uri: event.target.value } : entry,
-                                    ),
-                                  )
-                                }
-                              />
-                              <select
-                                aria-label={`Match rule ${index + 1}`}
-                                value={row.match === null ? '' : String(row.match)}
-                                disabled={busy}
-                                onChange={(event) => {
-                                  const match = uriMatchSchema.parse(
-                                    event.target.value === '' ? null : Number(event.target.value),
-                                  );
-                                  uriRows((rows) =>
-                                    rows.map((entry, i) =>
-                                      i === index ? { ...row, match } : entry,
-                                    ),
-                                  );
-                                }}
-                              >
-                                {uriMatchOptions.map((option) => (
-                                  <option key={option.value} value={option.value}>
-                                    {option.label}
-                                  </option>
-                                ))}
-                              </select>
-                            </>
-                          )}
-                          <Button
-                            type="button"
-                            variant="outline"
-                            disabled={busy}
-                            onClick={() => uriRows((rows) => rows.filter((_, i) => i !== index))}
-                          >
-                            Remove website
-                          </Button>
-                        </div>
-                      ))}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        disabled={busy}
-                        onClick={() =>
-                          uriRows((rows) => [...rows, { action: 'write', uri: '', match: null }])
-                        }
-                      >
-                        Add website
-                      </Button>
-                    </Field>
-                  )}
+                  <Field>
+                    <FieldLabel>Websites</FieldLabel>
+                    {draft.uris.map((row, index) => (
+                      <div key={index} className="task-uri-row">
+                        {row.action === 'keep' ? (
+                          <p className="text-xs text-muted-foreground">
+                            {item?.uris[row.sourceIndex]?.uri ?? 'Empty imported URI'}. Imported
+                            matching rule is preserved. Edit it in Bitwarden or remove this row.
+                          </p>
+                        ) : (
+                          <>
+                            <Input
+                              aria-label={`Website ${index + 1}`}
+                              value={row.uri}
+                              placeholder="https://example.com"
+                              maxLength={2048}
+                              disabled={busy}
+                              onChange={(event) =>
+                                uriRows((rows) =>
+                                  rows.map((entry, i) =>
+                                    i === index ? { ...row, uri: event.target.value } : entry,
+                                  ),
+                                )
+                              }
+                            />
+                            <select
+                              aria-label={`Match rule ${index + 1}`}
+                              value={row.match === null ? '' : String(row.match)}
+                              disabled={busy}
+                              onChange={(event) => {
+                                const match = uriMatchSchema.parse(
+                                  event.target.value === '' ? null : Number(event.target.value),
+                                );
+                                uriRows((rows) =>
+                                  rows.map((entry, i) => (i === index ? { ...row, match } : entry)),
+                                );
+                              }}
+                            >
+                              {uriMatchOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          </>
+                        )}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={busy}
+                          onClick={() => uriRows((rows) => rows.filter((_, i) => i !== index))}
+                        >
+                          Remove website
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={busy}
+                      onClick={() =>
+                        uriRows((rows) => [...rows, { action: 'write', uri: '', match: null }])
+                      }
+                    >
+                      Add website
+                    </Button>
+                  </Field>
                   <Field>
                     <FieldLabel htmlFor="editor-username">Username</FieldLabel>
                     <Input
                       id="editor-username"
-                      value={draft.type === 1 ? draft.username : ''}
+                      value={draft.username}
                       onChange={(event) => loginField('username', event.target.value)}
                       autoComplete="off"
                       disabled={busy}
@@ -510,7 +364,6 @@ export function Editor({
                       <PasswordGenerator
                         disabled={busy}
                         onUse={(password) => loginField('password', password)}
-                        onUseUsername={(username) => loginField('username', username)}
                       />
                     </div>
                     <InputGroup>
@@ -518,7 +371,7 @@ export function Editor({
                         id="editor-password"
                         type={revealed ? 'text' : 'password'}
                         autoComplete="new-password"
-                        value={draft.type === 1 ? draft.password : ''}
+                        value={draft.password}
                         onChange={(event) => loginField('password', event.target.value)}
                         disabled={busy}
                       />
@@ -539,120 +392,85 @@ export function Editor({
               )}
               {draft.type === 3 && (
                 <>
-                  {textField('cardholderName', 'Cardholder name')}
+                  <Field>
+                    <FieldLabel htmlFor="editor-cardholder">Cardholder name</FieldLabel>
+                    <Input
+                      id="editor-cardholder"
+                      value={draft.card.cardholderName}
+                      onChange={(event) => cardField('cardholderName', event.target.value)}
+                      autoComplete="off"
+                      disabled={busy}
+                    />
+                  </Field>
                   <Field>
                     <FieldLabel htmlFor="editor-brand">Brand</FieldLabel>
                     <select
                       id="editor-brand"
-                      value={draft.brand}
+                      value={draft.card.brand}
                       disabled={busy}
-                      onChange={(event) => bodyField('brand', event.target.value)}
+                      onChange={(event) => cardField('brand', event.target.value)}
                     >
-                      <option value="">Select brand</option>
-                      {cardBrands.map((brand) => (
-                        <option key={brand} value={brand}>
-                          {brand}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-                  {secretField('number', 'Number')}
-                  <Field>
-                    <FieldLabel htmlFor="editor-expMonth">Expiration month</FieldLabel>
-                    <select
-                      id="editor-expMonth"
-                      value={draft.expMonth}
-                      disabled={busy}
-                      onChange={(event) => bodyField('expMonth', event.target.value)}
-                    >
-                      <option value="">Select month</option>
-                      {cardMonths.map((month) => (
-                        <option key={month} value={month}>
-                          {month}
-                        </option>
-                      ))}
+                      {choices(brandOptions, draft.card.brand)}
                     </select>
                   </Field>
                   <Field>
-                    <FieldLabel htmlFor="editor-expYear">Expiration year</FieldLabel>
+                    <FieldLabel htmlFor="editor-number">Number</FieldLabel>
                     <Input
-                      id="editor-expYear"
-                      value={draft.expYear}
+                      id="editor-number"
                       inputMode="numeric"
+                      value={draft.card.number}
+                      onChange={(event) => cardField('number', event.target.value)}
                       autoComplete="off"
-                      maxLength={8}
-                      disabled={busy}
-                      onChange={(event) => bodyField('expYear', event.target.value)}
-                    />
-                  </Field>
-                  {secretField('code', 'Security code')}
-                </>
-              )}
-              {draft.type === 4 && (
-                <>
-                  {textField('title', 'Title')}
-                  {textField('firstName', 'First name')}
-                  {textField('middleName', 'Middle name')}
-                  {textField('lastName', 'Last name')}
-                  {textField('username', 'Username')}
-                  {textField('company', 'Company')}
-                  {secretField('ssn', 'Social security number')}
-                  {secretField('passportNumber', 'Passport number')}
-                  {secretField('licenseNumber', 'License number')}
-                  {textField('email', 'Email')}
-                  {textField('phone', 'Phone')}
-                  {textField('address1', 'Address 1')}
-                  {textField('address2', 'Address 2')}
-                  {textField('address3', 'Address 3')}
-                  {textField('city', 'City / Town')}
-                  {textField('state', 'State / Province')}
-                  {textField('postalCode', 'Zip / Postal code')}
-                  {textField('country', 'Country')}
-                </>
-              )}
-              {draft.type === 5 && (
-                <>
-                  {editing && (
-                    <p className="text-xs text-muted-foreground">
-                      Keys come from elsewhere. Strongroom does not change them.
-                    </p>
-                  )}
-                  <Field>
-                    <FieldLabel htmlFor="editor-publicKey">Public key</FieldLabel>
-                    <Textarea
-                      id="editor-publicKey"
-                      className="task-notes"
-                      rows={3}
-                      spellCheck={false}
-                      value={draft.publicKey}
-                      readOnly={editing}
-                      onChange={(event) => bodyField('publicKey', event.target.value)}
                       disabled={busy}
                     />
                   </Field>
                   <Field>
-                    <FieldLabel htmlFor="editor-privateKey">Private key</FieldLabel>
-                    <SecretInput
-                      id="editor-privateKey"
-                      label="Private key"
-                      multiline
-                      value={draft.privateKey}
-                      readOnly={editing}
-                      onChange={(value) => bodyField('privateKey', value)}
+                    <FieldLabel htmlFor="editor-exp-month">Expiration month</FieldLabel>
+                    <select
+                      id="editor-exp-month"
+                      value={draft.card.expMonth}
                       disabled={busy}
-                    />
+                      onChange={(event) => cardField('expMonth', event.target.value)}
+                    >
+                      {choices(monthOptions, draft.card.expMonth)}
+                    </select>
                   </Field>
                   <Field>
-                    <FieldLabel htmlFor="editor-keyFingerprint">Fingerprint</FieldLabel>
+                    <FieldLabel htmlFor="editor-exp-year">Expiration year</FieldLabel>
                     <Input
-                      id="editor-keyFingerprint"
-                      value={draft.keyFingerprint}
-                      readOnly={editing}
+                      id="editor-exp-year"
+                      inputMode="numeric"
+                      placeholder="YYYY"
+                      value={draft.card.expYear}
+                      onChange={(event) => cardField('expYear', event.target.value)}
                       autoComplete="off"
-                      maxLength={500}
-                      onChange={(event) => bodyField('keyFingerprint', event.target.value)}
                       disabled={busy}
                     />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="editor-code">Security code</FieldLabel>
+                    <InputGroup>
+                      <InputGroupInput
+                        id="editor-code"
+                        type={codeRevealed ? 'text' : 'password'}
+                        inputMode="numeric"
+                        autoComplete="off"
+                        value={draft.card.code}
+                        onChange={(event) => cardField('code', event.target.value)}
+                        disabled={busy}
+                      />
+                      <InputGroupAddon align="inline-end">
+                        <InputGroupButton
+                          size="icon-sm"
+                          aria-label={codeRevealed ? 'Hide security code' : 'Reveal security code'}
+                          aria-pressed={codeRevealed}
+                          onClick={() => setCodeRevealed(!codeRevealed)}
+                          disabled={busy}
+                        >
+                          {codeRevealed ? <EyeOff /> : <Eye />}
+                        </InputGroupButton>
+                      </InputGroupAddon>
+                    </InputGroup>
                   </Field>
                 </>
               )}
@@ -667,124 +485,6 @@ export function Editor({
                   onChange={(event) => update('notes', event.target.value)}
                   disabled={busy}
                 />
-              </Field>
-              <Field>
-                <FieldLabel>Custom fields</FieldLabel>
-                {(draft.fields ?? []).map((row, index) => (
-                  <div key={index} className="task-uri-row">
-                    <Input
-                      aria-label={`Field name ${index + 1}`}
-                      value={row.name}
-                      maxLength={500}
-                      autoComplete="off"
-                      disabled={busy}
-                      onChange={(event) =>
-                        fieldRows((rows) =>
-                          rows.map((entry, i) =>
-                            i === index ? { ...row, name: event.target.value } : entry,
-                          ),
-                        )
-                      }
-                    />
-                    <select
-                      aria-label={`Field type ${index + 1}`}
-                      value={row.type}
-                      disabled={busy}
-                      onChange={(event) => {
-                        const type = Number(event.target.value) as FieldDraft['type'];
-                        fieldRows((rows) =>
-                          rows.map((entry, i) =>
-                            i === index
-                              ? {
-                                  ...row,
-                                  type,
-                                  value:
-                                    type === 2
-                                      ? row.value === 'true'
-                                        ? 'true'
-                                        : 'false'
-                                      : row.value,
-                                }
-                              : entry,
-                          ),
-                        );
-                      }}
-                    >
-                      {([0, 1, 2] as const).map((type) => (
-                        <option key={type} value={type}>
-                          {fieldTypeLabels[type]}
-                        </option>
-                      ))}
-                    </select>
-                    {row.type === 2 ? (
-                      <label className="text-sm">
-                        <input
-                          type="checkbox"
-                          aria-label={`Field value ${index + 1}`}
-                          checked={row.value === 'true'}
-                          disabled={busy}
-                          onChange={(event) =>
-                            fieldRows((rows) =>
-                              rows.map((entry, i) =>
-                                i === index
-                                  ? { ...row, value: event.target.checked ? 'true' : 'false' }
-                                  : entry,
-                              ),
-                            )
-                          }
-                        />{' '}
-                        Yes
-                      </label>
-                    ) : row.type === 1 ? (
-                      <SecretInput
-                        id={`editor-field-value-${index}`}
-                        label={`Field value ${index + 1}`}
-                        value={row.value}
-                        disabled={busy}
-                        onChange={(value) =>
-                          fieldRows((rows) =>
-                            rows.map((entry, i) => (i === index ? { ...row, value } : entry)),
-                          )
-                        }
-                      />
-                    ) : (
-                      <Input
-                        aria-label={`Field value ${index + 1}`}
-                        value={row.value}
-                        autoComplete="off"
-                        disabled={busy}
-                        onChange={(event) =>
-                          fieldRows((rows) =>
-                            rows.map((entry, i) =>
-                              i === index ? { ...row, value: event.target.value } : entry,
-                            ),
-                          )
-                        }
-                      />
-                    )}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={busy}
-                      onClick={() => fieldRows((rows) => rows.filter((_, i) => i !== index))}
-                    >
-                      Remove field
-                    </Button>
-                  </div>
-                ))}
-                {item && item.customFields.length > item.fieldDrafts.length && (
-                  <p className="text-xs text-muted-foreground">
-                    Linked fields are kept. Edit them in Bitwarden.
-                  </p>
-                )}
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={busy}
-                  onClick={() => fieldRows((rows) => [...rows, { name: '', value: '', type: 0 }])}
-                >
-                  Add field
-                </Button>
               </Field>
               <Field orientation="horizontal">
                 <FieldLabel id="editor-favorite-label" htmlFor="editor-favorite">
@@ -807,11 +507,25 @@ export function Editor({
             </Button>
             <Button type="submit" disabled={busy} aria-busy={busy}>
               {busy ? <Spinner /> : <Check data-icon="inline-start" />}
-              {busy ? 'Saving…' : `Save ${typeLabels[draft.type]}`}
+              {busy ? 'Saving…' : draftTypes[draft.type].save}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   );
+}
+
+/** Lists an imported value Strongroom does not offer, so saving keeps it. */
+function choices(options: { value: string; label: string }[], current: string) {
+  const known = !current || options.some((option) => option.value === current);
+  return [
+    { value: '', label: '—' },
+    ...options,
+    ...(known ? [] : [{ value: current, label: current }]),
+  ].map((option) => (
+    <option key={option.value} value={option.value}>
+      {option.label}
+    </option>
+  ));
 }

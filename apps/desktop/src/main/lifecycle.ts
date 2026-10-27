@@ -1,12 +1,20 @@
 import { app, clipboard, globalShortcut, powerMonitor } from 'electron';
 import { readFile, writeFile } from 'node:fs/promises';
 import { UserError, lockTimeoutSchema, type DesktopRequest } from '@strongroom/shared/protocol';
-import type { LockTimeoutMinutes } from '@strongroom/shared/types';
+import type { ItemDetail, LockTimeoutMinutes } from '@strongroom/shared/types';
 import type { Vault } from './vault';
 import type { CliPort } from './cli';
 import type { createUpdates } from './updates';
 
 type CopyField = Extract<DesktopRequest, { type: 'copy' }>['field'];
+const copyValues: Record<CopyField, (item: ItemDetail) => string> = {
+  username: (item) => item.username,
+  password: (item) => item.password,
+  notes: (item) => item.notes,
+  website: (item) => item.website,
+  cardNumber: (item) => item.card?.number ?? '',
+  cardCode: (item) => item.card?.code ?? '',
+};
 
 /** Owns desktop invalidation and shutdown; vault session state stays in Vault. */
 export class DesktopLifecycle {
@@ -22,7 +30,7 @@ export class DesktopLifecycle {
   private copiedValue = '';
   private clipboardTimer?: NodeJS.Timeout;
   private clipboardQueue: Promise<void> = Promise.resolve();
-  lockTimeoutMinutes: LockTimeoutMinutes = 15;
+  lockTimeoutMinutes: LockTimeoutMinutes = 0;
   private preferencePath = '';
   private preferenceQueue: Promise<unknown> = Promise.resolve();
 
@@ -55,7 +63,7 @@ export class DesktopLifecycle {
       const parsed = lockTimeoutSchema.safeParse(stored.lockTimeoutMinutes);
       if (parsed.success) this.lockTimeoutMinutes = parsed.data;
     } catch {
-      // Missing or damaged preferences keep the timed default.
+      // Missing or damaged preferences retain manual locking.
     }
   }
 
@@ -122,34 +130,6 @@ export class DesktopLifecycle {
   };
 
   copy(id: string, field: CopyField) {
-    return this.copyValue((vault) => vault.detail(id)[field]);
-  }
-
-  copyExtra(id: string, index: number) {
-    return this.copyValue((vault) => vault.extraValue(id, index));
-  }
-
-  copyCustomField(id: string, index: number) {
-    return this.copyValue((vault) => vault.customFieldValue(id, index));
-  }
-
-  copyHistory(id: string, index: number) {
-    return this.copyValue((vault) => vault.historyValue(id, index));
-  }
-
-  copySendLink(id: string) {
-    return this.copyValue((vault) => vault.sendLink(id));
-  }
-
-  copyTotp(id: string) {
-    return this.copyValue(async (vault) => {
-      const code = await vault.totp(id);
-      if (!code) throw new UserError('This item has no one-time code.');
-      return code.code;
-    });
-  }
-
-  private copyValue(read: (vault: Vault) => string | Promise<string>) {
     const epoch = this.epoch;
     this.clipboardQueue = this.clipboardQueue
       .catch(() => undefined)
@@ -157,10 +137,8 @@ export class DesktopLifecycle {
         this.assertRunning();
         if (!this.vault || epoch !== this.epoch)
           throw new UserError('Vault locked. Try again after unlocking.');
-        const value = await read(this.vault);
-        if (epoch !== this.epoch) throw new UserError('Vault locked. Try again after unlocking.');
-        this.copiedValue = value;
-        await clipboard.writeText(value);
+        this.copiedValue = copyValues[field](this.vault.detail(id));
+        await clipboard.writeText(this.copiedValue);
         if (this.clipboardTimer) clearTimeout(this.clipboardTimer);
         this.clipboardTimer = setTimeout(
           () => void this.clearCopiedSecret().catch(() => undefined),

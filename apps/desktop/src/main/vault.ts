@@ -3,14 +3,7 @@ import { randomInt } from 'node:crypto';
 import { CodeRejectedError, type CliPort, type CliPrompt } from './cli';
 import { fillableUrl, matchesUri, normalizeServer, webUrl, type CipherUri } from './matching';
 import { UserError, type BrowserVaultQuery } from '@strongroom/shared/protocol';
-import { cardBrands, cardMonths, importFormats } from '@strongroom/shared/types';
-import { totpFromField, type TotpCode } from '@strongroom/shared/totp';
-import {
-  buildHealthReport,
-  findExposed,
-  hibpRangeFetch,
-  type HealthItem,
-} from '@strongroom/shared/health';
+import { cardLabel } from '@strongroom/shared/item-drafts';
 import {
   ES256,
   attestationObject,
@@ -32,24 +25,12 @@ import type {
   BrowserVaultPage,
   CaptureOffer,
   ChallengeAnswer,
-  AttachmentInfo,
-  ExportFormat,
-  ExtraField,
-  Folder,
-  HealthSummary,
   ItemDetail,
   ItemSummary,
   LoginChallenge,
   ItemDraft,
-  FieldDraft,
-  CardBody,
-  IdentityBody,
-  SshKeyBody,
   LoginInput,
-  PasswordHistoryEntry,
   PasswordOptions,
-  SendDraft,
-  SendSummary,
   TwoStepMethod,
   VaultState,
 } from '@strongroom/shared/types';
@@ -59,62 +40,29 @@ export interface Cipher {
   name: string;
   type: number;
   favorite?: boolean;
-  folderId?: string | null;
   organizationId?: string | null;
   deletedDate?: string | null;
   reprompt?: number;
   revisionDate?: string | null;
   creationDate?: string | null;
   notes?: string | null;
-  card?: Record<string, string | null> | null;
-  identity?: Record<string, string | null> | null;
-  sshKey?: Record<string, string | null> | null;
-  fields?: CipherField[] | null;
-  passwordHistory?: { password?: string | null; lastUsedDate?: string | null }[] | null;
-  attachments?: CipherAttachment[] | null;
   login?: {
     username?: string | null;
     password?: string | null;
-    totp?: string | null;
     uris?: CipherUri[];
     fido2Credentials?: Fido2Credential[];
     [key: string]: unknown;
   };
+  card?: {
+    cardholderName?: string | null;
+    brand?: string | null;
+    number?: string | null;
+    expMonth?: string | null;
+    expYear?: string | null;
+    code?: string | null;
+    [key: string]: unknown;
+  } | null;
   [key: string]: unknown;
-}
-
-export interface CipherField {
-  name?: string | null;
-  value?: string | null;
-  type?: number;
-  linkedId?: number | null;
-}
-
-export interface CipherAttachment {
-  id?: string | null;
-  fileName?: string | null;
-  sizeName?: string | null;
-  size?: string | null;
-  url?: string | null;
-}
-
-/** Picks a file path with a native dialog; null when the user cancels. */
-export type PathPicker = (suggestedName: string) => Promise<string | null>;
-
-const ATTACHMENT_REFUSED =
-  'Bitwarden did not accept the attachment. Your plan or server may not allow it.';
-const SEND_REFUSED = 'Bitwarden did not accept the Send. Your plan or server may not allow it.';
-const EXPORT_EXTENSIONS: Record<ExportFormat, string> = {
-  csv: 'csv',
-  json: 'json',
-  encrypted_json: 'json',
-};
-
-/** What the vault needs from the window to export: a confirmation and a save location. */
-export interface ExportUi {
-  /** Warns that the file holds every secret in plain text. Resolves true to go on. */
-  confirmPlain: () => Promise<boolean>;
-  pick: PathPicker;
 }
 
 /** The CLI's numeric identifiers for the two-step methods it can complete. */
@@ -179,8 +127,6 @@ export interface PasswordIdentity {
 export class Vault extends EventEmitter {
   private session = '';
   private ciphers = new Map<string, Cipher>();
-  private folderNames = new Map<string, string>();
-  private sendList = new Map<string, { summary: SendSummary; url: string }>();
   private generation = 0;
   private revision = 0;
   private itemsRevision = 0;
@@ -284,9 +230,7 @@ export class Vault extends EventEmitter {
       try {
         session = await this.cli.run(
           ['unlock', '--passwordenv', 'STRONGROOM_MASTER_PASSWORD', '--raw'],
-          {
-            password: input.password,
-          },
+          { password: input.password },
         );
       } catch (error) {
         if (generation === this.generation) this.publish();
@@ -492,8 +436,6 @@ export class Vault extends EventEmitter {
     if (!locking) this.cli.cancel();
     this.session = '';
     this.ciphers.clear();
-    this.folderNames.clear();
-    this.sendList.clear();
     this.trashLoaded = false;
     this.trashLoading = undefined;
     this.captured = undefined;
@@ -544,58 +486,6 @@ export class Vault extends EventEmitter {
   items(): ItemSummary[] {
     this.requireUnlocked();
     return this.listing((cipher) => !cipher.deletedDate);
-  }
-
-  /** Folders, sorted by name. The "No Folder" placeholder the CLI lists has no id and is omitted. */
-  folders(): Folder[] {
-    this.requireUnlocked();
-    return [...this.folderNames]
-      .map(([id, name]) => ({ id, name }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }
-
-  async createFolder(name: string): Promise<Folder> {
-    this.requireUnlocked();
-    const generation = this.generation;
-    const payload = Buffer.from(JSON.stringify({ name })).toString('base64');
-    const saved = parseFolder(
-      await this.cli.run(['create', 'folder'], { session: this.session, input: payload }),
-    );
-    this.assertGeneration(generation);
-    this.folderNames.set(saved.id, saved.name);
-    this.countItems();
-    this.publish();
-    return saved;
-  }
-
-  async renameFolder(id: string, name: string): Promise<Folder> {
-    this.requireUnlocked();
-    const generation = this.generation;
-    if (!this.folderNames.has(id))
-      throw new UserError('This folder is no longer available. Sync your vault.');
-    const payload = Buffer.from(JSON.stringify({ name })).toString('base64');
-    const saved = parseFolder(
-      await this.cli.run(['edit', 'folder', id], { session: this.session, input: payload }),
-    );
-    this.assertGeneration(generation);
-    this.folderNames.set(saved.id, saved.name);
-    this.countItems();
-    this.publish();
-    return saved;
-  }
-
-  /** Bitwarden moves the folder's items to "No folder"; none are deleted. */
-  async deleteFolder(id: string) {
-    this.requireUnlocked();
-    const generation = this.generation;
-    if (!this.folderNames.has(id))
-      throw new UserError('This folder is no longer available. Sync your vault.');
-    await this.cli.run(['delete', 'folder', id], { session: this.session });
-    this.assertGeneration(generation);
-    this.folderNames.delete(id);
-    for (const cipher of this.ciphers.values()) if (cipher.folderId === id) cipher.folderId = null;
-    this.countItems();
-    return this.publish();
   }
 
   /** Items sitting in Bitwarden's trash, which another client can restore. */
@@ -650,336 +540,29 @@ export class Vault extends EventEmitter {
     return {
       ...summarize(cipher),
       password: cipher.login?.password ?? '',
+      card:
+        cipher.type === 3
+          ? {
+              cardholderName: cipher.card?.cardholderName ?? '',
+              brand: cipher.card?.brand ?? '',
+              number: cipher.card?.number ?? '',
+              expMonth: cipher.card?.expMonth ?? '',
+              expYear: cipher.card?.expYear ?? '',
+              code: cipher.card?.code ?? '',
+            }
+          : null,
       uris: (cipher.login?.uris ?? []).map((row, sourceIndex) => ({
         sourceIndex,
         uri: row.uri,
         match: row.match ?? null,
       })),
       notes: cipher.notes ?? '',
-      extra: extraFields(cipher),
-      customFields: customFieldRows(cipher),
-      fieldDrafts: fieldDrafts(cipher),
-      ...(cipher.type === 3 ? { card: cardBody(cipher) } : {}),
-      ...(cipher.type === 4 ? { identity: identityBody(cipher) } : {}),
-      ...(cipher.type === 5 ? { sshKey: sshKeyBody(cipher) } : {}),
-      passwordHistory: historyRows(cipher),
-      attachments: attachmentRows(cipher),
       revisionDate: cipher.revisionDate ?? null,
       createdDate: cipher.creationDate ?? null,
       editable: isEditable(cipher) && !cipher.deletedDate,
       deletable: isRemovable(cipher) && !cipher.deletedDate,
       restorable: isRemovable(cipher) && Boolean(cipher.deletedDate),
     };
-  }
-
-  /** One value from an item's read-only fields, for copying. */
-  extraValue(id: string, index: number): string {
-    const row = extraFields(this.item(id))[index];
-    if (!row) throw new UserError('That field is no longer available.');
-    return row.value;
-  }
-
-  /** One value from an item's custom fields, for copying. */
-  customFieldValue(id: string, index: number): string {
-    const row = customFieldRows(this.item(id))[index];
-    if (!row || row.copyable === false) throw new UserError('That field is no longer available.');
-    return row.value;
-  }
-
-  /** One earlier password, for copying. Index follows the newest-first order of the detail. */
-  historyValue(id: string, index: number): string {
-    const row = historyRows(this.item(id))[index];
-    if (!row) throw new UserError('That password is no longer available.');
-    return row.password;
-  }
-
-  /** Saves an attachment to a path the user picks. Resolves false when they cancel. */
-  async downloadAttachment(id: string, attachmentId: string, pick: PathPicker) {
-    const cipher = this.attachable(id);
-    const attachment = (cipher.attachments ?? []).find((entry) => entry.id === attachmentId);
-    if (!attachment?.id) throw new UserError('That attachment is no longer available.');
-    const generation = this.generation;
-    const path = await pick(attachment.fileName || 'attachment');
-    this.assertGeneration(generation);
-    this.requireUnlocked();
-    if (!path) return false;
-    await this.guardedCommand(
-      generation,
-      ['get', 'attachment', attachment.id, '--itemid', id, '--output', path],
-      'Bitwarden could not download the attachment.',
-    );
-    return true;
-  }
-
-  async deleteAttachment(id: string, attachmentId: string) {
-    const cipher = this.attachable(id);
-    if (!(cipher.attachments ?? []).some((entry) => entry.id === attachmentId))
-      throw new UserError('That attachment is no longer available.');
-    const generation = this.generation;
-    await this.guardedCommand(
-      generation,
-      ['delete', 'attachment', attachmentId, '--itemid', id],
-      'Bitwarden could not delete the attachment.',
-    );
-    return this.refreshItem(id, generation);
-  }
-
-  /** Attaches a file the user picks. Resolves null when they cancel. */
-  async addAttachment(id: string, pick: () => Promise<string | null>) {
-    this.attachable(id);
-    const generation = this.generation;
-    const path = await pick();
-    this.assertGeneration(generation);
-    this.requireUnlocked();
-    if (!path) return null;
-    await this.guardedCommand(
-      generation,
-      ['create', 'attachment', '--file', path, '--itemid', id],
-      ATTACHMENT_REFUSED,
-    );
-    return this.refreshItem(id, generation);
-  }
-
-  /** The account's Sends, read fresh from Bitwarden. Nothing is kept once the vault locks. */
-  async sends(): Promise<SendSummary[]> {
-    this.requireUnlocked();
-    return this.refreshSends(this.generation);
-  }
-
-  /** Creates a Send. A file Send asks `pick` for its file. Resolves null when they cancel. */
-  async createSend(draft: SendDraft, pick: () => Promise<string | null>) {
-    this.requireUnlocked();
-    const generation = this.generation;
-    let path = '';
-    if (draft.type === 'file') {
-      const picked = await pick();
-      this.assertGeneration(generation);
-      this.requireUnlocked();
-      if (!picked) return null;
-      path = picked;
-    }
-    const day = 86_400_000;
-    const payload = {
-      type: draft.type === 'text' ? 0 : 1,
-      name: draft.name,
-      notes: draft.notes || null,
-      text: draft.type === 'text' ? { text: draft.text, hidden: draft.hidden } : null,
-      file: draft.type === 'file' ? { fileName: path } : null,
-      maxAccessCount: draft.maxAccessCount,
-      deletionDate: new Date(Date.now() + draft.deleteInDays * day).toISOString(),
-      expirationDate:
-        draft.expireInDays === null
-          ? null
-          : new Date(Date.now() + draft.expireInDays * day).toISOString(),
-      // The password travels on stdin, never in the argument list.
-      password: draft.password || null,
-      emails: null,
-      disabled: draft.disabled,
-      hideEmail: draft.hideEmail,
-    };
-    await this.guardedCommand(
-      generation,
-      ['send', 'create'],
-      SEND_REFUSED,
-      Buffer.from(JSON.stringify(payload)).toString('base64'),
-    );
-    return this.refreshSends(generation);
-  }
-
-  async deleteSend(id: string) {
-    this.knownSend(id);
-    const generation = this.generation;
-    await this.guardedCommand(
-      generation,
-      ['send', 'delete', id],
-      'Bitwarden could not delete the Send.',
-    );
-    this.sendList.delete(id);
-    return this.refreshSends(generation);
-  }
-
-  async removeSendPassword(id: string) {
-    this.knownSend(id);
-    const generation = this.generation;
-    await this.guardedCommand(
-      generation,
-      ['send', 'remove-password', id],
-      'Bitwarden could not remove the password.',
-    );
-    return this.refreshSends(generation);
-  }
-
-  /** The Send's share link, for the main process to put on the clipboard. */
-  sendLink(id: string) {
-    const { url } = this.knownSend(id);
-    if (!url) throw new UserError('That Send has no link to copy.');
-    return url;
-  }
-
-  private knownSend(id: string) {
-    this.requireUnlocked();
-    const entry = this.sendList.get(id);
-    if (!entry) throw new UserError('That Send is no longer available. Reload your Sends.');
-    return entry;
-  }
-
-  private async refreshSends(generation: number) {
-    let listed: SendSummary[];
-    let entries: [string, { summary: SendSummary; url: string }][];
-    try {
-      const rows = JSON.parse(await this.cli.run(['send', 'list'], { session: this.session }));
-      if (!Array.isArray(rows)) throw new Error('not a list');
-      entries = rows.map((row) => {
-        const entry = parseSend(row);
-        return [entry.summary.id, entry];
-      });
-      listed = entries.map(([, entry]) => entry.summary);
-    } catch {
-      this.assertGeneration(generation);
-      throw new UserError('Could not load your Sends. Try again.');
-    }
-    this.assertGeneration(generation);
-    this.sendList = new Map(entries);
-    return listed.sort((a, b) => a.name.localeCompare(b.name));
-  }
-
-  /**
-   * Writes the vault to a file the user picks. Plain-text formats ask for
-   * confirmation first. Resolves false when they decline or cancel.
-   */
-  async exportVault(format: ExportFormat, ui: ExportUi) {
-    this.requireUnlocked();
-    const extension = EXPORT_EXTENSIONS[format];
-    if (!extension) throw new UserError('Choose an export format.');
-    const generation = this.generation;
-    if (format !== 'encrypted_json') {
-      const confirmed = await ui.confirmPlain();
-      this.assertGeneration(generation);
-      this.requireUnlocked();
-      if (!confirmed) return false;
-    }
-    const path = await ui.pick(`strongroom-export.${extension}`);
-    this.assertGeneration(generation);
-    this.requireUnlocked();
-    if (!path) return false;
-    // Without --password, encrypted_json is tied to this account and needs no secret on the command line.
-    await this.guardedCommand(
-      generation,
-      ['export', '--format', format, '--output', path],
-      'Bitwarden could not export your vault. An organization policy may prevent it.',
-    );
-    return true;
-  }
-
-  /** Imports a file the user picks, then reloads the vault. Resolves null when they cancel. */
-  async importVault(format: string, pick: () => Promise<string | null>) {
-    this.requireUnlocked();
-    if (!importFormats.some(([id]) => id === format))
-      throw new UserError('Choose a file format to import.');
-    const generation = this.generation;
-    const path = await pick();
-    this.assertGeneration(generation);
-    this.requireUnlocked();
-    if (!path) return null;
-    await this.guardedCommand(
-      generation,
-      ['import', format, path],
-      'Bitwarden could not import that file. Check that the format matches the file.',
-    );
-    try {
-      return await this.sync();
-    } catch {
-      this.assertGeneration(generation);
-      throw new UserError(
-        'The file was sent to Bitwarden, but the list could not refresh. Sync your vault.',
-      );
-    }
-  }
-
-  private attachable(id: string) {
-    const cipher = this.item(id);
-    if (isRestricted(cipher) || cipher.deletedDate)
-      throw new UserError('Use the official Bitwarden client for this item.');
-    return cipher;
-  }
-
-  /** Runs a command for its effect. The CLI's own output and errors never leave this method. */
-  private async guardedCommand(
-    generation: number,
-    args: string[],
-    failure: string,
-    input?: string,
-  ) {
-    try {
-      await this.cli.run(args, {
-        session: this.session,
-        ...(input === undefined ? {} : { input }),
-      });
-    } catch {
-      this.assertGeneration(generation);
-      throw new UserError(failure);
-    }
-    this.assertGeneration(generation);
-  }
-
-  private async refreshItem(id: string, generation: number) {
-    let saved: Cipher;
-    try {
-      saved = JSON.parse(await this.cli.run(['get', 'item', id], { session: this.session }));
-    } catch {
-      this.assertGeneration(generation);
-      throw new UserError('Done, but the item could not be reloaded. Sync your vault.');
-    }
-    this.assertGeneration(generation);
-    this.ciphers.set(saved.id, cacheFields(saved));
-    this.publish();
-    return this.detail(saved.id);
-  }
-
-  /**
-   * Current one-time code for a login, computed here so the stored secret never
-   * reaches the window. Returns null when the item has no usable secret.
-   */
-  async totp(id: string): Promise<TotpCode | null> {
-    const cipher = this.item(id);
-    if (isRestricted(cipher) || cipher.deletedDate) return null;
-    const secret = cipher.login?.totp;
-    return secret ? totpFromField(secret) : null;
-  }
-
-  /**
-   * Reused, weak and unencrypted-site checks over the personal logins in the
-   * vault. The breach lookup only runs when asked, and sends hash prefixes.
-   */
-  async health(breaches: boolean): Promise<HealthSummary> {
-    this.requireUnlocked();
-    const generation = this.generation;
-    const logins = [...this.ciphers.values()].filter(
-      (cipher) => cipher.type === 1 && !cipher.deletedDate && !isRestricted(cipher),
-    );
-    const names = new Map(logins.map((cipher) => [cipher.id, cipher.name]));
-    const items: HealthItem[] = logins.map((cipher) => ({
-      id: cipher.id,
-      name: cipher.name,
-      password: cipher.login?.password,
-      uris: (cipher.login?.uris ?? []).map((row) => row.uri ?? '').filter(Boolean),
-    }));
-    const label = (id: string) => names.get(id) ?? '';
-    const report = buildHealthReport(items);
-    const summary: HealthSummary = {
-      checked: items.length,
-      reused: report.reused.map((group) => ({ names: group.itemIds.map(label) })),
-      weak: report.weak.map((row) => ({ name: label(row.itemId), reasons: row.reasons })),
-      insecure: report.insecureUris.map((row) => ({ name: label(row.itemId) })),
-    };
-    if (breaches) {
-      const exposed = await findExposed(items, hibpRangeFetch);
-      // The vault may have locked while the lookup ran.
-      if (generation !== this.generation)
-        throw new UserError('The vault was locked. Unlock it and try again.');
-      summary.exposed = exposed.map((row) => ({ name: label(row.itemId), count: row.count }));
-    }
-    return summary;
   }
 
   /** Moves an item to Bitwarden's trash, where it can still be restored. */
@@ -1314,8 +897,7 @@ export class Vault extends EventEmitter {
     const credential = latest.login?.fido2Credentials?.find(
       (entry) => entry.credentialId === credentialId,
     );
-    if (!credential)
-      throw new UserError('This passkey is no longer in your vault. Sync Strongroom.');
+    if (!credential) throw new UserError('This passkey is no longer in your vault. Sync Strongroom.');
     credential.counter = String(Math.max(counter, (Number(credential.counter) || 0) + 1));
     const payload = Buffer.from(JSON.stringify(latest)).toString('base64');
     const saved = JSON.parse(
@@ -1456,66 +1038,23 @@ export class Vault extends EventEmitter {
         collectionIds: [],
         folderId: null,
         reprompt: 0,
-        favorite: false,
-        notes: null,
-        fields: [],
       };
     }
     this.assertGeneration(generation);
-    if (draft.folderId !== undefined) {
-      if (draft.folderId !== null && !this.folderNames.has(draft.folderId))
-        throw new UserError('That folder no longer exists. Pick another folder and try again.');
-      cipher.folderId = draft.folderId;
-    }
     Object.assign(cipher, {
       name: draft.name,
       notes: draft.notes || null,
       favorite: draft.favorite,
     });
-    if (draft.fields !== undefined) {
-      const fields = mergeFields(cipher.fields, draft.fields);
-      if (fields.length || cipher.fields) cipher.fields = fields;
-    }
     if (draft.type === 2) {
       delete cipher.login;
       cipher.secureNote ??= { type: 0 };
     } else if (draft.type === 3) {
-      const brand = draft.brand;
-      const month = draft.expMonth;
-      if (brand !== '' && !(cardBrands as readonly string[]).includes(brand))
-        throw new UserError('Choose a card brand from the list.');
-      if (month !== '' && !(cardMonths as readonly string[]).includes(month))
-        throw new UserError('Choose an expiration month from 1 to 12.');
-      const stored = cipher.card ?? {};
-      // A stored brand or month the list cannot show stays as it is until the user picks another.
-      const keep = (key: 'brand' | 'expMonth', value: string) =>
-        value === (key === 'brand' ? cardValue(stored, 'brand') : cardValue(stored, 'expMonth'))
-          ? stored[key]
-          : value || null;
-      cipher.card = {
-        ...stored,
-        cardholderName: draft.cardholderName || null,
-        brand: keep('brand', brand) ?? null,
-        number: draft.number || null,
-        expMonth: keep('expMonth', month) ?? null,
-        expYear: draft.expYear || null,
-        code: draft.code || null,
-      };
-    } else if (draft.type === 4) {
-      const identity: Record<string, string | null> = { ...cipher.identity };
-      for (const key of IDENTITY_KEYS) identity[key] = draft[key] || null;
-      cipher.identity = identity;
-    } else if (draft.type === 5) {
-      // Keys come from elsewhere. Existing keys are never rewritten; new ones are pasted whole.
-      if (!draft.id) {
-        if (!draft.publicKey.trim() || !draft.privateKey.trim() || !draft.keyFingerprint.trim())
-          throw new UserError('Paste the public key, private key and fingerprint.');
-        cipher.sshKey = {
-          privateKey: draft.privateKey,
-          publicKey: draft.publicKey,
-          keyFingerprint: draft.keyFingerprint,
-        };
-      }
+      delete cipher.login;
+      const fields = Object.entries(draft.card).map(
+        ([key, value]) => [key, value || null] as const,
+      );
+      cipher.card = { ...cipher.card, ...Object.fromEntries(fields) };
     } else {
       const previous = cipher.login?.uris ?? [];
       const seen = new Set<number>();
@@ -1558,13 +1097,6 @@ export class Vault extends EventEmitter {
         await this.cli.run(['list', 'items'], { session: this.session }),
       ) as Cipher[];
       this.assertGeneration(generation);
-      const folders = JSON.parse(
-        await this.cli.run(['list', 'folders'], { session: this.session }),
-      ) as { id: string | null; name: string }[];
-      this.assertGeneration(generation);
-      this.folderNames = new Map(
-        folders.flatMap((folder) => (folder.id ? [[folder.id, folder.name] as const] : [])),
-      );
       this.trashLoaded = false;
       this.trashLoading = undefined;
       this.ciphers = new Map(
@@ -1577,8 +1109,6 @@ export class Vault extends EventEmitter {
         this.cli.cancel();
         this.session = '';
         this.ciphers.clear();
-        this.folderNames.clear();
-        this.sendList.clear();
         this.trashLoaded = false;
         this.trashLoading = undefined;
         this.state.status = 'locked';
@@ -1623,7 +1153,6 @@ function cacheFields(cipher: Cipher): Cipher {
     name: cipher.name,
     type: cipher.type,
     favorite: cipher.favorite,
-    folderId: cipher.folderId ?? null,
     organizationId: cipher.organizationId,
     reprompt: cipher.reprompt,
     revisionDate: cipher.revisionDate,
@@ -1631,15 +1160,9 @@ function cacheFields(cipher: Cipher): Cipher {
     deletedDate: cipher.deletedDate,
     notes: isRestricted(cipher) ? null : cipher.notes,
     card: isRestricted(cipher) ? null : cipher.card,
-    identity: isRestricted(cipher) ? null : cipher.identity,
-    sshKey: isRestricted(cipher) ? null : cipher.sshKey,
-    fields: isRestricted(cipher) ? null : cipher.fields,
-    passwordHistory: isRestricted(cipher) ? null : cipher.passwordHistory,
-    attachments: isRestricted(cipher) ? null : cipher.attachments,
     login: {
       username: isRestricted(cipher) ? null : cipher.login?.username,
       password: isRestricted(cipher) ? null : cipher.login?.password,
-      totp: isRestricted(cipher) ? null : cipher.login?.totp,
       uris: cipher.login?.uris,
       fido2Credentials: isRestricted(cipher)
         ? cipher.login?.fido2Credentials?.length
@@ -1649,218 +1172,6 @@ function cacheFields(cipher: Cipher): Cipher {
     },
   };
 }
-/** Read-only fields for cards, identities and SSH keys, in display order. */
-function extraFields(cipher: Cipher): ExtraField[] {
-  if (isRestricted(cipher)) return [];
-  const rows: ExtraField[] = [];
-  const add = (label: string, value: string | null | undefined, secret = false) => {
-    if (value && value.trim()) rows.push({ label, value, secret });
-  };
-  if (cipher.type === 3 && cipher.card) {
-    const c = cipher.card;
-    add('Cardholder name', c.cardholderName);
-    add('Brand', c.brand);
-    add('Number', c.number, true);
-    add(
-      'Expires',
-      c.expMonth && c.expYear ? `${c.expMonth}/${c.expYear}` : (c.expMonth ?? c.expYear),
-    );
-    add('Security code', c.code, true);
-  } else if (cipher.type === 4 && cipher.identity) {
-    const i = cipher.identity;
-    add('Name', [i.title, i.firstName, i.middleName, i.lastName].filter(Boolean).join(' '));
-    add('Username', i.username);
-    add('Company', i.company);
-    add('Email', i.email);
-    add('Phone', i.phone);
-    add(
-      'Address',
-      [
-        i.address1,
-        i.address2,
-        i.address3,
-        [i.postalCode, i.city].filter(Boolean).join(' '),
-        i.state,
-        i.country,
-      ]
-        .filter(Boolean)
-        .join(', '),
-    );
-    add('Social security number', i.ssn, true);
-    add('Passport number', i.passportNumber, true);
-    add('License number', i.licenseNumber, true);
-  } else if (cipher.type === 5 && cipher.sshKey) {
-    const k = cipher.sshKey;
-    add('Public key', k.publicKey);
-    add('Fingerprint', k.keyFingerprint);
-    add('Private key', k.privateKey, true);
-  }
-  return rows;
-}
-const IDENTITY_KEYS = [
-  'title',
-  'firstName',
-  'middleName',
-  'lastName',
-  'username',
-  'company',
-  'ssn',
-  'passportNumber',
-  'licenseNumber',
-  'email',
-  'phone',
-  'address1',
-  'address2',
-  'address3',
-  'city',
-  'state',
-  'postalCode',
-  'country',
-] as const satisfies readonly (keyof IdentityBody)[];
-
-/** A stored brand or month as the editor lists it; '' when the list has no entry for it. */
-function cardValue(
-  card: Record<string, string | null | undefined>,
-  key: 'brand',
-): CardBody['brand'];
-function cardValue(
-  card: Record<string, string | null | undefined>,
-  key: 'expMonth',
-): CardBody['expMonth'];
-function cardValue(card: Record<string, string | null | undefined>, key: 'brand' | 'expMonth') {
-  const value = card[key] ?? '';
-  if (key === 'brand') return cardBrands.find((brand) => brand === value) ?? '';
-  const month = /^\d{1,2}$/.test(value) ? String(Number(value)) : '';
-  return cardMonths.find((entry) => entry === month) ?? '';
-}
-function cardBody(cipher: Cipher): CardBody {
-  const c = cipher.card ?? {};
-  return {
-    cardholderName: c.cardholderName ?? '',
-    brand: cardValue(c, 'brand'),
-    number: c.number ?? '',
-    expMonth: cardValue(c, 'expMonth'),
-    expYear: c.expYear ?? '',
-    code: c.code ?? '',
-  };
-}
-function identityBody(cipher: Cipher): IdentityBody {
-  const i = cipher.identity ?? {};
-  return Object.fromEntries(
-    IDENTITY_KEYS.map((key) => [key, i[key] ?? '']),
-  ) as unknown as IdentityBody;
-}
-function sshKeyBody(cipher: Cipher): SshKeyBody {
-  const k = cipher.sshKey ?? {};
-  return {
-    publicKey: k.publicKey ?? '',
-    privateKey: k.privateKey ?? '',
-    keyFingerprint: k.keyFingerprint ?? '',
-  };
-}
-/** The custom fields the editor can change. Linked fields are left out. */
-function fieldDrafts(cipher: Cipher): FieldDraft[] {
-  if (isRestricted(cipher)) return [];
-  return (cipher.fields ?? []).flatMap((field, sourceIndex): FieldDraft[] => {
-    const type = field.type ?? 0;
-    if (type !== 0 && type !== 1 && type !== 2) return [];
-    return [{ sourceIndex, name: field.name ?? '', value: field.value ?? '', type }];
-  });
-}
-/**
- * The stored list with the draft's editable fields swapped in. Linked fields
- * stay where they were; fields that kept a sourceIndex keep their other keys.
- */
-function mergeFields(stored: CipherField[] | null | undefined, rows: FieldDraft[]): CipherField[] {
-  const previous = stored ?? [];
-  const seen = new Set<number>();
-  const edited = rows.map((row): CipherField => {
-    const index = row.sourceIndex;
-    let original: CipherField | undefined;
-    if (index !== undefined) {
-      original = previous[index];
-      if (!original || original.type === 3 || seen.has(index))
-        throw new UserError('The custom fields changed. Reopen this item and try again.');
-      seen.add(index);
-    }
-    const value = row.type === 2 ? (row.value === 'true' ? 'true' : 'false') : row.value;
-    return { ...original, name: row.name, value, type: row.type };
-  });
-  previous.forEach((field, index) => {
-    if (field.type === 3) edited.splice(Math.min(index, edited.length), 0, field);
-  });
-  return edited;
-}
-/** Labels for the fields a linked custom field can point at. */
-const LINKED_LABELS: Record<number, string> = {
-  100: 'Username',
-  101: 'Password',
-  300: 'Cardholder name',
-  301: 'Expiration month',
-  302: 'Expiration year',
-  303: 'Security code',
-  304: 'Brand',
-  305: 'Number',
-  400: 'Title',
-  401: 'Middle name',
-  402: 'Address 1',
-  403: 'Address 2',
-  404: 'Address 3',
-  405: 'City / Town',
-  406: 'State / Province',
-  407: 'Zip / Postal code',
-  408: 'Country',
-  409: 'Company',
-  410: 'Email',
-  411: 'Phone',
-  412: 'Social security number',
-  413: 'Username',
-  414: 'Passport number',
-  415: 'License number',
-  416: 'First name',
-  417: 'Last name',
-  418: 'Full name',
-};
-
-/** Custom fields in stored order. Index here is the index copy uses. */
-function customFieldRows(cipher: Cipher): ExtraField[] {
-  if (isRestricted(cipher)) return [];
-  return (cipher.fields ?? []).map((field): ExtraField => {
-    const label = field.name?.trim() || 'Field';
-    const value = field.value ?? '';
-    if (field.type === 1) return { label, value, secret: true };
-    if (field.type === 2) return { label, value: value === 'true' ? 'Yes' : 'No', secret: false };
-    if (field.type === 3) {
-      const linked = field.linkedId == null ? undefined : LINKED_LABELS[field.linkedId];
-      return { label, value: linked ?? '', secret: false, copyable: false };
-    }
-    return { label, value, secret: false };
-  });
-}
-
-/** Earlier passwords, newest first. Entries without a usable date go last. */
-function historyRows(cipher: Cipher): PasswordHistoryEntry[] {
-  if (isRestricted(cipher)) return [];
-  const time = (entry: PasswordHistoryEntry) => {
-    const value = Date.parse(entry.lastUsedDate ?? '');
-    return Number.isNaN(value) ? -Infinity : value;
-  };
-  return (cipher.passwordHistory ?? [])
-    .filter((entry) => entry.password)
-    .map((entry) => ({ password: entry.password!, lastUsedDate: entry.lastUsedDate ?? null }))
-    .sort((a, b) => time(b) - time(a));
-}
-
-function attachmentRows(cipher: Cipher): AttachmentInfo[] {
-  if (isRestricted(cipher)) return [];
-  return (cipher.attachments ?? [])
-    .filter((entry) => entry.id)
-    .map((entry) => ({
-      id: entry.id!,
-      fileName: entry.fileName || 'Attachment',
-      size: entry.sizeName ?? '',
-    }));
-}
 /** The passkeys on an item that this Mac can sign with. */
 function passkeysOf(cipher: Cipher): Fido2Credential[] {
   if (cipher.type !== 1 || cipher.deletedDate || isRestricted(cipher)) return [];
@@ -1868,14 +1179,11 @@ function passkeysOf(cipher: Cipher): Fido2Credential[] {
 }
 /** Whether Strongroom will move an item to the trash. Type does not matter here. */
 function isRemovable(cipher: Cipher) {
-  // Trashing does not rewrite the item and can be undone, so an item that holds
-  // a passkey may be removed. Only editing stays blocked for those.
-  return !isRestricted(cipher);
+  return !isRestricted(cipher) && !cipher.login?.fido2Credentials?.length;
 }
 function isEditable(cipher: Cipher) {
   return (
-    cipher.type >= 1 &&
-    cipher.type <= 5 &&
+    (cipher.type === 1 || cipher.type === 2 || cipher.type === 3) &&
     !isRestricted(cipher) &&
     !cipher.login?.fido2Credentials?.length
   );
@@ -1898,47 +1206,14 @@ function summarize(cipher: Cipher): ItemSummary {
     name: cipher.name || 'Untitled',
     username: isRestricted(cipher) ? '' : (cipher.login?.username ?? ''),
     website: cipher.login?.uris?.[0]?.uri ?? '',
+    cardLabel: isRestricted(cipher)
+      ? ''
+      : cardLabel(cipher.card?.brand ?? '', cipher.card?.number ?? ''),
     type: cipher.type,
     favorite: Boolean(cipher.favorite),
     hasPasskey: Boolean(cipher.login?.fido2Credentials?.length),
     restricted: isRestricted(cipher),
-    folderId: cipher.folderId ?? null,
   };
-}
-
-function parseSend(row: unknown): { summary: SendSummary; url: string } {
-  const send = row as Record<string, unknown>;
-  const text = (value: unknown) => (typeof value === 'string' ? value : null);
-  const count = (value: unknown) => (typeof value === 'number' ? value : null);
-  if (
-    typeof send?.id !== 'string' ||
-    typeof send.name !== 'string' ||
-    (send.type !== 0 && send.type !== 1)
-  )
-    throw new Error('unexpected Send');
-  const file = send.file as Record<string, unknown> | null | undefined;
-  return {
-    summary: {
-      id: send.id,
-      name: send.name,
-      type: send.type,
-      fileName: send.type === 1 ? text(file?.fileName) : null,
-      deletionDate: text(send.deletionDate),
-      expirationDate: text(send.expirationDate),
-      maxAccessCount: count(send.maxAccessCount),
-      accessCount: count(send.accessCount) ?? 0,
-      disabled: send.disabled === true,
-      passwordSet: send.passwordSet === true,
-    },
-    url: text(send.accessUrl) ?? '',
-  };
-}
-
-function parseFolder(output: string): Folder {
-  const folder = JSON.parse(output) as Partial<Folder>;
-  if (typeof folder.id !== 'string' || typeof folder.name !== 'string')
-    throw new UserError('Bitwarden returned an unexpected reply. Sync your vault and try again.');
-  return { id: folder.id, name: folder.name };
 }
 
 export function generatePassword(options: PasswordOptions) {

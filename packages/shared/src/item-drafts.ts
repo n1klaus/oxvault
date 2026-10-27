@@ -1,4 +1,4 @@
-import type { CardBody, IdentityBody, ItemDetail, ItemDraft, SshKeyBody, UriDraft } from './types';
+import type { CardFields, ItemDetail, ItemDraft, UriDraft } from './types';
 import { uriMatchSchema } from './protocol';
 import { webUrl } from './urls';
 
@@ -10,7 +10,20 @@ export const uriMatchOptions = [
   { value: '3', label: 'Exact' },
   { value: '5', label: 'Never' },
 ];
-export const emptyCard: CardBody = {
+/** Bitwarden's card brand values. */
+export const cardBrands = [
+  'Visa',
+  'Mastercard',
+  'Amex',
+  'Discover',
+  'Diners Club',
+  'JCB',
+  'Maestro',
+  'UnionPay',
+  'RuPay',
+  'Other',
+];
+export const emptyCard: CardFields = {
   cardholderName: '',
   brand: '',
   number: '',
@@ -18,27 +31,9 @@ export const emptyCard: CardBody = {
   expYear: '',
   code: '',
 };
-export const emptyIdentity: IdentityBody = {
-  title: '',
-  firstName: '',
-  middleName: '',
-  lastName: '',
-  username: '',
-  company: '',
-  ssn: '',
-  passportNumber: '',
-  licenseNumber: '',
-  email: '',
-  phone: '',
-  address1: '',
-  address2: '',
-  address3: '',
-  city: '',
-  state: '',
-  postalCode: '',
-  country: '',
-};
-export const emptySshKey: SshKeyBody = { publicKey: '', privateKey: '', keyFingerprint: '' };
+export function cardLabel(brand: string, number: string) {
+  return [brand, number && `•••• ${number.slice(-4)}`].filter(Boolean).join(' ');
+}
 export function editableUri(row: ItemDetail['uris'][number]) {
   return (
     row.uri !== null &&
@@ -53,13 +48,9 @@ export function itemDraft(item: ItemDetail): ItemDraft {
     name: item.name,
     notes: item.notes,
     favorite: item.favorite,
-    folderId: item.folderId,
-    fields: item.fieldDrafts,
   };
   if (item.type === 2) return { ...base, type: 2 };
-  if (item.type === 3) return { ...base, type: 3, ...(item.card ?? emptyCard) };
-  if (item.type === 4) return { ...base, type: 4, ...(item.identity ?? emptyIdentity) };
-  if (item.type === 5) return { ...base, type: 5, ...(item.sshKey ?? emptySshKey) };
+  if (item.type === 3) return { ...base, type: 3, card: item.card ?? emptyCard };
   return {
     ...base,
     type: 1,

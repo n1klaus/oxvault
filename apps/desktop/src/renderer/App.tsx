@@ -4,14 +4,12 @@ import {
   WarningCircle as AlertCircle,
   FileText,
   Fingerprint,
-  FolderSimple,
-  PaperPlaneTilt,
-  PencilSimple,
   Vault as FolderKey,
   Key as KeyRound,
   LockKey as LockKeyhole,
   Plus,
   ArrowsClockwise as RefreshCw,
+  CreditCard,
   MagnifyingGlass as Search,
   SlidersHorizontal as Settings2,
   Star,
@@ -19,24 +17,23 @@ import {
   X,
 } from '@phosphor-icons/react';
 import type {
-  Folder,
   ItemDetail,
+  ItemMenuAction,
   ItemSummary,
   MenuPosition,
   VaultState,
 } from '@strongroom/shared/types';
 import { Auth } from './Auth';
 import { Editor } from './Editor';
-import { Sends } from './Sends';
 import { Settings } from './Settings';
 import { Mark } from './Mark';
 import { Detail } from './Detail';
 import { ItemList } from './ItemList';
+import { fieldLabels, type CopyField } from './items';
 import { QuickOpen } from './QuickOpen';
 import { WebsiteIconsProvider } from './WebsiteIcons';
 import { Toasts, useToasts, type Notifier } from './Toasts';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   InputGroup,
   InputGroupAddon,
@@ -71,16 +68,7 @@ const initialState: VaultState = {
   biometrics: 'unsupported',
   biometricsOn: false,
 };
-type Filter =
-  | 'all'
-  | 'favorites'
-  | 'logins'
-  | 'notes'
-  | 'passkeys'
-  | 'trash'
-  | 'nofolder'
-  | `folder:${string}`;
-type FolderEdit = { mode: 'create' } | { mode: 'rename'; folder: Folder } | null;
+type Filter = 'all' | 'favorites' | 'logins' | 'notes' | 'cards' | 'passkeys' | 'trash';
 type Selection =
   | { status: 'unselected' }
   | { status: 'loading' | 'restricted' | 'error'; id: string }
@@ -100,7 +88,7 @@ const filters = [
     label: 'Logins',
     icon: KeyRound,
     empty: 'No logins',
-    description: 'Use New login to add one.',
+    description: 'Use New item to add one.',
   },
   {
     id: 'notes',
@@ -108,6 +96,13 @@ const filters = [
     icon: FileText,
     empty: 'No secure notes',
     description: 'Secure notes from Bitwarden appear here.',
+  },
+  {
+    id: 'cards',
+    label: 'Cards',
+    icon: CreditCard,
+    empty: 'No cards',
+    description: 'Use New item to add one.',
   },
   {
     id: 'passkeys',
@@ -124,11 +119,17 @@ const filters = [
     description: 'Items moved to Trash can be restored.',
   },
 ] as const;
+const copyFields: Record<Exclude<ItemMenuAction, 'edit' | 'trash' | 'restore'>, CopyField> = {
+  copyUsername: 'username',
+  copyPassword: 'password',
+  copyCardNumber: 'cardNumber',
+  copyCardCode: 'cardCode',
+};
 
 function indexItems(items: ItemSummary[]) {
   return items.map((item) => ({
     item,
-    haystack: `${item.name} ${item.username} ${item.website}`.toLowerCase(),
+    haystack: `${item.name} ${item.username} ${item.website} ${item.cardLabel}`.toLowerCase(),
   }));
 }
 
@@ -245,13 +246,6 @@ function VaultWorkspace({
 }) {
   const [items, setItems] = useState<ItemSummary[]>([]);
   const [trashed, setTrashed] = useState<ItemSummary[]>([]);
-  const [folders, setFolders] = useState<Folder[]>([]);
-  const [foldersLoaded, setFoldersLoaded] = useState(false);
-  const [sendsOpen, setSendsOpen] = useState(false);
-  const [folderEdit, setFolderEdit] = useState<FolderEdit>(null);
-  const [folderBusy, setFolderBusy] = useState(false);
-  const folderWorking = useRef(false);
-  const folderVersion = useRef(0);
   const [selection, setSelection] = useState<Selection>({ status: 'unselected' });
   const selected = selection.status === 'ready' ? selection.item : null;
   const selectedId =
@@ -322,34 +316,6 @@ function VaultWorkspace({
       ++listVersion.current;
     };
   }, [state.itemsRevision]);
-
-  const loadFolders = useCallback(async () => {
-    const version = ++folderVersion.current;
-    try {
-      const listed = await window.strongroom.folders();
-      if (!alive.current || version !== folderVersion.current) return;
-      if (listed.ok) {
-        setFolders(listed.value);
-        setFoldersLoaded(true);
-      }
-    } catch {
-      // Keep the folders already shown; the next sync retries.
-    }
-  }, []);
-  useEffect(() => {
-    void loadFolders();
-    return () => {
-      ++folderVersion.current;
-    };
-  }, [loadFolders, state.itemsRevision]);
-  useEffect(() => {
-    if (
-      foldersLoaded &&
-      filter.startsWith('folder:') &&
-      !folders.some((f) => `folder:${f.id}` === filter)
-    )
-      setFilter('all');
-  }, [foldersLoaded, folders, filter]);
 
   useEffect(() => {
     if (filter !== 'trash') return;
@@ -426,22 +392,12 @@ function VaultWorkspace({
         if (filter === 'favorites' && !item.favorite) return false;
         if (filter === 'logins' && item.type !== 1) return false;
         if (filter === 'notes' && item.type !== 2) return false;
+        if (filter === 'cards' && item.type !== 3) return false;
         if (filter === 'passkeys' && !item.hasPasskey) return false;
-        if (filter === 'nofolder' && item.folderId) return false;
-        if (filter.startsWith('folder:') && item.folderId !== filter.slice(7)) return false;
         return terms.every((term) => haystack.includes(term));
       })
       .map(({ item }) => item);
   }, [indexed, indexedTrash, query, filter]);
-  const folderCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    let none = 0;
-    for (const item of items) {
-      if (item.folderId) counts.set(item.folderId, (counts.get(item.folderId) ?? 0) + 1);
-      else none++;
-    }
-    return { counts, none };
-  }, [items]);
   const selectionVisible = !!selectedId && visible.some((item) => item.id === selectedId);
 
   useLayoutEffect(() => {
@@ -520,13 +476,13 @@ function VaultWorkspace({
         if (detail.editable && !hasModal()) setModal('edit');
         return;
       }
-      if (action === 'copyUsername' || action === 'copyPassword') {
-        const field = action === 'copyUsername' ? 'username' : 'password';
+      if (action !== 'trash' && action !== 'restore') {
+        const field = copyFields[action];
         const copied = await window.strongroom.copy(item.id, field);
         if (current())
           notify.show(
             copied.ok ? 'done' : 'error',
-            copied.ok ? `${field === 'username' ? 'Username' : 'Password'} copied` : copied.error,
+            copied.ok ? `${fieldLabels[field]} copied` : copied.error,
           );
         return;
       }
@@ -613,88 +569,7 @@ function VaultWorkspace({
     }
   }
 
-  async function submitFolder(name: string) {
-    if (!alive.current || folderWorking.current || !folderEdit) return;
-    const edit = folderEdit;
-    folderWorking.current = true;
-    setFolderBusy(true);
-    try {
-      const result =
-        edit.mode === 'create'
-          ? await window.strongroom.createFolder(name)
-          : await window.strongroom.renameFolder(edit.folder.id, name);
-      if (!alive.current) return;
-      if (result.ok) {
-        setFolderEdit(null);
-        void loadFolders();
-      } else notify.show('error', result.error);
-    } catch {
-      notify.show('error', 'Could not save the folder. Try again.');
-    } finally {
-      folderWorking.current = false;
-      if (alive.current) setFolderBusy(false);
-    }
-  }
-
-  async function removeFolder(folder: Folder) {
-    if (!alive.current || folderWorking.current || modal || hasModal()) return;
-    folderWorking.current = true;
-    setFolderBusy(true);
-    let pending: ReturnType<Notifier['show']> | undefined;
-    try {
-      const confirmation = await window.strongroom.confirm('deleteFolder');
-      if (!alive.current) return;
-      if (!confirmation.ok) {
-        notify.show('error', confirmation.error);
-        return;
-      }
-      if (!confirmation.value) return;
-      pending = notify.show('pending', 'Deleting folder…');
-      const result = await window.strongroom.deleteFolder(folder.id);
-      if (!alive.current) return;
-      notify.settle(
-        pending,
-        result.ok ? 'done' : 'error',
-        result.ok ? 'Folder deleted' : result.error,
-      );
-      if (result.ok) {
-        if (filter === `folder:${folder.id}`) setFilter('all');
-        void loadFolders();
-      }
-    } catch {
-      if (alive.current) {
-        if (pending) notify.settle(pending, 'error', 'Could not delete the folder.');
-        else notify.show('error', 'Could not delete the folder. Try again.');
-      }
-    } finally {
-      folderWorking.current = false;
-      if (alive.current) setFolderBusy(false);
-    }
-  }
-
-  function showFilter(next: Filter) {
-    setSendsOpen(false);
-    setFilter(next);
-  }
-
-  const activeFolder = filter.startsWith('folder:')
-    ? folders.find((entry) => `folder:${entry.id}` === filter)
-    : undefined;
-  const currentFilter: { label: string; empty?: string; description?: string } =
-    filter === 'nofolder'
-      ? {
-          label: 'No folder',
-          empty: 'No unfiled items',
-          description: 'Items that are not in a folder appear here.',
-        }
-      : activeFolder
-        ? {
-            label: activeFolder.name,
-            empty: 'This folder is empty',
-            description: 'Choose this folder when you add or edit an item.',
-          }
-        : (filters.find((entry) => entry.id === filter) ?? filters[0]);
-  const newItemFolder = activeFolder ? activeFolder.id : null;
+  const currentFilter = filters.find((entry) => entry.id === filter)!;
   const activeDetail = selectionVisible ? selection.status : 'unselected';
   const currentListError = filter === 'trash' ? listError.trash : listError.all;
   return (
@@ -724,9 +599,9 @@ function VaultWorkspace({
                   type="button"
                   variant="sidebar"
                   key={id}
-                  className={`nav-item ${filter === id && !sendsOpen ? 'active' : ''}`}
-                  aria-pressed={filter === id && !sendsOpen}
-                  onClick={() => showFilter(id)}
+                  className={`nav-item ${filter === id ? 'active' : ''}`}
+                  aria-pressed={filter === id}
+                  onClick={() => setFilter(id)}
                 >
                   <Icon size={16} />
                   <span>{label}</span>
@@ -736,106 +611,6 @@ function VaultWorkspace({
                   )}
                 </Button>
               ))}
-            </nav>
-            <nav className="folder-nav" aria-label="Folders">
-              <div className="nav-heading">
-                <span>Folders</span>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-xs"
-                      aria-label="New folder"
-                      disabled={folderBusy}
-                      onClick={() => setFolderEdit({ mode: 'create' })}
-                    >
-                      <Plus size={14} />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>New folder</TooltipContent>
-                </Tooltip>
-              </div>
-              {folderEdit?.mode === 'create' && (
-                <FolderForm
-                  label="New folder name"
-                  initial=""
-                  busy={folderBusy}
-                  onSubmit={(name) => void submitFolder(name)}
-                  onCancel={() => setFolderEdit(null)}
-                />
-              )}
-              {folders.map((folder) =>
-                folderEdit?.mode === 'rename' && folderEdit.folder.id === folder.id ? (
-                  <FolderForm
-                    key={folder.id}
-                    label="Folder name"
-                    initial={folder.name}
-                    busy={folderBusy}
-                    onSubmit={(name) => void submitFolder(name)}
-                    onCancel={() => setFolderEdit(null)}
-                  />
-                ) : (
-                  <div className="folder-row" key={folder.id}>
-                    <Button
-                      type="button"
-                      variant="sidebar"
-                      className={`nav-item ${filter === `folder:${folder.id}` && !sendsOpen ? 'active' : ''}`}
-                      aria-pressed={filter === `folder:${folder.id}` && !sendsOpen}
-                      onClick={() => showFilter(`folder:${folder.id}`)}
-                    >
-                      <FolderSimple size={16} />
-                      <span title={folder.name}>{folder.name}</span>
-                      <small>{(folderCounts.counts.get(folder.id) ?? 0).toLocaleString()}</small>
-                    </Button>
-                    <div className="folder-actions">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-xs"
-                        aria-label={`Rename ${folder.name}`}
-                        disabled={folderBusy}
-                        onClick={() => setFolderEdit({ mode: 'rename', folder })}
-                      >
-                        <PencilSimple size={13} />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-xs"
-                        aria-label={`Delete ${folder.name}`}
-                        disabled={folderBusy}
-                        onClick={() => void removeFolder(folder)}
-                      >
-                        <Trash2 size={13} />
-                      </Button>
-                    </div>
-                  </div>
-                ),
-              )}
-              <Button
-                type="button"
-                variant="sidebar"
-                className={`nav-item ${filter === 'nofolder' && !sendsOpen ? 'active' : ''}`}
-                aria-pressed={filter === 'nofolder' && !sendsOpen}
-                onClick={() => showFilter('nofolder')}
-              >
-                <FolderSimple size={16} />
-                <span>No folder</span>
-                <small>{folderCounts.none.toLocaleString()}</small>
-              </Button>
-            </nav>
-            <nav className="folder-nav" aria-label="Sends">
-              <Button
-                type="button"
-                variant="sidebar"
-                className={`nav-item ${sendsOpen ? 'active' : ''}`}
-                aria-pressed={sendsOpen}
-                onClick={() => setSendsOpen(true)}
-              >
-                <PaperPlaneTilt size={16} />
-                <span>Sends</span>
-              </Button>
             </nav>
             <div className="sidebar-bottom">
               <Separator />
@@ -851,213 +626,198 @@ function VaultWorkspace({
               </Button>
             </div>
           </aside>
-          {sendsOpen ? (
-            <Sends />
-          ) : (
-            <>
-              <section className="item-list" aria-label={currentFilter.label}>
-                <ItemList
-                  onFavorite={filter === 'trash' ? undefined : toggleFavorite}
-                  favoritePending={favoritePending}
-                  revealSelection={revealSelection}
-                  onItemMenu={(item, position) => void showItemMenu(item, position)}
-                  header={
-                    <>
-                      <header className="workspace-list-toolbar">
-                        <InputGroup>
-                          <InputGroupAddon>
-                            <Search size={16} />
-                          </InputGroupAddon>
-                          <InputGroupInput
-                            ref={searchInput}
-                            aria-label="Search vault"
-                            placeholder="Search vault"
-                            value={query}
-                            onChange={(event) => setQuery(event.target.value)}
-                          />
-                          <InputGroupAddon align="inline-end">
-                            {!query && (
-                              <InputGroupButton
-                                size="sm"
-                                aria-label="Quick open (⌘K)"
-                                onClick={() => runCommand('search')}
-                              >
-                                <Kbd>⌘K</Kbd>
-                              </InputGroupButton>
-                            )}
-                            {query && (
-                              <InputGroupButton
-                                size="icon-xs"
-                                aria-label="Clear search"
-                                onClick={() => {
-                                  setQuery('');
-                                  searchInput.current?.focus();
-                                }}
-                              >
-                                <X size={14} />
-                              </InputGroupButton>
-                            )}
-                          </InputGroupAddon>
-                        </InputGroup>
-                      </header>
-                      <header className="list-heading">
-                        <h1>{query ? 'Search results' : currentFilter.label}</h1>
-                        <span>{visible.length.toLocaleString()}</span>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon-sm"
-                              aria-label="Sync vault"
-                              aria-busy={syncing}
-                              disabled={syncing}
-                              onClick={() => void sync()}
-                            >
-                              {syncing ? <Spinner /> : <RefreshCw size={14} />}
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Sync vault</TooltipContent>
-                        </Tooltip>
-                      </header>
-                      {currentListError && visible.length > 0 && (
-                        <Alert variant="destructive" className="workspace-list-error">
-                          <AlertCircle />
-                          <AlertDescription>{currentListError}</AlertDescription>
-                        </Alert>
-                      )}
-                    </>
-                  }
-                  items={visible}
-                  selectedId={selectionVisible ? selectedId : ''}
-                  onSelect={(item) => void select(item)}
-                  query={query}
-                  onNew={() => runCommand('new')}
-                  emptyLabel={currentFilter.empty}
-                  emptyDescription={currentFilter.description}
-                  loading={filter === 'trash' ? trashLoading : loading}
-                  error={currentListError}
-                />
-                <footer className="list-footer">
-                  <Button
-                    ref={newButton}
-                    type="button"
-                    variant="ghost"
-                    className="workspace-new"
-                    onClick={() => runCommand('new')}
-                  >
-                    <Plus size={16} />
-                    New login<Kbd>⌘N</Kbd>
-                  </Button>
-                </footer>
-              </section>
-              <section
-                className="detail-pane"
-                aria-label="Item details"
-                aria-busy={activeDetail === 'loading'}
-                onContextMenu={(event) => {
-                  if (!selected || !selectionVisible) return;
-                  const target = event.target as HTMLElement;
-                  if (target.closest('input, textarea, [contenteditable="true"]')) return;
-                  // Selected notes and URLs retain standard text Copy. Credentials
-                  // always use the timed clipboard API, including revealed passwords.
-                  if (!target.closest('[data-credential]') && window.getSelection()?.toString())
-                    return;
-                  event.preventDefault();
-                  void showItemMenu(selected, {
-                    x: Math.round(event.clientX),
-                    y: Math.round(event.clientY),
-                  });
-                }}
-              >
-                {selected && selectionVisible ? (
-                  <Detail
-                    key={selected.id}
-                    item={selected}
-                    onEdit={() => {
-                      if (!hasModal()) setModal('edit');
-                    }}
-                    onGone={() => {
-                      if (!alive.current) return;
-                      selectionVersion.current++;
-                      setSelection({ status: 'unselected' });
-                    }}
-                    onUpdated={(updated) => {
-                      if (!alive.current) return;
-                      setSelection((current) =>
-                        current.status === 'ready' && current.item.id === updated.id
-                          ? { status: 'ready', item: updated }
-                          : current,
-                      );
-                    }}
-                    notify={notify}
-                  />
-                ) : (
-                  <Empty className="workspace-detail-empty" role="status">
-                    <EmptyHeader>
-                      <EmptyMedia>
-                        {activeDetail === 'loading' ? (
-                          <Spinner />
-                        ) : activeDetail === 'restricted' ? (
-                          <LockKeyhole size={24} />
-                        ) : activeDetail === 'error' ? (
-                          <AlertCircle size={24} />
-                        ) : (
-                          <Mark size={28} />
+          <section className="item-list" aria-label={currentFilter.label}>
+            <ItemList
+              onFavorite={filter === 'trash' ? undefined : toggleFavorite}
+              favoritePending={favoritePending}
+              revealSelection={revealSelection}
+              onItemMenu={(item, position) => void showItemMenu(item, position)}
+              header={
+                <>
+                  <header className="workspace-list-toolbar">
+                    <InputGroup>
+                      <InputGroupAddon>
+                        <Search size={16} />
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        ref={searchInput}
+                        aria-label="Search vault"
+                        placeholder="Search vault"
+                        value={query}
+                        onChange={(event) => setQuery(event.target.value)}
+                      />
+                      <InputGroupAddon align="inline-end">
+                        {!query && (
+                          <InputGroupButton
+                            size="sm"
+                            aria-label="Quick open (⌘K)"
+                            onClick={() => runCommand('search')}
+                          >
+                            <Kbd>⌘K</Kbd>
+                          </InputGroupButton>
                         )}
-                      </EmptyMedia>
-                      <EmptyTitle>
-                        {activeDetail === 'loading'
-                          ? 'Loading item…'
-                          : activeDetail === 'restricted'
-                            ? 'Open this item in Bitwarden'
-                            : activeDetail === 'error'
-                              ? 'Could not load item'
-                              : query && !visible.length
-                                ? 'No matching items'
-                                : 'Select an item'}
-                      </EmptyTitle>
-                      <EmptyDescription>
-                        {activeDetail === 'loading'
-                          ? 'Reading item details.'
-                          : activeDetail === 'restricted'
-                            ? 'Shared and protected items are available in the official Bitwarden client.'
-                            : activeDetail === 'error'
-                              ? 'Could not load this item. Try again.'
-                              : query && !visible.length
-                                ? 'Change or clear your search to see more items.'
-                                : 'Choose an item to view its details.'}
-                      </EmptyDescription>
-                    </EmptyHeader>
-                    {activeDetail === 'error' && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          const item = visible.find((entry) => entry.id === selectedId);
-                          if (item) void select(item);
-                        }}
-                      >
-                        Try again
-                      </Button>
+                        {query && (
+                          <InputGroupButton
+                            size="icon-xs"
+                            aria-label="Clear search"
+                            onClick={() => {
+                              setQuery('');
+                              searchInput.current?.focus();
+                            }}
+                          >
+                            <X size={14} />
+                          </InputGroupButton>
+                        )}
+                      </InputGroupAddon>
+                    </InputGroup>
+                  </header>
+                  <header className="list-heading">
+                    <h1>{query ? 'Search results' : currentFilter.label}</h1>
+                    <span>{visible.length.toLocaleString()}</span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label="Sync vault"
+                          aria-busy={syncing}
+                          disabled={syncing}
+                          onClick={() => void sync()}
+                        >
+                          {syncing ? <Spinner /> : <RefreshCw size={14} />}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Sync vault</TooltipContent>
+                    </Tooltip>
+                  </header>
+                  {currentListError && visible.length > 0 && (
+                    <Alert variant="destructive" className="workspace-list-error">
+                      <AlertCircle />
+                      <AlertDescription>{currentListError}</AlertDescription>
+                    </Alert>
+                  )}
+                </>
+              }
+              items={visible}
+              selectedId={selectionVisible ? selectedId : ''}
+              onSelect={(item) => void select(item)}
+              query={query}
+              onNew={() => runCommand('new')}
+              emptyLabel={currentFilter.empty}
+              emptyDescription={currentFilter.description}
+              loading={filter === 'trash' ? trashLoading : loading}
+              error={currentListError}
+            />
+            <footer className="list-footer">
+              <Button
+                ref={newButton}
+                type="button"
+                variant="ghost"
+                className="workspace-new"
+                onClick={() => runCommand('new')}
+              >
+                <Plus size={16} />
+                New item<Kbd>⌘N</Kbd>
+              </Button>
+            </footer>
+          </section>
+          <section
+            className="detail-pane"
+            aria-label="Item details"
+            aria-busy={activeDetail === 'loading'}
+            onContextMenu={(event) => {
+              if (!selected || !selectionVisible) return;
+              const target = event.target as HTMLElement;
+              if (target.closest('input, textarea, [contenteditable="true"]')) return;
+              // Selected notes and URLs retain standard text Copy. Credentials
+              // always use the timed clipboard API, including revealed passwords.
+              if (!target.closest('[data-credential]') && window.getSelection()?.toString()) return;
+              event.preventDefault();
+              void showItemMenu(selected, {
+                x: Math.round(event.clientX),
+                y: Math.round(event.clientY),
+              });
+            }}
+          >
+            {selected && selectionVisible ? (
+              <Detail
+                key={selected.id}
+                item={selected}
+                onEdit={() => {
+                  if (!hasModal()) setModal('edit');
+                }}
+                onGone={() => {
+                  if (!alive.current) return;
+                  selectionVersion.current++;
+                  setSelection({ status: 'unselected' });
+                }}
+                notify={notify}
+              />
+            ) : (
+              <Empty className="workspace-detail-empty" role="status">
+                <EmptyHeader>
+                  <EmptyMedia>
+                    {activeDetail === 'loading' ? (
+                      <Spinner />
+                    ) : activeDetail === 'restricted' ? (
+                      <LockKeyhole size={24} />
+                    ) : activeDetail === 'error' ? (
+                      <AlertCircle size={24} />
+                    ) : (
+                      <Mark size={28} />
                     )}
-                    {query && !visible.length && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          setQuery('');
-                          searchInput.current?.focus();
-                        }}
-                      >
-                        Clear search
-                      </Button>
-                    )}
-                  </Empty>
+                  </EmptyMedia>
+                  <EmptyTitle>
+                    {activeDetail === 'loading'
+                      ? 'Loading item…'
+                      : activeDetail === 'restricted'
+                        ? 'Open this item in Bitwarden'
+                        : activeDetail === 'error'
+                          ? 'Could not load item'
+                          : query && !visible.length
+                            ? 'No matching items'
+                            : 'Select an item'}
+                  </EmptyTitle>
+                  <EmptyDescription>
+                    {activeDetail === 'loading'
+                      ? 'Reading item details.'
+                      : activeDetail === 'restricted'
+                        ? 'Shared and protected items are available in the official Bitwarden client.'
+                        : activeDetail === 'error'
+                          ? 'Could not load this item. Try again.'
+                          : query && !visible.length
+                            ? 'Change or clear your search to see more items.'
+                            : 'Choose an item to view its details.'}
+                  </EmptyDescription>
+                </EmptyHeader>
+                {activeDetail === 'error' && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      const item = visible.find((entry) => entry.id === selectedId);
+                      if (item) void select(item);
+                    }}
+                  >
+                    Try again
+                  </Button>
                 )}
-              </section>
-            </>
-          )}
+                {query && !visible.length && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setQuery('');
+                      searchInput.current?.focus();
+                    }}
+                  >
+                    Clear search
+                  </Button>
+                )}
+              </Empty>
+            )}
+          </section>
         </main>
         {modal === 'search' && (
           <QuickOpen
@@ -1069,7 +829,7 @@ function VaultWorkspace({
               if (!alive.current) return;
               setModal(null);
               setQuery('');
-              showFilter('all');
+              setFilter('all');
               setRevealSelection((request) => request + 1);
               if (item.id !== selectedId || selection.status === 'error') void select(item);
             }}
@@ -1078,9 +838,6 @@ function VaultWorkspace({
         {(modal === 'new' || modal === 'edit') && (
           <Editor
             item={modal === 'edit' ? selected : null}
-            folders={folders}
-            defaultFolderId={newItemFolder}
-            defaultType={filter === 'notes' ? 2 : 1}
             onClose={() => {
               if (alive.current) setModal(null);
             }}
@@ -1095,18 +852,18 @@ function VaultWorkspace({
                 name,
                 username,
                 website,
+                cardLabel,
                 type,
                 favorite,
                 hasPasskey,
                 restricted,
-                folderId,
               } = item;
               setItems((current) => [
                 ...current.filter((entry) => entry.id !== id),
-                { id, name, username, website, type, favorite, hasPasskey, restricted, folderId },
+                { id, name, username, website, cardLabel, type, favorite, hasPasskey, restricted },
               ]);
               setQuery('');
-              showFilter('all');
+              setFilter('all');
               setSelection({ status: 'ready', item });
             }}
             notify={notify}
@@ -1127,51 +884,5 @@ function VaultWorkspace({
         <Toasts />
       </div>
     </TooltipProvider>
-  );
-}
-
-function FolderForm({
-  label,
-  initial,
-  busy,
-  onSubmit,
-  onCancel,
-}: {
-  label: string;
-  initial: string;
-  busy: boolean;
-  onSubmit: (name: string) => void;
-  onCancel: () => void;
-}) {
-  const [name, setName] = useState(initial);
-  const input = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    input.current?.focus();
-    input.current?.select();
-  }, []);
-  return (
-    <form
-      className="folder-form"
-      onSubmit={(event) => {
-        event.preventDefault();
-        const trimmed = name.trim();
-        if (trimmed && !busy) onSubmit(trimmed);
-      }}
-    >
-      <Input
-        ref={input}
-        aria-label={label}
-        value={name}
-        maxLength={500}
-        disabled={busy}
-        onChange={(event) => setName(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key !== 'Escape') return;
-          event.preventDefault();
-          event.stopPropagation();
-          onCancel();
-        }}
-      />
-    </form>
   );
 }
