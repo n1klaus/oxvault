@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { cardBrands, cardMonths, importFormats, lockTimeoutMinutes } from './types';
+import { lockTimeoutMinutes } from './types';
 
 export const lockTimeoutSchema = z.literal(lockTimeoutMinutes);
 export const passwordOptionsSchema = z
@@ -34,53 +34,14 @@ const challengeAnswer = z.union([
   z.object({ cancel: z.literal(true) }).strict(),
 ]);
 const id = z.string().uuid();
-const attachmentId = z.string().min(1).max(200);
 export const browserSaveResultSchema = z.object({ id });
-const sendDays = z.number().int().min(1).max(31);
-const sendDraftBase = {
-  name: z.string().trim().min(1).max(500),
-  notes: z.string().max(1_000),
-  deleteInDays: sendDays,
-  expireInDays: sendDays.nullable(),
-  maxAccessCount: z.number().int().min(1).max(1_000_000).nullable(),
-  password: z.string().max(1_024),
-  disabled: z.boolean(),
-  hideEmail: z.boolean(),
-};
-export const sendDraftSchema = z.discriminatedUnion('type', [
-  z
-    .object({
-      ...sendDraftBase,
-      type: z.literal('text'),
-      text: z.string().min(1).max(16_384),
-      hidden: z.boolean(),
-    })
-    .strict(),
-  z.object({ ...sendDraftBase, type: z.literal('file') }).strict(),
-]);
-const folderName = z.string().trim().min(1).max(500);
 const draftBase = {
   id: id.optional(),
   revisionDate: z.string().nullable().optional(),
   name: z.string().trim().min(1).max(500),
   notes: z.string().max(100_000),
   favorite: z.boolean(),
-  folderId: id.nullable().optional(),
-  fields: z
-    .array(
-      z
-        .object({
-          sourceIndex: z.number().int().min(0).max(100_000).optional(),
-          name: z.string().max(500),
-          value: boundedText,
-          type: z.literal([0, 1, 2]),
-        })
-        .strict(),
-    )
-    .max(256)
-    .optional(),
 };
-const shortText = z.string().max(500);
 const sourceIndex = z.number().int().min(0).max(100_000);
 export const uriMatchSchema = z.union([z.null(), z.literal([0, 1, 2, 3, 5])]);
 export const itemDraftSchema = z.discriminatedUnion('type', [
@@ -108,51 +69,6 @@ export const itemDraftSchema = z.discriminatedUnion('type', [
     })
     .strict(),
   z.object({ ...draftBase, type: z.literal(2) }).strict(),
-  z
-    .object({
-      ...draftBase,
-      type: z.literal(3),
-      cardholderName: shortText,
-      brand: z.union([z.literal(''), z.enum(cardBrands)]),
-      number: shortText,
-      expMonth: z.union([z.literal(''), z.enum(cardMonths)]),
-      expYear: z.string().max(8),
-      code: z.string().max(16),
-    })
-    .strict(),
-  z
-    .object({
-      ...draftBase,
-      type: z.literal(4),
-      title: shortText,
-      firstName: shortText,
-      middleName: shortText,
-      lastName: shortText,
-      username: shortText,
-      company: shortText,
-      ssn: shortText,
-      passportNumber: shortText,
-      licenseNumber: shortText,
-      email: shortText,
-      phone: shortText,
-      address1: shortText,
-      address2: shortText,
-      address3: shortText,
-      city: shortText,
-      state: shortText,
-      postalCode: shortText,
-      country: shortText,
-    })
-    .strict(),
-  z
-    .object({
-      ...draftBase,
-      type: z.literal(5),
-      publicKey: z.string().max(65_536),
-      privateKey: z.string().max(65_536),
-      keyFingerprint: shortText,
-    })
-    .strict(),
 ]);
 export { MAX_BROWSER_MESSAGE_BYTES } from './types';
 
@@ -167,19 +83,7 @@ export const desktopRequestSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('websiteIcon'), id }).strict(),
   z.object({ type: z.literal('state') }).strict(),
   z.object({ type: z.literal('appearance') }).strict(),
-  z
-    .object({
-      type: z.literal('confirm'),
-      action: z.enum([
-        'discard',
-        'trash',
-        'deleteFolder',
-        'deleteAttachment',
-        'deleteSend',
-        'exportPlain',
-      ]),
-    })
-    .strict(),
+  z.object({ type: z.literal('confirm'), action: z.enum(['discard', 'trash']) }).strict(),
   z
     .object({
       type: z.literal('itemMenu'),
@@ -216,14 +120,7 @@ export const desktopRequestSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('commitCapture'), url: z.string().max(4_096) }).strict(),
   z.object({ type: z.literal('items') }).strict(),
   z.object({ type: z.literal('trash') }).strict(),
-  z.object({ type: z.literal('folders') }).strict(),
-  z.object({ type: z.literal('createFolder'), name: folderName }).strict(),
-  z.object({ type: z.literal('renameFolder'), id, name: folderName }).strict(),
-  z.object({ type: z.literal('deleteFolder'), id }).strict(),
   z.object({ type: z.literal('detail'), id }).strict(),
-  z.object({ type: z.literal('totp'), id }).strict(),
-  z.object({ type: z.literal('copyTotp'), id }).strict(),
-  z.object({ type: z.literal('health'), breaches: z.boolean() }).strict(),
   z.object({ type: z.literal('save'), draft: itemDraftSchema }).strict(),
   z.object({ type: z.literal('setFavorite'), id, favorite: z.boolean() }).strict(),
   z.object({ type: z.literal('delete'), id }).strict(),
@@ -235,31 +132,7 @@ export const desktopRequestSchema = z.discriminatedUnion('type', [
       field: z.enum(['username', 'password', 'notes', 'website']),
     })
     .strict(),
-  z.object({ type: z.literal('copyExtra'), id, index: z.number().int().min(0).max(63) }).strict(),
-  z
-    .object({ type: z.literal('copyCustomField'), id, index: z.number().int().min(0).max(255) })
-    .strict(),
-  z
-    .object({ type: z.literal('copyHistory'), id, index: z.number().int().min(0).max(255) })
-    .strict(),
-  z.object({ type: z.literal('downloadAttachment'), id, attachmentId }).strict(),
-  z.object({ type: z.literal('deleteAttachment'), id, attachmentId }).strict(),
-  z.object({ type: z.literal('addAttachment'), id }).strict(),
   z.object({ type: z.literal('generate'), options: passwordOptionsSchema }).strict(),
-  z.object({ type: z.literal('sends') }).strict(),
-  z.object({ type: z.literal('createSend'), draft: sendDraftSchema }).strict(),
-  z.object({ type: z.literal('deleteSend'), id }).strict(),
-  z.object({ type: z.literal('removeSendPassword'), id }).strict(),
-  z.object({ type: z.literal('copySendLink'), id }).strict(),
-  z
-    .object({ type: z.literal('exportVault'), format: z.enum(['csv', 'json', 'encrypted_json']) })
-    .strict(),
-  z
-    .object({
-      type: z.literal('importVault'),
-      format: z.enum(importFormats.map(([format]) => format) as [string, ...string[]]),
-    })
-    .strict(),
   z.object({ type: z.literal('browserSetup') }).strict(),
   z
     .object({ type: z.literal('connectBrowser'), browser: z.enum(['safari', 'chrome', 'firefox']) })
@@ -280,8 +153,6 @@ export type BrowserVaultQuery = z.infer<typeof browserVaultQuerySchema>;
 
 export const browserRequestSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('detail'), id }).strict(),
-  z.object({ type: z.literal('totp'), id }).strict(),
-  z.object({ type: z.literal('copyTotp'), id }).strict(),
   z.object({ type: z.literal('save'), draft: itemDraftSchema }).strict(),
   z.object({ type: z.literal('delete'), id }).strict(),
   z.object({ type: z.literal('restore'), id }).strict(),
@@ -290,6 +161,7 @@ export const browserRequestSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('sync') }).strict(),
   z.object({ type: z.literal('status') }).strict(),
   z.object({ type: z.literal('unlockState') }).strict(),
+  z.object({ type: z.literal('unlock'), password: z.string().min(1).max(1_024) }).strict(),
   z.object({ type: z.literal('biometricUnlock') }).strict(),
   z
     .object({
@@ -342,6 +214,7 @@ export async function safely<T>(operation: () => T | Promise<T>) {
 
 // A separate socket/token keeps launcher commands out of the browser protocol.
 export const launcherRequestSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('unlock'), password: z.string().min(1).max(1_024) }).strict(),
   z.object({ type: z.literal('biometricUnlock') }).strict(),
   z.object({ type: z.literal('detail'), id }).strict(),
   z.object({ type: z.literal('search'), query: z.string().max(500) }).strict(),
