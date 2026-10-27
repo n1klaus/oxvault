@@ -2,7 +2,13 @@ import { access, readFile, stat } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { homedir, userInfo } from 'node:os';
 import { delimiter, dirname, extname, join, isAbsolute, resolve, sep } from 'node:path';
-import { BitwardenCli, bootstrapRuns, type CliOptions, type CliPort } from './cli';
+import {
+  BitwardenCli,
+  bootstrapRuns,
+  removeVerifyCopies,
+  type CliOptions,
+  type CliPort,
+} from './cli';
 import { WarmBitwardenCli } from './serve';
 import { UserError } from '@strongroom/shared/protocol';
 
@@ -14,8 +20,8 @@ export const ENGINE_SETUP_MESSAGE =
 /** Without the preload, keys would sit in the CLI's environment, where other apps can read them. */
 const PRIVATE_CHANNEL_MESSAGE =
   process.platform === 'darwin'
-    ? 'This Bitwarden CLI cannot receive keys privately. Install the official CLI with “brew install bitwarden-cli”, then restart Bitlatch.'
-    : 'This Bitwarden CLI cannot receive keys privately. Install the official CLI with “npm install -g @bitwarden/cli”, then restart Bitlatch.';
+    ? 'This Bitwarden CLI cannot receive keys privately. Install the official CLI with “brew install bitwarden-cli”, then restart Strongroom.'
+    : 'This Bitwarden CLI cannot receive keys privately. Install the official CLI with “npm install -g @bitwarden/cli”, then restart Strongroom.';
 
 /**
  * Puts a warm vault server in front of the one-shot CLI, so reads and writes
@@ -57,8 +63,9 @@ export async function localEngine(options: {
   try {
     await access(options.bootstrap, constants.R_OK);
   } catch {
-    return unavailable('Bitlatch is missing one of its files. Reinstall Bitlatch, then try again.');
+    return unavailable('Strongroom is missing one of its files. Reinstall Strongroom, then try again.');
   }
+  await removeVerifyCopies(options.dataDir);
   let privateChannelMissing = false;
   for (const executable of candidates) {
     if (!executable || !isAbsolute(executable)) continue;
