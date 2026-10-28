@@ -14,3 +14,7 @@ coverage/
 
 .wxt/
 .output/
+.claude/skills
+.agents/skills
+.omo
+.qoder

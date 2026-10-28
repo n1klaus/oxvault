@@ -33,7 +33,10 @@ import type { DesktopRequest } from '@strongroom/shared/protocol';
 process.umask(0o077);
 // Keep the existing data directory and OS encryption identity across the rename.
 app.setName('Strongroom');
-app.setPath('userData', process.env.STRONGROOM_DATA_DIR ?? join(app.getPath('appData'), 'Strongroom'));
+app.setPath(
+  'userData',
+  process.env.STRONGROOM_DATA_DIR ?? join(app.getPath('appData'), 'Strongroom'),
+);
 if (!app.requestSingleInstanceLock()) app.quit();
 
 let window: BrowserWindow;
@@ -104,7 +107,7 @@ lifecycle.startup = app
     const sessions = touchIdSessionStore(app.getPath('userData'));
     const hints = new AccountHints(join(app.getPath('userData'), 'account-hint.json'));
     const [, hint] = await Promise.all([sessions.load(), hints.read()]);
-    vault = new Vault(engine.cli, sessions, engine.sharedItems);
+    vault = new Vault(engine.cli, sessions);
     lifecycle.attachVault(vault, () => {
       websiteIcons.clear();
       nativeInteractions?.cancelConfirmation();

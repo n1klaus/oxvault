@@ -63,7 +63,9 @@ export async function localEngine(options: {
   try {
     await access(options.bootstrap, constants.R_OK);
   } catch {
-    return unavailable('Strongroom is missing one of its files. Reinstall Strongroom, then try again.');
+    return unavailable(
+      'Strongroom is missing one of its files. Reinstall Strongroom, then try again.',
+    );
   }
   await removeVerifyCopies(options.dataDir);
   let privateChannelMissing = false;

@@ -101,7 +101,9 @@ export function Detail({
         if (!confirmation.value) return;
       }
       pending = notify.show('pending', restore ? 'Restoring…' : 'Moving to Trash…');
-      const result = await (restore ? window.strongroom.restore(item.id) : window.strongroom.remove(item.id));
+      const result = await (restore
+        ? window.strongroom.restore(item.id)
+        : window.strongroom.remove(item.id));
       if (!alive.current || version !== epoch.current) return;
       if (result.ok) {
         notify.settle(pending, 'done', restore ? 'Restored to your vault' : 'Moved to Trash');

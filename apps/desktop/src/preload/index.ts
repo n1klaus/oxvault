@@ -1,5 +1,10 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { LatchApi, VaultState, WindowCommand, WindowAppearance } from '@strongroom/shared/types';
+import type {
+  LatchApi,
+  VaultState,
+  WindowCommand,
+  WindowAppearance,
+} from '@strongroom/shared/types';
 import type { DesktopRequest } from '@strongroom/shared/protocol';
 
 const request = (message: DesktopRequest) => ipcRenderer.invoke('strongroom:request', message);

@@ -73,7 +73,8 @@ function requestThroughHost<T>(
           entry.finish(new Error('Invalid Strongroom response.'));
         }
       }
-      if (output.length > MAX_RESPONSE + 4) closeHost(new Error('Strongroom response is too large.'));
+      if (output.length > MAX_RESPONSE + 4)
+        closeHost(new Error('Strongroom response is too large.'));
     });
   }
   return new Promise<T>((resolve, reject) => {
@@ -192,7 +193,9 @@ export async function request<T = void>(
         if (result.ok === true) finish(undefined, result.value);
         else
           finish(
-            new Error(typeof result.error === 'string' ? result.error : 'Strongroom request failed.'),
+            new Error(
+              typeof result.error === 'string' ? result.error : 'Strongroom request failed.',
+            ),
           );
       } catch {
         finish(new Error('Invalid Strongroom response.'));

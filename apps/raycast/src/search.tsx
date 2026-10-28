@@ -1,7 +1,7 @@
 import { Action, ActionPanel, Icon, List } from '@raycast/api';
 import { useEffect, useState } from 'react';
 import { request, SearchResult } from './bridge';
-import { ItemActions, ItemPage, OpenStrongroom } from './item';
+import { ItemActions, ItemPage, OpenLatch } from './item';
 import { Unlock } from './unlock';
 
 const typeIcons: Record<number, Icon> = {
@@ -85,7 +85,7 @@ export default function SearchVault() {
         }
         actions={
           <ActionPanel>
-            <OpenStrongroom />
+            <OpenLatch />
           </ActionPanel>
         }
       />

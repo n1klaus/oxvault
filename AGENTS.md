@@ -89,15 +89,15 @@ baseline changes need a reviewer, never edit output to hide failures).
 
 ## Tools — index
 
-| Section | Use for |
-| ------------------------------- | ------------------------------------------- |
-| CodeGraph | Source exploration, symbol source, callers |
-| GitNexus | Blast radius, change detection, renames |
-| Context7 | Live library/framework documentation |
-| shell + RTK | Simple commands: `rtk` first, bash fallback |
-| context-mode | Active: batch, sandbox, file analysis, search |
-| Tavily search | Current facts from the open web |
-| web_search / webfetch | Quick lookups and single-page reads |
+| Section               | Use for                                       |
+| --------------------- | --------------------------------------------- |
+| CodeGraph             | Source exploration, symbol source, callers    |
+| GitNexus              | Blast radius, change detection, renames       |
+| Context7              | Live library/framework documentation          |
+| shell + RTK           | Simple commands: `rtk` first, bash fallback   |
+| context-mode          | Active: batch, sandbox, file analysis, search |
+| Tavily search         | Current facts from the open web               |
+| web_search / webfetch | Quick lookups and single-page reads           |
 
 Calls below are direct tool calls. Graph/doc tools may also be reachable as
 `xd://mcp__<server>_<tool>` devices depending on the host — same JSON args.
@@ -108,12 +108,12 @@ Project is indexed by CodeGraph. Use it for **source code**; `read`/`grep`/`glob
 are for non-code files only (markdown, JSON, configs, lockfiles — Vite/Next
 configs are not parsed).
 
-| Task | Tool | Key arg |
-| ----------------------------------- | ------------------------- | ------------------------------ |
-| "How does X work?" / tracing a bug | `codegraph_explore` | `query` |
-| Reading a file region | `codegraph_node` | `file`, `offset`, `limit` |
-| "What calls this?" | `codegraph_callers` | `symbol` |
-| "What is this symbol?" | `codegraph_search` | `query` |
+| Task                               | Tool                | Key arg                   |
+| ---------------------------------- | ------------------- | ------------------------- |
+| "How does X work?" / tracing a bug | `codegraph_explore` | `query`                   |
+| Reading a file region              | `codegraph_node`    | `file`, `offset`, `limit` |
+| "What calls this?"                 | `codegraph_callers` | `symbol`                  |
+| "What is this symbol?"             | `codegraph_search`  | `query`                   |
 
 - `codegraph_node` with `symbol` returns verbatim source (`includeCode: true`)
   plus the caller/callee trail — run it BEFORE editing any symbol you can name.
@@ -123,13 +123,13 @@ configs are not parsed).
 
 Call-graph and impact analysis. Secondary to CodeGraph, primary for blast radius.
 
-| Task | Tool | Key arg |
-| --------------------------------- | -------------------------- | ---------------------------- |
-| Blast radius before edits | `gitnexus_impact` | `target`, `direction` |
-| Verify changes before commit | `gitnexus_detect_changes` | `scope` (`or base_ref`) |
-| Execution flows by concept | `gitnexus_query` | `query` |
-| Full 360° symbol context | `gitnexus_context` | `name` |
-| Safe symbol rename | `gitnexus_rename` | `symbol_name`, `new_name` |
+| Task                         | Tool                      | Key arg                   |
+| ---------------------------- | ------------------------- | ------------------------- |
+| Blast radius before edits    | `gitnexus_impact`         | `target`, `direction`     |
+| Verify changes before commit | `gitnexus_detect_changes` | `scope` (`or base_ref`)   |
+| Execution flows by concept   | `gitnexus_query`          | `query`                   |
+| Full 360° symbol context     | `gitnexus_context`        | `name`                    |
+| Safe symbol rename           | `gitnexus_rename`         | `symbol_name`, `new_name` |
 
 - `risk: UNKNOWN` means unresolved — confirm with a text search before editing.
 - Never find-and-replace a rename; use `gitnexus_rename` (dry run first).
@@ -201,15 +201,15 @@ reads: the bytes stay in the sandbox and only stdout enters context.
 
 `ctx_batch_execute` > `ctx_execute` > `ctx_execute_file` > `ctx_search`
 
-| Situation | Tool |
-| ----------------------------------------- | ---------------------------------------------- |
-| Multi-command research (3+ commands) | `ctx_batch_execute(commands, queries)` |
-| Derive / count / filter / aggregate data | `ctx_execute(language, code)` |
-| Read a file for analysis | `ctx_execute_file(path, language, code)` |
-| Query already-indexed content | `ctx_search(queries, source?)` |
-| Fetch a web page | `ctx_fetch_and_index(url, source)` → `ctx_search` |
-| Store docs/specs for later | `ctx_index(content, source)` |
-| Health / counters / cleanup | `ctx_stats`, `ctx_doctor`, `ctx_purge` |
+| Situation                                | Tool                                              |
+| ---------------------------------------- | ------------------------------------------------- |
+| Multi-command research (3+ commands)     | `ctx_batch_execute(commands, queries)`            |
+| Derive / count / filter / aggregate data | `ctx_execute(language, code)`                     |
+| Read a file for analysis                 | `ctx_execute_file(path, language, code)`          |
+| Query already-indexed content            | `ctx_search(queries, source?)`                    |
+| Fetch a web page                         | `ctx_fetch_and_index(url, source)` → `ctx_search` |
+| Store docs/specs for later               | `ctx_index(content, source)`                      |
+| Health / counters / cleanup              | `ctx_stats`, `ctx_doctor`, `ctx_purge`            |
 
 `ctx_execute_file` analyzes a file; it cannot write back — actual edits still go
 through the `edit`/`write` tools.
