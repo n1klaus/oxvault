@@ -2,7 +2,25 @@
 
 An honest status. "Full parity" is not reachable for a client that sits on top of the official CLI, because part of Bitwarden lives on the server and in the web vault. This page says which part is which.
 
-Status words: **Done** works in Strongroom. **Partial** works with limits. **Planned** is a client-side gap Strongroom can close. **Not possible here** needs the server, the web vault, or key handling that Strongroom's rules keep with the official CLI.
+Status words: **Done** works in OxVault. **Partial** works with limits. **Planned** is a client-side gap OxVault can close. **Not possible here** needs the server, the web vault, or key handling that OxVault's rules keep with the official CLI.
+
+## Design Decisions
+
+### Organization-Shared Items (Declined)
+
+Upstream Bitlatch #21 added organization-shared items. OxVault declines this feature due to a write-back data-loss hazard in `cacheFields` / `hidesPasswords`. When restricted items are cached and then edited, sensitive fields could be cleared or corrupted. See https://github.com/dillionverma/bitlatch/issues/21 for discussion.
+
+This means organization items appear as restricted and cannot be edited in OxVault.
+
+### Master Password Items (Implemented)
+
+Items marked with reprompt require unlocking with the master password before opening. OxVault implements this via Bitlatch #20 (`4f7e028ef`), which adds `openProtected(id, password)` to the API. Users can unlock such items directly without editing the cipher.
+
+### Web Vault (Self-Hosted Only)
+
+OxVault includes `apps/web`, a TOTP authenticator for browser-based access. However, Vaultwarden's CORS policy blocks external origins—GitHub Pages would fail. The web app must be served from the vault server's own origin, and the origin guard stays a hard failure. See `apps/web/guard.ts`.
+
+Scope is intentionally limited: unlock, list TOTP-bearing logins, show code and countdown, copy. No write-back operations, which sidesteps the #21 hazard entirely.
 
 ## Vault items
 
@@ -22,14 +40,14 @@ Status words: **Done** works in Strongroom. **Partial** works with limits. **Pla
 | Password history: view and copy                       | Done              |                                                                                             |
 | Attachments: add, download, delete                    | Done              | Desktop app. The server decides if the account may add files. Not run against a real server |
 | Attachments: list                                     | Done              | Shown in the item detail                                                                    |
-| Items with master password re-prompt                  | Not possible here | Shown as restricted. Re-prompt belongs in the official client                               |
+| Items with master password re-prompt                  | Partial           | Shown with reprompt flag; `openProtected(id, password)` unlocks them. Editing left to official client. |
 | Organization and collection items                     | Not possible here | Shown as restricted. Needs organization key handling                                        |
 
 ## Sending and sharing
 
 | Feature                                             | Status            | Notes                                                                          |
 | --------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------ |
-| File Send: create                                   | Done              | Desktop app and `strongroom send`. The server decides if the account may       |
+| File Send: create                                   | Done              | Desktop app and `oxvault send`. The server decides if the account may       |
 | Text Send, list, copy link, remove password, delete | Done              | Editing an existing Send is not built                                          |
 | Sharing items with an organization                  | Not possible here | Organization keys                                                              |
 | Emergency access                                    | Not possible here | Server API and a key exchange between accounts. See [FEATURES.md](FEATURES.md) |
