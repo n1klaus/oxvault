@@ -317,6 +317,35 @@ export interface MacAutoFillState {
   reason?: string;
 }
 
+/** A Send's summary displayed in a list. */
+export interface SendSummary {
+  id: string;
+  name: string;
+  type: number;
+  fileName: string | null;
+  deletionDate: string | null;
+  expirationDate: string | null;
+  maxAccessCount: number | null;
+  accessCount: number;
+  disabled: boolean;
+  passwordSet: boolean;
+}
+
+/** A Send draft to create or update. */
+export interface SendDraft {
+  type: 'text' | 'file';
+  name: string;
+  notes?: string;
+  text?: string;
+  password?: string;
+  maxAccessCount?: number | null;
+  deleteInDays: number;
+  expireInDays: number | null;
+  hidden?: boolean;
+  disabled?: boolean;
+  hideEmail?: boolean;
+}
+
 export type Browser = 'safari' | 'chrome' | 'firefox';
 export type BrowserSetup = Record<Browser, { available: boolean; reason?: string }>;
 
@@ -371,6 +400,14 @@ export interface LatchApi {
   connectBrowser(browser: Browser): Promise<Result<void>>;
   browserConnection(): Promise<Result<BrowserConnection>>;
   openExtensionFolder(): Promise<Result<void>>;
+  sends(): Promise<Result<SendSummary[]>>;
+  createSend(
+    draft: SendDraft,
+    pick: () => Promise<string | null>,
+  ): Promise<Result<SendSummary | null>>;
+  deleteSend(id: string): Promise<Result<SendSummary[]>>;
+  removeSendPassword(id: string): Promise<Result<SendSummary[]>>;
+  sendLink(id: string): Promise<Result<string>>;
   onState(listener: (state: VaultState) => void): () => void;
   appearance(): Promise<Result<WindowAppearance>>;
   onAppearance(listener: (appearance: WindowAppearance) => void): () => void;
