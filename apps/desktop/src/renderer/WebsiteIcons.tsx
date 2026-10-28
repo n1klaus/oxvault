@@ -11,7 +11,7 @@ export function WebsiteIconsProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   useEffect(() => {
     let active = true;
-    void window.strongroom
+    void window.oxvault
       .websiteIcons()
       .then((result) => {
         if (!active) return;
@@ -31,7 +31,7 @@ export function WebsiteIconsProvider({ children }: { children: ReactNode }) {
         enabled,
         ready,
         async setEnabled(value) {
-          const result = await window.strongroom.setWebsiteIcons(value);
+          const result = await window.oxvault.setWebsiteIcons(value);
           if (!result.ok) throw new Error('Could not update website icons.');
           setEnabled(result.value);
         },

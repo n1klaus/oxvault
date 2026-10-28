@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { LockKey as LockKeyhole } from '@phosphor-icons/react';
-import type { ItemDetail, ItemSummary } from '@strongroom/shared/types';
+import type { ItemDetail, ItemSummary } from '@oxvault/shared/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
@@ -44,7 +44,7 @@ export function Protected({
     setBusy(true);
     setError('');
     try {
-      const result = await window.strongroom.openProtected(item.id, password);
+      const result = await window.oxvault.openProtected(item.id, password);
       // A reply that arrives after this form closed belongs to an earlier visit.
       if (!mounted.current) return;
       setPassword('');

@@ -1,4 +1,4 @@
-import type { ItemDetail } from '@strongroom/shared/types';
+import type { ItemDetail } from '@oxvault/shared/types';
 import type { FormKind, FormValues } from './content/forms';
 
 /** The values a card or identity fills into a page's form fields. */

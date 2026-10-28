@@ -1,4 +1,4 @@
-import { strongroomPaths } from '@strongroom/shared/brand';
+import { strongroomPaths } from '@oxvault/shared/brand';
 
 export function element<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -35,7 +35,7 @@ export function mark() {
 export function brand(label: string) {
   const header = element('div', 'brand');
   const name = element('span', 'brand-name');
-  name.append(mark(), element('span', '', 'Strongroom'));
+  name.append(mark(), element('span', '', 'OxVault'));
   header.append(name, element('span', 'origin', label));
   return header;
 }

@@ -6,8 +6,8 @@ import { BOOTSTRAP_MARKER, secretNames, type BootstrapPayload } from './payload'
 // Loaded into the Bitwarden CLI before it starts. The secrets never enter the
 // real environment: `ps -E` shows the one a process started with, and child
 // processes copy the current one. Reads of `process.env` still find them.
-const fd = Number(process.env.STRONGROOM_SECRET_FD);
-delete process.env.STRONGROOM_SECRET_FD;
+const fd = Number(process.env.OXVAULT_SECRET_FD);
+delete process.env.OXVAULT_SECRET_FD;
 delete process.env.NODE_OPTIONS;
 if (Number.isInteger(fd) && fd > 2) {
   const chunks: Buffer[] = [];

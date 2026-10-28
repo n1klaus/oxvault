@@ -1,7 +1,7 @@
 @layer theme, base, components, utilities;
 @import 'tailwindcss' source(none);
 @import 'tw-animate-css';
-@import '@strongroom/shared/theme.css';
+@import '@oxvault/shared/theme.css';
 @import './tokens.css';
 @import './ui-utilities.css';
 

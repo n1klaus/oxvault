@@ -8,7 +8,7 @@ import {
   User as UserRound,
 } from '@phosphor-icons/react';
 import { useEffect, useRef, useState } from 'react';
-import type { ItemSummary, LatchApi } from '@strongroom/shared/types';
+import type { ItemSummary, LatchApi } from '@oxvault/shared/types';
 import { useWebsiteIcons } from './WebsiteIcons';
 
 export type CopyField = Extract<Parameters<LatchApi['copy']>[1], string>;
@@ -40,7 +40,7 @@ export function ItemIcon({ item, large = false }: { item: ItemSummary; large?: b
     const observer = new IntersectionObserver((entries) => {
       if (!entries.some((entry) => entry.isIntersecting)) return;
       observer.disconnect();
-      void window.strongroom
+      void window.oxvault
         .websiteIcon(item.id)
         .then((result) => {
           if (active && result.ok && result.value)
@@ -88,7 +88,7 @@ export function displayWebsite(website: string) {
     return website;
   }
 }
-export { typeName } from '@strongroom/shared/item-fields';
+export { typeName } from '@oxvault/shared/item-fields';
 
 /** The secret-free summary fields of an item, without its detail. */
 export function summaryOf(item: ItemSummary): ItemSummary {

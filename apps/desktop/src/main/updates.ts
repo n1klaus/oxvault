@@ -7,7 +7,7 @@ export function createUpdates() {
   const enabled =
     app.isPackaged &&
     process.platform === 'darwin' &&
-    !process.env.STRONGROOM_DATA_DIR &&
+    !process.env.OXVAULT_DATA_DIR &&
     existsSync(join(process.resourcesPath, 'app-update.yml'));
   let checking = false;
   let downloaded = false;
@@ -45,14 +45,14 @@ export function createUpdates() {
       if (manual && !stopping)
         await dialog.showMessageBox({
           type: 'info',
-          message: downloaded ? 'An update is ready.' : 'Strongroom is up to date.',
-          detail: downloaded ? 'It will be installed when you quit Strongroom.' : undefined,
+          message: downloaded ? 'An update is ready.' : 'OxVault is up to date.',
+          detail: downloaded ? 'It will be installed when you quit OxVault.' : undefined,
         });
     } catch {
       if (manual && !stopping)
         await dialog.showMessageBox({
           type: 'info',
-          message: 'Could not update Strongroom.',
+          message: 'Could not update OxVault.',
           detail: 'Please try again later.',
         });
     } finally {

@@ -8,13 +8,13 @@ import {
   UserError,
   type BrowserRequest,
   type DesktopRequest,
-} from '@strongroom/shared/protocol';
+} from '@oxvault/shared/protocol';
 import { LocalTransport } from './local-transport';
 import { launcherRows } from './launcher-rows';
 import type { VerifiedPeer } from './local-transport';
 import { ExternalAccess } from './external-access';
 import { installBrowser } from './browser-registration';
-import type { BrowserConnection, BrowserUnlockState } from '@strongroom/shared/types';
+import type { BrowserConnection, BrowserUnlockState } from '@oxvault/shared/types';
 import { iconHostname, iconUrl, type WebsiteIcons } from './website-icons';
 import type { Vault } from './vault';
 import type { MacAutoFill } from './macos-autofill';
@@ -156,7 +156,7 @@ export async function startBridges({
     });
     transports.push(bridge);
     await bridge.start().catch(() => {
-      console.warn('Strongroom browser connection unavailable. Check the app signature.');
+      console.warn('OxVault browser connection unavailable. Check the app signature.');
     });
     const launcherBridge = new LocalTransport({
       channel: 'raycast',
@@ -244,7 +244,7 @@ export async function startBridges({
     });
     transports.push(launcherBridge);
     await launcherBridge.start().catch(() => {
-      console.warn('Strongroom Raycast connection unavailable. Check the app signature.');
+      console.warn('OxVault Raycast connection unavailable. Check the app signature.');
     });
     if (existsSync(join(process.resourcesPath, '../PlugIns/LatchSafari.appex'))) {
       try {
@@ -266,7 +266,7 @@ export async function startBridges({
         if (safariBridge) transports.splice(transports.indexOf(safariBridge), 1);
         // Optional browser setup must not prevent access to the desktop vault.
         console.warn(
-          'Strongroom Safari connection unavailable. Check signing and App Group setup.',
+          'OxVault Safari connection unavailable. Check signing and App Group setup.',
         );
       }
     }

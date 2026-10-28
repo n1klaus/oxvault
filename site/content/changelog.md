@@ -1,6 +1,6 @@
 ---
-title: 'Strongroom changelog: what changed since the bitlatch fork'
-description: 'A short changelog for Strongroom, the unofficial Bitwarden client, taken from git history. No release is tagged yet, so entries are grouped by change.'
+title: 'OxVault changelog: what changed since the bitlatch fork'
+description: 'A short changelog for OxVault, the unofficial Bitwarden client, taken from git history. No release is tagged yet, so entries are grouped by change.'
 nav: Changelog
 order: 9
 updated: 2026-10-10
@@ -25,4 +25,4 @@ No release is tagged yet. This list is hand-written from `git log` and goes newe
 
 ## Origin
 
-- Forked from bitlatch at v0.3.5 and renamed to Strongroom.
+- Forked from bitlatch at v0.3.5 and renamed to OxVault.

@@ -8,8 +8,8 @@ import type { Writable } from 'node:stream';
 import { homedir, tmpdir } from 'node:os';
 import { copyFile, mkdir, mkdtemp, readdir, rm } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { UserError } from '@strongroom/shared/protocol';
-import type { TwoStepMethod } from '@strongroom/shared/types';
+import { UserError } from '@oxvault/shared/protocol';
+import type { TwoStepMethod } from '@oxvault/shared/types';
 import { BOOTSTRAP_MARKER, type BootstrapPayload, type SecretName } from '../cli-bootstrap/payload';
 
 export interface CliOptions {
@@ -48,7 +48,7 @@ export function spawnCli(
       stdio: [...stdio, 'pipe'],
       env: {
         ...env,
-        STRONGROOM_SECRET_FD: String(fd),
+        OXVAULT_SECRET_FD: String(fd),
         ...(options.script
           ? {}
           : { NODE_OPTIONS: `--require ${JSON.stringify(options.bootstrap)}` }),
@@ -204,7 +204,7 @@ export class BitwardenCli implements CliPort {
       // A copy that needs an account migration fails offline until a real unlock runs it.
       if (attempt)
         throw new UserError(
-          'Could not check your master password. Lock Strongroom, unlock it, and try again.',
+          'Could not check your master password. Lock OxVault, unlock it, and try again.',
         );
     }
   }
@@ -213,9 +213,9 @@ export class BitwardenCli implements CliPort {
     return new Promise<{ code: number | null; stderr: string }>((settle) => {
       const child = spawnCli(
         { ...this.options, dataDir: directory },
-        ['unlock', '--passwordenv', 'STRONGROOM_MASTER_PASSWORD', '--raw', '--nointeraction'],
+        ['unlock', '--passwordenv', 'OXVAULT_MASTER_PASSWORD', '--raw', '--nointeraction'],
         { ...cliEnvironment(directory), BW_NOINTERACTION: 'true' },
-        { STRONGROOM_MASTER_PASSWORD: password },
+        { OXVAULT_MASTER_PASSWORD: password },
         ['ignore', 'ignore', 'pipe'],
         // Unlock can run account migrations that write to the server, such as a
         // KDF change. Offline, the copy can only check the password.
@@ -268,7 +268,7 @@ export class BitwardenCli implements CliPort {
         },
         {
           BW_SESSION: options.session,
-          STRONGROOM_MASTER_PASSWORD: options.password,
+          OXVAULT_MASTER_PASSWORD: options.password,
           BW_CLIENTID: options.clientId,
           BW_CLIENTSECRET: options.clientSecret,
         },
@@ -349,7 +349,7 @@ export class BitwardenCli implements CliPort {
       child.on('error', () =>
         reject(
           new UserError(
-            'The Bitwarden CLI could not start. Check its installation, then restart Strongroom.',
+            'The Bitwarden CLI could not start. Check its installation, then restart OxVault.',
           ),
         ),
       );
@@ -385,7 +385,7 @@ export function detectPrompt(output: string, handled = new Set<CliPrompt['kind']
   if (KNOWN_QUESTIONS['two-step-method'].test(text))
     prompts.push({ kind: 'two-step-method', methods: listedMethods(text) });
   if (KNOWN_QUESTIONS['two-step-code'].test(text)) prompts.push({ kind: 'two-step-code' });
-  // Any other question is one Strongroom cannot answer. Echoes of answered
+  // Any other question is one OxVault cannot answer. Echoes of answered
   // questions are still recognized, so they never count as unknown.
   const questions = text.match(/(^|\n)\? [^\n]*/g) ?? [];
   if (
@@ -432,7 +432,7 @@ export function cliError(rawOutput: string, overflow: boolean) {
     );
   if (/code is required|no provider selected/i.test(output))
     return new UserError(
-      'Bitwarden asked for a verification code that Strongroom could not collect. Try again, or use Personal API key sign-in.',
+      'Bitwarden asked for a verification code that OxVault could not collect. Try again, or use Personal API key sign-in.',
     );
   if (/two.?step|two.?factor|captcha|\bbot\b|verification|api key|client_secret/i.test(output)) {
     return new UserError(

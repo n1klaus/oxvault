@@ -1,6 +1,6 @@
 ---
 title: 'Parity with the official Bitwarden clients, honestly'
-description: "Strongroom's parity with official Bitwarden apps, item by item: what is done, partial, planned, and not possible from a client built on the bw CLI."
+description: "OxVault's parity with official Bitwarden apps, item by item: what is done, partial, planned, and not possible from a client built on the bw CLI."
 nav: Parity
 order: 3
 updated: 2026-10-10
@@ -10,7 +10,7 @@ updated: 2026-10-10
 
 Full parity is not reachable for a client that sits on top of `bw`, because part of Bitwarden lives on the server and in the web vault. This page says which part is which. The source is `docs/PARITY.md` in the repo.
 
-Status words. **Done** works in Strongroom. **Partial** works with limits. **Planned** is a client-side gap Strongroom can close. **Not possible here** needs the server, the web vault, or key handling that Strongroom keeps with the official CLI.
+Status words. **Done** works in OxVault. **Partial** works with limits. **Planned** is a client-side gap OxVault can close. **Not possible here** needs the server, the web vault, or key handling that OxVault keeps with the official CLI.
 
 ## Vault items
 

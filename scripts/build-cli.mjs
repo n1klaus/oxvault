@@ -4,7 +4,7 @@ import { chmodSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const cli = resolve(import.meta.dirname, '../apps/cli');
-const outfile = resolve(cli, 'dist/strongroom.mjs');
+const outfile = resolve(cli, 'dist/oxvault.mjs');
 
 await build({
   entryPoints: [resolve(cli, 'src/index.ts')],

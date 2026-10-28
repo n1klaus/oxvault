@@ -7,9 +7,9 @@ import { marked } from 'marked';
 const here = dirname(fileURLToPath(import.meta.url));
 const dist = join(here, 'dist');
 const ORIGIN = 'https://bodencrouch.github.io';
-const BASE = '/strongroom/';
-const REPO = 'https://github.com/bodencrouch/strongroom';
-const SITE_NAME = 'Strongroom';
+const BASE = '/oxvault/';
+const REPO = 'https://github.com/bodencrouch/oxvault';
+const SITE_NAME = 'OxVault';
 const OG_IMAGE = `${ORIGIN}${BASE}og.png`;
 
 const esc = (s) =>
@@ -154,7 +154,7 @@ function render(p) {
   const crumbs =
     p.slug === 'home' || p.slug === '404'
       ? ''
-      : `<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="${BASE}">Strongroom</a></li><li><span aria-current="page">${esc(p.nav)}</span></li></ol></nav>`;
+      : `<nav class="crumbs" aria-label="Breadcrumb"><ol><li><a href="${BASE}">OxVault</a></li><li><span aria-current="page">${esc(p.nav)}</span></li></ol></nav>`;
   const nav = byOrder
     .map(
       (n) =>
@@ -186,20 +186,20 @@ ${robots}${canonical}<meta name="theme-color" content="#0f766e" media="(prefers-
 <meta property="og:image" content="${OG_IMAGE}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Strongroom: an unofficial Bitwarden client">
+<meta property="og:image:alt" content="OxVault: an unofficial Bitwarden client">
 <meta property="og:locale" content="en_US">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${esc(p.title)}">
 <meta name="twitter:description" content="${esc(p.description)}">
 <meta name="twitter:image" content="${OG_IMAGE}">
-<meta name="twitter:image:alt" content="Strongroom: an unofficial Bitwarden client">
+<meta name="twitter:image:alt" content="OxVault: an unofficial Bitwarden client">
 <style>${css}</style>
 ${jsonLd(p, html)}
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <header class="site"><div class="wrap">
-<a class="brand" href="${BASE}"><img src="${BASE}favicon-32.png" width="28" height="28" alt="">Strongroom</a>
+<a class="brand" href="${BASE}"><img src="${BASE}favicon-32.png" width="28" height="28" alt="">OxVault</a>
 <nav aria-label="Main"><ul>${nav}</ul></nav>
 </div></header>
 <main id="main"><div class="wrap">
@@ -207,7 +207,7 @@ ${crumbs}
 ${html}
 </div></main>
 <footer class="site"><div class="wrap">
-<p>Strongroom is an independent project. It is not affiliated with, endorsed by or sponsored by Bitwarden. Bitwarden is a trademark of Bitwarden, Inc.</p>
+<p>OxVault is an independent project. It is not affiliated with, endorsed by or sponsored by Bitwarden. Bitwarden is a trademark of Bitwarden, Inc.</p>
 <p>MIT licensed. <a href="${REPO}">Source on GitHub</a>, <a href="${REPO}/issues">issue tracker</a>.</p>
 </div></footer>
 </body>

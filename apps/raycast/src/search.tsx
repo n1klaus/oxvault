@@ -44,7 +44,7 @@ export default function SearchVault() {
       } catch (e) {
         if (controller.signal.aborted) return;
         setResult({ status: 'unavailable', items: [] });
-        setError(e instanceof Error ? e.message : 'Strongroom is unavailable.');
+        setError(e instanceof Error ? e.message : 'OxVault is unavailable.');
       } finally {
         if (!controller.signal.aborted) {
           setLoading(false);
@@ -66,7 +66,7 @@ export default function SearchVault() {
       filtering={false}
       searchText={query}
       onSearchTextChange={setQuery}
-      searchBarPlaceholder="Search Strongroom…"
+      searchBarPlaceholder="Search OxVault…"
     >
       <List.EmptyView
         icon="icon.png"
@@ -75,12 +75,12 @@ export default function SearchVault() {
           (result.status === 'unlocked'
             ? 'No matching items'
             : result.status === 'loading'
-              ? 'Connecting to Strongroom…'
-              : 'Open Strongroom to connect')
+              ? 'Connecting to OxVault…'
+              : 'Open OxVault to connect')
         }
         description={
           result.status === 'signed-out'
-            ? 'Sign in to your Bitwarden account in Strongroom first.'
+            ? 'Sign in to your Bitwarden account in OxVault first.'
             : undefined
         }
         actions={

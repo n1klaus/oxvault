@@ -25,20 +25,20 @@ export function Unlock({ state, onUnlock }: { state: SearchResult; onUnlock: () 
     try {
       await request({ type: 'open' });
     } catch {
-      await open('/Applications/Strongroom.app');
+      await open('/Applications/OxVault.app');
     }
   }
   return (
     <Detail
-      navigationTitle="Unlock Strongroom"
+      navigationTitle="Unlock OxVault"
       isLoading={busy}
-      markdown={error ?? `Open Strongroom to unlock ${state.email || 'your vault'}.`}
+      markdown={error ?? `Open OxVault to unlock ${state.email || 'your vault'}.`}
       actions={
         <ActionPanel>
           {state.canUseBiometrics && (
             <Action title="Unlock with Touch ID" icon={Icon.Fingerprint} onAction={unlock} />
           )}
-          <Action title="Open Strongroom" icon={Icon.AppWindow} onAction={openDesktop} />
+          <Action title="Open OxVault" icon={Icon.AppWindow} onAction={openDesktop} />
         </ActionPanel>
       }
     />

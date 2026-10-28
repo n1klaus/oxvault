@@ -27,12 +27,12 @@ importers:
       '@electron/osx-sign':
         specifier: ^2.7.1
         version: 2.7.1(supports-color@8.1.1)
+      '@oxvault/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@phosphor-icons/react':
         specifier: ^2.1.10
         version: 2.1.10(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      '@strongroom/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       '@tailwindcss/vite':
         specifier: ^4.3.3
         version: 4.3.3(@voidzero-dev/vite-plus-core@1.1.0(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(typescript@7.0.2))
@@ -109,7 +109,7 @@ importers:
 
   apps/extension:
     devDependencies:
-      '@strongroom/shared':
+      '@oxvault/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       '@types/chrome':
@@ -127,12 +127,12 @@ importers:
 
   apps/raycast:
     dependencies:
+      '@oxvault/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@raycast/api':
         specifier: 2.7.3
         version: 2.7.3(@types/node@26.6.5)(@types/react@19.3.0)(supports-color@8.1.1)
-      '@strongroom/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
     devDependencies:
       '@raycast/eslint-config':
         specifier: 2.2.0
@@ -6379,7 +6379,7 @@ snapshots:
     dependencies:
       '@types/http-cache-semantics': 4.2.0
       '@types/keyv': 3.1.4
-      '@types/node': 24.13.5
+      '@types/node': 26.6.5
       '@types/responselike': 1.0.3
 
   '@types/chai@5.2.3':
@@ -6410,7 +6410,7 @@ snapshots:
 
   '@types/fs-extra@9.0.13':
     dependencies:
-      '@types/node': 24.13.5
+      '@types/node': 26.6.5
 
   '@types/har-format@1.2.16': {}
 
@@ -6420,7 +6420,7 @@ snapshots:
 
   '@types/keyv@3.1.4':
     dependencies:
-      '@types/node': 24.13.5
+      '@types/node': 26.6.5
 
   '@types/ms@2.1.0': {}
 
@@ -6442,7 +6442,7 @@ snapshots:
 
   '@types/responselike@1.0.3':
     dependencies:
-      '@types/node': 24.13.5
+      '@types/node': 26.6.5
 
   '@typescript-eslint/eslint-plugin@8.71.0(@typescript-eslint/parser@8.71.0(eslint@10.12.0(jiti@2.7.0)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@7.0.2))(eslint@10.12.0(jiti@2.7.0)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@7.0.2)':
     dependencies:

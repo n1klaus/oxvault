@@ -5,7 +5,7 @@ import {
   Fingerprint,
   WarningCircle as CircleAlert,
 } from '@phosphor-icons/react';
-import type { ChallengeAnswer, LoginChallenge, Result, VaultState } from '@strongroom/shared/types';
+import type { ChallengeAnswer, LoginChallenge, Result, VaultState } from '@oxvault/shared/types';
 import { motion, useReducedMotion } from 'motion/react';
 import appIcon from '../../../../assets/brand/macos/icon-1024.png';
 import { Button } from '@/components/ui/button';
@@ -49,7 +49,7 @@ export function Auth({
   }, [error, busy, state.challenge]);
   useLayoutEffect(() => {
     alive.current = true;
-    const unsubscribe = window.strongroom.onState((next) => {
+    const unsubscribe = window.oxvault.onState((next) => {
       if (next.status === 'locked' || (locked && next.status === 'signed-out')) {
         epoch.current++;
         working.current = false;
@@ -90,15 +90,15 @@ export function Auth({
   }
   useEffect(() => {
     if (!touchId) return;
-    // Ask for Touch ID whenever Strongroom comes to the front while locked. A lock
+    // Ask for Touch ID whenever OxVault comes to the front while locked. A lock
     // that happens in the background, such as at the screen lock, must not
     // spend the prompt before anyone is looking.
     const ask = () => {
       if (asked.current || working.current || !document.hasFocus()) return;
       asked.current = true;
-      void run(() => window.strongroom.unlockWithBiometrics(), true);
+      void run(() => window.oxvault.unlockWithBiometrics(), true);
     };
-    // Leaving Strongroom re-arms the prompt. The Touch ID sheet itself can take
+    // Leaving OxVault re-arms the prompt. The Touch ID sheet itself can take
     // focus, so a blur while it is open does not, and cancelling cannot loop.
     const leave = () => {
       if (!working.current) asked.current = false;
@@ -117,8 +117,8 @@ export function Auth({
     canceled.current = false;
     void run(() => {
       const response = locked
-        ? window.strongroom.unlock(password)
-        : window.strongroom.login({
+        ? window.oxvault.unlock(password)
+        : window.oxvault.login({
             email,
             password,
             server: server === 'custom' ? customServer : server,
@@ -321,7 +321,7 @@ export function Auth({
                   size="lg"
                   variant="outline"
                   type="button"
-                  onClick={() => void run(() => window.strongroom.unlockWithBiometrics(), true)}
+                  onClick={() => void run(() => window.oxvault.unlockWithBiometrics(), true)}
                   disabled={busy}
                 >
                   {biometricPending ? <Spinner /> : <Fingerprint data-icon="inline-start" />}
@@ -334,7 +334,7 @@ export function Auth({
                   size="sm"
                   className="self-center"
                   type="button"
-                  onClick={() => void run(() => window.strongroom.logout())}
+                  onClick={() => void run(() => window.oxvault.logout())}
                   disabled={busy}
                 >
                   Use another account
@@ -401,7 +401,7 @@ function Challenge({ challenge, onCancel }: { challenge: LoginChallenge; onCance
     const request = epoch.current;
     if ('cancel' in value) onCancel();
     try {
-      const result = await window.strongroom.answerChallenge(value);
+      const result = await window.oxvault.answerChallenge(value);
       if (request !== epoch.current) return;
       if (!result.ok) {
         working.current = false;

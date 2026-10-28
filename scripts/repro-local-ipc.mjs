@@ -18,10 +18,10 @@ const channels = [
     request: { type: 'copy', id: syntheticId, field: 'password' },
   },
 ];
-if (process.env.STRONGROOM_AUTOFILL_DIR)
+if (process.env.OXVAULT_AUTOFILL_DIR)
   channels.push({
     name: 'autofill assertion',
-    file: join(process.env.STRONGROOM_AUTOFILL_DIR, 'autofill.json'),
+    file: join(process.env.OXVAULT_AUTOFILL_DIR, 'autofill.json'),
     request: {
       type: 'assert',
       id: syntheticId,
@@ -35,7 +35,7 @@ if (process.env.STRONGROOM_AUTOFILL_DIR)
 for (const channel of channels) {
   const config = JSON.parse(await readFile(channel.file, 'utf8'));
   const socketPath =
-    config.socketPath ?? join(process.env.STRONGROOM_AUTOFILL_DIR, 'autofill.sock');
+    config.socketPath ?? join(process.env.OXVAULT_AUTOFILL_DIR, 'autofill.sock');
   const result = await new Promise((resolve) => {
     const socket = createConnection(socketPath);
     socket.setTimeout(3000, () => socket.destroy(new Error('timeout')));

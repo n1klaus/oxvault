@@ -1,4 +1,4 @@
-// Strongroom mark: a strongroom plate over a staple, as filled shapes (assets/brand/source/strongroom-glyph.svg).
+// OxVault mark: a oxvault plate over a staple, as filled shapes (assets/brand/source/oxvault-glyph.svg).
 // The slot and hole wind the opposite way so they cut out of the plate.
 export const strongroomPaths = [
   // Staple

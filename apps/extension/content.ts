@@ -1,7 +1,7 @@
 import { browser, type Browser } from 'wxt/browser';
 import type { ContentScriptContext } from 'wxt/utils/content-script-context';
-import { isLocalHost } from '@strongroom/shared/urls';
-import sharedTheme from '@strongroom/shared/theme.css?inline';
+import { isLocalHost } from '@oxvault/shared/urls';
+import sharedTheme from '@oxvault/shared/theme.css?inline';
 import contentStyles from './content/styles.css?inline';
 import { brand, element, mark } from './content/render';
 import { fillForm, scanForm, type FormValues } from './content/forms';
@@ -20,7 +20,7 @@ import type {
   FillCredential,
   Result,
   VaultStatus,
-} from '@strongroom/shared/types';
+} from '@oxvault/shared/types';
 
 export function startContent(ctx: ContentScriptContext) {
   if (!['https:', 'http:'].includes(location.protocol)) return;
@@ -87,7 +87,7 @@ export function startContent(ctx: ContentScriptContext) {
   }
 
   const host = document.createElement('div');
-  host.setAttribute('data-strongroom', '');
+  host.setAttribute('data-oxvault', '');
   host.style.cssText =
     'all:initial!important;position:fixed!important;top:0!important;left:0!important;z-index:2147483647!important;width:0!important;height:0!important;pointer-events:none!important;color-scheme:light dark!important;';
   const shadow = host.attachShadow({ mode: 'closed' });
@@ -96,22 +96,22 @@ export function startContent(ctx: ContentScriptContext) {
   const trigger = document.createElement('button');
   trigger.className = 'trigger';
   trigger.type = 'button';
-  trigger.setAttribute('aria-label', 'Fill with Strongroom');
+  trigger.setAttribute('aria-label', 'Fill with OxVault');
   trigger.setAttribute('aria-expanded', 'false');
   trigger.setAttribute('aria-strongroomopup', 'dialog');
-  trigger.setAttribute('aria-controls', 'strongroom-logins');
+  trigger.setAttribute('aria-controls', 'oxvault-logins');
   trigger.append(mark());
   const panel = document.createElement('div');
   panel.className = 'panel';
-  panel.id = 'strongroom-logins';
+  panel.id = 'oxvault-logins';
   panel.tabIndex = -1;
   panel.setAttribute('role', 'dialog');
-  panel.setAttribute('aria-label', 'Strongroom logins');
+  panel.setAttribute('aria-label', 'OxVault logins');
   const savePanel = document.createElement('div');
   savePanel.className = 'save';
   savePanel.tabIndex = -1;
   savePanel.setAttribute('role', 'dialog');
-  savePanel.setAttribute('aria-label', 'Save this login to Strongroom');
+  savePanel.setAttribute('aria-label', 'Save this login to OxVault');
   shadow.append(style, trigger, panel, savePanel);
   document.documentElement.append(host);
 
@@ -290,10 +290,10 @@ export function startContent(ctx: ContentScriptContext) {
   async function send<T>(message: unknown): Promise<Result<T>> {
     try {
       const result = (await browser.runtime.sendMessage(message)) as Result<T>;
-      if (ctx.isInvalid) return { ok: false, error: 'Reload this page to reconnect Strongroom.' };
+      if (ctx.isInvalid) return { ok: false, error: 'Reload this page to reconnect OxVault.' };
       return result;
     } catch {
-      return { ok: false, error: 'Reload this page to reconnect Strongroom.' };
+      return { ok: false, error: 'Reload this page to reconnect OxVault.' };
     }
   }
 
@@ -304,7 +304,7 @@ export function startContent(ctx: ContentScriptContext) {
     const version = ++requestVersion;
     open = true;
     trigger.setAttribute('aria-expanded', 'true');
-    panel.replaceChildren(element('div', 'hint', 'Connecting to Strongroom…'));
+    panel.replaceChildren(element('div', 'hint', 'Connecting to OxVault…'));
     panel.style.display = 'flex';
     watchStatus();
     position();
@@ -339,7 +339,7 @@ export function startContent(ctx: ContentScriptContext) {
       row.type = 'button';
       row.append(
         mark(),
-        element('span', 'text', locked ? 'Unlock' : response.ok ? 'Sign in' : 'Open Strongroom'),
+        element('span', 'text', locked ? 'Unlock' : response.ok ? 'Sign in' : 'Open OxVault'),
       );
       row.addEventListener('click', async (event) => {
         if (!event.isTrusted) return;
@@ -464,7 +464,7 @@ export function startContent(ctx: ContentScriptContext) {
     if (!targets) {
       response.value.password = '';
       const error =
-        'This looks like a signup or password-change form. Copy from Strongroom instead.';
+        'This looks like a signup or password-change form. Copy from OxVault instead.';
       showFillError(error);
       return { ok: false, error };
     }
@@ -502,7 +502,7 @@ export function startContent(ctx: ContentScriptContext) {
       document.hidden ||
       ctx.isInvalid
     ) {
-      respond({ ok: false, error: 'The page changed. Open Strongroom again.' });
+      respond({ ok: false, error: 'The page changed. Open OxVault again.' });
       return false;
     }
     if (filling) {
@@ -578,12 +578,12 @@ export function startContent(ctx: ContentScriptContext) {
     const update = offer.action === 'update';
     savePanel.setAttribute(
       'aria-label',
-      update ? 'Update this password in Strongroom' : 'Save this login to Strongroom',
+      update ? 'Update this password in OxVault' : 'Save this login to OxVault',
     );
     const title = element(
       'div',
       'save-title',
-      update ? 'Update this password in Strongroom?' : 'Save this login to Strongroom?',
+      update ? 'Update this password in OxVault?' : 'Save this login to OxVault?',
     );
     const sub = element(
       'div',
@@ -639,7 +639,7 @@ export function startContent(ctx: ContentScriptContext) {
           if (restoreFocus) no.focus({ preventScroll: true });
           return;
         }
-        title.textContent = update ? 'Password updated.' : 'Saved to Strongroom.';
+        title.textContent = update ? 'Password updated.' : 'Saved to OxVault.';
         savePanel.dataset.offer = 'success';
         sub.remove();
         feedback.textContent = 'Done.';

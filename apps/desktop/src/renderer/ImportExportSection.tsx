@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { WarningCircle as CircleAlert } from '@phosphor-icons/react';
-import { importFormats, type ExportFormat, type ImportFormat } from '@strongroom/shared/types';
+import { importFormats, type ExportFormat, type ImportFormat } from '@oxvault/shared/types';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Spinner } from '@/components/ui/spinner';
@@ -30,11 +30,11 @@ export function ImportExportSection() {
     setDone('');
     try {
       if (kind === 'export') {
-        const result = await window.strongroom.exportVault(exportFormat);
+        const result = await window.oxvault.exportVault(exportFormat);
         if (!result.ok) setError(result.error);
         else if (result.value) setDone('Export saved.');
       } else {
-        const result = await window.strongroom.importVault(importFormat);
+        const result = await window.oxvault.importVault(importFormat);
         if (!result.ok) setError(result.error);
         else if (result.value) setDone('Import finished. Your vault is up to date.');
       }
@@ -59,7 +59,7 @@ export function ImportExportSection() {
             <FieldContent>
               <FieldLabel htmlFor="settings-export-format">Format</FieldLabel>
               <FieldDescription>
-                Files that are not encrypted hold every password as plain text. Strongroom asks you
+                Files that are not encrypted hold every password as plain text. OxVault asks you
                 to confirm first.
               </FieldDescription>
             </FieldContent>

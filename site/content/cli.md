@@ -1,16 +1,16 @@
 ---
-title: 'Strongroom CLI: a Bitwarden CLI wrapper for TOTP, health'
+title: 'OxVault CLI: a Bitwarden CLI wrapper for TOTP, health'
 description: 'The strongroom command line wraps the official bw CLI: print one-time codes, run a vault health report, attach files and create file Sends from a shell.'
 nav: CLI
 order: 4
 updated: 2026-10-10
 ---
 
-# Strongroom CLI, a wrapper around the Bitwarden CLI
+# OxVault CLI, a wrapper around the Bitwarden CLI
 
 `strongroom` is a Node script that calls `bw`. It adds four commands. It reads items that `bw` has already decrypted, and it never prints a password or a one-time secret. The source is `apps/cli/src/index.ts`, 188 lines.
 
-You need `bw` installed and unlocked. Strongroom never signs in for you.
+You need `bw` installed and unlocked. OxVault never signs in for you.
 
 ```sh
 export BW_SESSION="$(bw unlock --raw)"
@@ -48,7 +48,7 @@ Check: `strongroom health | head -1` prints `Checked N logins.` Compare N with `
 strongroom attach ./receipt.pdf <item-id>
 ```
 
-It runs `bw create attachment`. If your plan or server does not allow attachments, `bw` refuses and Strongroom prints one generic line. It does not echo `bw` output, because that output can contain sensitive arguments.
+It runs `bw create attachment`. If your plan or server does not allow attachments, `bw` refuses and OxVault prints one generic line. It does not echo `bw` output, because that output can contain sensitive arguments.
 
 ## send: create a file Send
 

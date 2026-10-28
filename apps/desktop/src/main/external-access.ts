@@ -1,5 +1,5 @@
 import { app } from 'electron';
-import { UserError } from '@strongroom/shared/protocol';
+import { UserError } from '@oxvault/shared/protocol';
 import type { VerifiedPeer } from './local-transport';
 import type { MacAutoFill } from './macos-autofill';
 

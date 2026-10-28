@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Check, Copy } from '@phosphor-icons/react';
-import type { TotpCode } from '@strongroom/shared/totp';
+import type { TotpCode } from '@oxvault/shared/totp';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 
@@ -17,7 +17,7 @@ export function TotpRow({ itemId, disabled }: { itemId: string; disabled: boolea
     let timer: ReturnType<typeof setTimeout> | undefined;
     async function refresh() {
       try {
-        const result = await window.strongroom.totp(itemId);
+        const result = await window.oxvault.totp(itemId);
         if (!alive.current) return;
         setTotp(result.ok ? result.value : null);
         // Wake just after the code rolls over, never later than a second from now.
@@ -42,7 +42,7 @@ export function TotpRow({ itemId, disabled }: { itemId: string; disabled: boolea
     if (!totp) return;
     try {
       // Through the main process, so the clipboard clears after 30 s like a password copy.
-      const result = await window.strongroom.copyTotp(itemId);
+      const result = await window.oxvault.copyTotp(itemId);
       setCopied(result.ok);
       if (result.ok) setTimeout(() => alive.current && setCopied(false), 2000);
     } catch {

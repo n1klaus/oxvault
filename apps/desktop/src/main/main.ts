@@ -16,7 +16,7 @@ import { prepareWindowAppearance } from './window-appearance';
 import { manageWindowLayout } from './window-layout';
 import { installNativeInteractions } from './native-interactions';
 import { WebsiteIcons } from './website-icons';
-import type { WindowCommand } from '@strongroom/shared/types';
+import type { WindowCommand } from '@oxvault/shared/types';
 import { localEngine } from './engine';
 import { generateSshKey, importSshKey } from './ssh-keys';
 import { Vault, generatePassword } from './vault';
@@ -27,15 +27,15 @@ import { startBridges } from './bridges';
 import { DesktopLifecycle } from './lifecycle';
 import { MacAutoFill } from './macos-autofill';
 import { createUpdates } from './updates';
-import { desktopRequestSchema, safely, UserError } from '@strongroom/shared/protocol';
-import type { DesktopRequest } from '@strongroom/shared/protocol';
+import { desktopRequestSchema, safely, UserError } from '@oxvault/shared/protocol';
+import type { DesktopRequest } from '@oxvault/shared/protocol';
 
 process.umask(0o077);
 // Keep the existing data directory and OS encryption identity across the rename.
-app.setName('Strongroom');
+app.setName('OxVault');
 app.setPath(
   'userData',
-  process.env.STRONGROOM_DATA_DIR ?? join(app.getPath('appData'), 'Strongroom'),
+  process.env.OXVAULT_DATA_DIR ?? join(app.getPath('appData'), 'OxVault'),
 );
 if (!app.requestSingleInstanceLock()) app.quit();
 
@@ -57,8 +57,8 @@ const lifecycle = new DesktopLifecycle();
 let examined: Promise<unknown> = Promise.resolve();
 const rendererPath = join(__dirname, '../renderer/index.html');
 const rendererUrl =
-  !app.isPackaged && process.env.STRONGROOM_RENDERER_URL
-    ? new URL(process.env.STRONGROOM_RENDERER_URL).href
+  !app.isPackaged && process.env.OXVAULT_RENDERER_URL
+    ? new URL(process.env.OXVAULT_RENDERER_URL).href
     : pathToFileURL(rendererPath).href;
 const extensionPath = app.isPackaged
   ? join(process.resourcesPath, 'app.asar.unpacked/dist/extension')
@@ -86,10 +86,10 @@ if (!app.isPackaged) {
 lifecycle.startup = app
   .whenReady()
   .then(async () => {
-    app.setName('Strongroom');
+    app.setName('OxVault');
     // Refresh the running Dock tile when macOS retains artwork from an older build.
     if (process.platform === 'darwin' && app.isPackaged) {
-      app.dock?.setIcon(join(process.resourcesPath, 'strongroom-dock.png'));
+      app.dock?.setIcon(join(process.resourcesPath, 'oxvault-dock.png'));
     }
     await mkdir(app.getPath('userData'), { recursive: true, mode: 0o700 });
     await lifecycle.loadPreferences(join(app.getPath('userData'), 'preferences.json'));
@@ -128,9 +128,9 @@ lifecycle.startup = app
     examined = setupError
       ? Promise.resolve()
       : vault.initialize().catch(() => {
-          setupError = 'Could not check your vault. Restart Strongroom to try again.';
+          setupError = 'Could not check your vault. Restart OxVault to try again.';
           if (window && !window.isDestroyed())
-            window.webContents.send('strongroom:state', { ...vault.snapshot(), setupError });
+            window.webContents.send('oxvault:state', { ...vault.snapshot(), setupError });
         });
     // Only signed macOS builds can tell which app is calling. Elsewhere any
     // process that reads the token file could take passwords without a prompt.
@@ -139,7 +139,7 @@ lifecycle.startup = app
         ? { stop: async () => {}, browserConnection: () => 'unavailable' as const }
         : await startBridges({
             dataDir: app.getPath('userData'),
-            browserRoot: process.env.STRONGROOM_BROWSER_ROOT,
+            browserRoot: process.env.OXVAULT_BROWSER_ROOT,
             hostScript,
             nativeHost:
               process.platform === 'darwin' && app.isPackaged
@@ -161,7 +161,7 @@ lifecycle.startup = app
       callback(false),
     );
     session.defaultSession.setPermissionCheckHandler(() => false);
-    const requestedMaterial = process.env.STRONGROOM_MATERIAL;
+    const requestedMaterial = process.env.OXVAULT_MATERIAL;
     nativeTheme.themeSource = 'system';
     appearance = prepareWindowAppearance({
       // Keep native vibrancy as the default; glass remains an explicit opt-in.
@@ -181,7 +181,7 @@ lifecycle.startup = app
       height: 720,
       minWidth: 820,
       minHeight: 550,
-      title: 'Strongroom',
+      title: 'OxVault',
       titleBarStyle: 'hiddenInset',
       trafficLightPosition: { x: 18, y: 19 },
       // An inactive-window click must only activate, never reveal or copy a secret.
@@ -201,7 +201,7 @@ lifecycle.startup = app
     const updateWindowLayout = manageWindowLayout(window);
     updateWindowLayout(vault.snapshot());
     const unsubscribeAppearance = appearance.subscribe((snapshot) => {
-      if (!window.isDestroyed()) window.webContents.send('strongroom:appearance', snapshot);
+      if (!window.isDestroyed()) window.webContents.send('oxvault:appearance', snapshot);
     });
     window.once('closed', unsubscribeAppearance);
     window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
@@ -219,7 +219,7 @@ lifecycle.startup = app
       const state = vault.snapshot();
       if (state.biometrics === previousBiometrics) return;
       previousBiometrics = state.biometrics;
-      window.webContents.send('strongroom:state', state);
+      window.webContents.send('oxvault:state', state);
     };
     window.on('focus', () => {
       void macAutoFill.status().catch(() => undefined);
@@ -230,11 +230,11 @@ lifecycle.startup = app
     vault.on('state', (state) => {
       nativeInteractions.cancelMenu();
       if (!window.isDestroyed()) {
-        window.webContents.send('strongroom:state', state);
+        window.webContents.send('oxvault:state', state);
         updateWindowLayout(state);
       }
     });
-    ipcMain.handle('strongroom:request', (event, raw: unknown) =>
+    ipcMain.handle('oxvault:request', (event, raw: unknown) =>
       safely(async () => {
         if (
           event.sender !== window.webContents ||
@@ -255,7 +255,7 @@ lifecycle.startup = app
   })
   .catch(() => {
     // Deliberately omit raw engine errors: they can contain vault data.
-    console.error('Strongroom could not initialize. Check the installation and restart.');
+    console.error('OxVault could not initialize. Check the installation and restart.');
     app.quit();
   });
 
@@ -317,7 +317,7 @@ async function handleRequest(request: DesktopRequest, fromWindow = false): Promi
     case 'generateSshKey':
     case 'importSshKey': {
       if (vault.snapshot().status !== 'unlocked')
-        throw new UserError('Unlock Strongroom to continue.');
+        throw new UserError('Unlock OxVault to continue.');
       const epoch = lifecycle.epoch;
       const key =
         request.type === 'generateSshKey'
@@ -436,13 +436,13 @@ async function mutateVault(
 
 function sendCommand(command: WindowCommand) {
   showWindow();
-  if (!window.isDestroyed()) window.webContents.send('strongroom:command', command);
+  if (!window.isDestroyed()) window.webContents.send('oxvault:command', command);
 }
 
 function installMenu() {
   const menu = Menu.buildFromTemplate([
     {
-      label: 'Strongroom',
+      label: 'OxVault',
       submenu: [
         { role: 'about' },
         { label: 'Settings…', accelerator: 'CmdOrCtrl+,', click: () => sendCommand('settings') },

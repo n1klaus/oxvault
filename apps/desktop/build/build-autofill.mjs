@@ -57,9 +57,9 @@ export async function buildAutoFill(root) {
     `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-<key>CFBundleIdentifier</key><string>app.strongroom.vault.bridgehost</string>
+<key>CFBundleIdentifier</key><string>app.oxvault.vault.bridgehost</string>
 <key>CFBundleExecutable</key><string>LatchBridgeHost</string>
-<key>CFBundleName</key><string>Strongroom Bridge Host</string>
+<key>CFBundleName</key><string>OxVault Bridge Host</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>LSMinimumSystemVersion</key><string>14.0</string>
 </dict></plist>`,
@@ -69,7 +69,7 @@ export async function buildAutoFill(root) {
   await mkdir(resolve(contents, 'Resources'), { recursive: true });
   // Use the approved default appearance in a conventional macOS icon catalog.
   const catalog = resolve(output, 'Icons.xcassets');
-  const iconset = resolve(catalog, 'Strongroom.appiconset');
+  const iconset = resolve(catalog, 'OxVault.appiconset');
   await mkdir(iconset, { recursive: true });
   const images = [];
   for (const size of [16, 32, 128, 256, 512]) {
@@ -98,7 +98,7 @@ export async function buildAutoFill(root) {
       '--minimum-deployment-target',
       '14.0',
       '--app-icon',
-      'Strongroom',
+      'OxVault',
       '--output-partial-info-plist',
       resolve(output, 'icon-info.plist'),
     ],
@@ -167,9 +167,9 @@ export async function buildAutoFill(root) {
     '-Xlinker',
     '-install_name',
     '-Xlinker',
-    '@rpath/strongroom-autofill.node',
+    '@rpath/oxvault-autofill.node',
     '-o',
-    resolve(output, 'strongroom-autofill.node'),
+    resolve(output, 'oxvault-autofill.node'),
   ]);
   await rm(bridge);
   await rm(verifiedSocket);
@@ -189,9 +189,9 @@ export async function buildAutoFill(root) {
     resolve(contents, 'MacOS/LatchAutoFill'),
   ]);
   await rm(verifiedServer);
-  const group = process.env.STRONGROOM_APP_GROUP ?? 'UNCONFIGURED.app.strongroom.vault';
-  if (!/^[A-Z0-9]+\.app\.strongroom\.vault$/.test(group))
-    throw new Error('Invalid STRONGROOM_APP_GROUP');
+  const group = process.env.OXVAULT_APP_GROUP ?? 'UNCONFIGURED.app.oxvault.vault';
+  if (!/^[A-Z0-9]+\.app\.oxvault\.vault$/.test(group))
+    throw new Error('Invalid OXVAULT_APP_GROUP');
   const { version } = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8'));
   if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error('Invalid native bundle version');
   await writeFile(
@@ -199,15 +199,15 @@ export async function buildAutoFill(root) {
     `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-<key>CFBundleIdentifier</key><string>app.strongroom.vault.autofill</string>
+<key>CFBundleIdentifier</key><string>app.oxvault.vault.autofill</string>
 <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
 <key>CFBundleDevelopmentRegion</key><string>en</string>
 <key>CFBundleSupportedPlatforms</key><array><string>MacOSX</string></array>
-<key>CFBundleName</key><string>Strongroom</string>
-<key>CFBundleDisplayName</key><string>Strongroom</string>
+<key>CFBundleName</key><string>OxVault</string>
+<key>CFBundleDisplayName</key><string>OxVault</string>
 <key>CFBundleExecutable</key><string>LatchAutoFill</string>
-<key>CFBundleIconName</key><string>Strongroom</string>
-<key>CFBundleIconFile</key><string>Strongroom.icns</string>
+<key>CFBundleIconName</key><string>OxVault</string>
+<key>CFBundleIconFile</key><string>OxVault.icns</string>
 <key>CFBundlePackageType</key><string>XPC!</string>
 <key>CFBundleVersion</key><string>${version}</string>
 <key>CFBundleShortVersionString</key><string>${version}</string>

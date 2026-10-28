@@ -7,7 +7,7 @@ export default defineConfig({
   run: {
     tasks: {
       bundle: {
-        dependsOn: ['@strongroom/extension#build:chrome'],
+        dependsOn: ['@oxvault/extension#build:chrome'],
         command: ['node build/prepare.mjs', 'vp pack', 'vp build'],
       },
     },
@@ -33,7 +33,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     {
-      name: 'strongroom-dev-csp',
+      name: 'oxvault-dev-csp',
       apply: 'serve',
       transformIndexHtml: (html) =>
         html

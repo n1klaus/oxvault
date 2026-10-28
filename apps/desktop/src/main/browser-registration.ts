@@ -3,7 +3,7 @@ import { chmod, mkdir, rm, writeFile } from 'node:fs/promises';
 import { isAbsolute, join } from 'node:path';
 import { homedir } from 'node:os';
 import { promisify } from 'node:util';
-import { FIREFOX_EXTENSION_ID } from '@strongroom/shared/browser-targets';
+import { FIREFOX_EXTENSION_ID } from '@oxvault/shared/browser-targets';
 import { NATIVE_HOST } from './native-config';
 
 interface BrowserRegistration {
@@ -17,12 +17,12 @@ interface BrowserRegistration {
 export async function installBrowser(options: BrowserRegistration, root?: string) {
   const windows = process.platform === 'win32';
   // A filesystem sandbox cannot redirect HKCU. Never touch the user's registry
-  // when STRONGROOM_BROWSER_ROOT was supplied for an isolated run.
+  // when OXVAULT_BROWSER_ROOT was supplied for an isolated run.
   if (windows && root !== undefined)
     throw new Error('Windows browser registration cannot use an isolated browser root.');
   const launcher = join(
     options.dataDir,
-    windows ? 'strongroom-native-host.cmd' : 'strongroom-native-host',
+    windows ? 'oxvault-native-host.cmd' : 'oxvault-native-host',
   );
   if (options.nativeHost) await rm(launcher, { force: true });
   else {
@@ -40,7 +40,7 @@ export async function installBrowser(options: BrowserRegistration, root?: string
   }
   const common = {
     name: NATIVE_HOST,
-    description: 'Strongroom vault bridge',
+    description: 'OxVault vault bridge',
     path: options.nativeHost ?? launcher,
     type: 'stdio',
   };

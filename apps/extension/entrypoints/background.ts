@@ -5,7 +5,7 @@ import {
   MAX_BROWSER_MESSAGE_BYTES,
   browserVaultQuerySchema,
   type BrowserRequest,
-} from '@strongroom/shared/protocol';
+} from '@oxvault/shared/protocol';
 import type {
   BrowserMatches,
   BrowserSuggestions,
@@ -16,7 +16,7 @@ import type {
   ItemDetail,
   Result,
   VaultStatus,
-} from '@strongroom/shared/types';
+} from '@oxvault/shared/types';
 import { formValues } from '../form-values';
 import type { FormKind } from '../content/forms';
 
@@ -38,7 +38,7 @@ async function fillForm(
   confirmed: string[],
 ) {
   if (typeof tabId !== 'number') return { ok: false, error: 'Invalid fill request.' };
-  const changed = { ok: false, error: 'This page changed. Open Strongroom again.' } as const;
+  const changed = { ok: false, error: 'This page changed. Open OxVault again.' } as const;
   // Re-read the tab each time: a navigation must stop the fill.
   const current = async () => {
     const [tab] = await browser.tabs.query({ active: true, lastFocusedWindow: true });
@@ -107,8 +107,8 @@ async function fillForm(
       ok: false,
       error:
         kind === 'card'
-          ? 'This page has no card fields Strongroom can fill.'
-          : 'This page has no name, contact, or address fields Strongroom can fill.',
+          ? 'This page has no card fields OxVault can fill.'
+          : 'This page has no name, contact, or address fields OxVault can fill.',
     };
   const foreign = [...new Set(targets.map((frame) => frame.origin).filter((o) => o !== top))];
   const unconfirmed = foreign.filter((origin) => !confirmed.includes(origin));
@@ -149,7 +149,7 @@ async function fillForm(
 }
 
 export default defineBackground(() => {
-  const HOST = 'app.strongroom.vault';
+  const HOST = 'app.oxvault.vault';
   type Pending = {
     resolve: (value: Result<unknown>) => void;
     timer: ReturnType<typeof setTimeout>;
@@ -172,7 +172,7 @@ export default defineBackground(() => {
     if (import.meta.env.BROWSER === 'safari') {
       return new Promise((resolve) => {
         const timer = setTimeout(
-          () => resolve({ ok: false, error: 'Strongroom is not responding.' }),
+          () => resolve({ ok: false, error: 'OxVault is not responding.' }),
           timeout,
         );
         browser.runtime.sendNativeMessage(HOST, request).then(
@@ -182,7 +182,7 @@ export default defineBackground(() => {
           },
           () => {
             clearTimeout(timer);
-            resolve({ ok: false, error: 'Open Strongroom and enable its Safari extension.' });
+            resolve({ ok: false, error: 'Open OxVault and enable its Safari extension.' });
           },
         );
       });
@@ -231,7 +231,7 @@ export default defineBackground(() => {
       clearTimeout(entry.timer);
       entry.resolve({
         ok: false,
-        error: 'Strongroom is not responding. Open the desktop app and try again.',
+        error: 'OxVault is not responding. Open the desktop app and try again.',
       });
     }
     lane.pending = [];
@@ -273,12 +273,12 @@ export default defineBackground(() => {
       const text = count ? (count >= 12 ? '12+' : String(count)) : '';
       const title =
         !url || !/^https?:\/\//.test(url)
-          ? 'Strongroom'
+          ? 'OxVault'
           : !result?.ok
-            ? 'Strongroom — open the desktop app'
+            ? 'OxVault — open the desktop app'
             : !unlocked
-              ? 'Strongroom — vault locked'
-              : `Strongroom — ${text || 'No'} matching ${count === 1 ? 'login' : 'logins'}`;
+              ? 'OxVault — vault locked'
+              : `OxVault — ${text || 'No'} matching ${count === 1 ? 'login' : 'logins'}`;
       if (!clear && badgeLabel === title) return;
       badgeLabel = title;
       await browser.action.setBadgeBackgroundColor({ color: '#334155' });
@@ -298,7 +298,7 @@ export default defineBackground(() => {
     if (tab.active && (change.url || change.status === 'complete')) void refreshBadge(true);
   });
   browser.windows.onFocusChanged.addListener(() => void refreshBadge(true));
-  // Also retry after Strongroom starts or restarts; a missing port is not permanent.
+  // Also retry after OxVault starts or restarts; a missing port is not permanent.
   setInterval(() => {
     void refreshBadge();
   }, 5000);
@@ -415,7 +415,7 @@ export default defineBackground(() => {
           await browser.action.openPopup();
           return { ok: true, value: null };
         } catch {
-          return { ok: false, error: 'Click Strongroom in your browser toolbar to unlock.' };
+          return { ok: false, error: 'Click OxVault in your browser toolbar to unlock.' };
         }
       }
       if (type === 'unlockState' && (isPopup || senderUrl(sender)))
@@ -457,7 +457,7 @@ export default defineBackground(() => {
       return { ok: false, error: 'Unsupported request.' };
     })()
       .then(respond)
-      .catch(() => respond({ ok: false, error: 'Unable to connect to Strongroom.' }));
+      .catch(() => respond({ ok: false, error: 'Unable to connect to OxVault.' }));
     return true;
   });
 });

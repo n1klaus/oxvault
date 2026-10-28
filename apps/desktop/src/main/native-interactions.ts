@@ -4,7 +4,7 @@ import type {
   ItemMenuAction,
   MenuPosition,
   NativeConfirmation,
-} from '@strongroom/shared/types';
+} from '@oxvault/shared/types';
 
 const confirmations: Record<
   NativeConfirmation,

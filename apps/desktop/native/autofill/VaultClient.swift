@@ -50,7 +50,7 @@ final class VaultClient {
 
   struct Failure: LocalizedError {
     let errorDescription: String?
-    init(_ message: String = "Open and unlock Strongroom, then try again.") {
+    init(_ message: String = "Open and unlock OxVault, then try again.") {
       errorDescription = message
     }
   }
@@ -86,7 +86,7 @@ final class VaultClient {
     let reply = try JSONDecoder().decode(Reply<Value>.self, from: data)
     guard reply.ok, let value = reply.value else {
       throw Failure(
-        reply.error.flatMap { $0.isEmpty ? nil : $0 } ?? "Open and unlock Strongroom, then try again.")
+        reply.error.flatMap { $0.isEmpty ? nil : $0 } ?? "Open and unlock OxVault, then try again.")
     }
     return value
   }

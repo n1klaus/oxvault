@@ -1,12 +1,12 @@
 import { useEffect, useId, useMemo, useState } from 'react';
 import { ArrowsClockwise, MagicWand } from '@phosphor-icons/react';
-import { defaultPasswordOptions } from '@strongroom/shared/types';
+import { defaultPasswordOptions } from '@oxvault/shared/types';
 import {
   defaultPassphraseOptions,
   generatePassphrase,
   generateUsername,
   type UsernameOptions,
-} from '@strongroom/shared/generator';
+} from '@oxvault/shared/generator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -115,7 +115,7 @@ export function PasswordGenerator({
       return;
     }
     let active = true;
-    void window.strongroom
+    void window.oxvault
       .generate(options)
       .then((response) => {
         if (!active) return;

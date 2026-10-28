@@ -1,7 +1,7 @@
 import { defineConfig } from 'wxt';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { EXTENSION_MATCHES, FIREFOX_EXTENSION_ID } from '@strongroom/shared/browser-targets';
+import { EXTENSION_MATCHES, FIREFOX_EXTENSION_ID } from '@oxvault/shared/browser-targets';
 const identity = JSON.parse(
   readFileSync(new URL('../../packages/shared/extension.json', import.meta.url), 'utf8'),
 );
@@ -21,7 +21,7 @@ export default defineConfig({
     },
   },
   zip: {
-    name: 'strongroom',
+    name: 'oxvault',
     sourcesRoot: fileURLToPath(new URL('../..', import.meta.url)),
     includeSources: [
       'apps/extension/{content,popup}.ts',
@@ -46,15 +46,15 @@ export default defineConfig({
   },
   manifestVersion: 3,
   manifest: ({ browser }) => ({
-    name: 'Strongroom — a modern, unofficial Bitwarden client',
+    name: 'OxVault — a modern, unofficial Bitwarden client',
     version: pkg.version,
     description:
-      'Search, filter, and copy from your Bitwarden vault, and fill logins with the Strongroom desktop app.',
+      'Search, filter, and copy from your Bitwarden vault, and fill logins with the OxVault desktop app.',
     ...(browser === 'chrome' || browser === 'edge' ? { key: identity.key } : {}),
     permissions: ['nativeMessaging', 'activeTab', 'storage', 'scripting'],
     host_permissions: EXTENSION_MATCHES,
     action: {
-      default_title: 'Strongroom',
+      default_title: 'OxVault',
       default_icon: {
         16: 'icon-16.png',
         32: 'icon-32.png',

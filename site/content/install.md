@@ -1,12 +1,12 @@
 ---
-title: 'Install Strongroom: build the Bitwarden client from source'
-description: 'Build Strongroom from source with pnpm, run the CLI with node today and from npm once the first release is tagged. Needs the official Bitwarden CLI.'
+title: 'Install OxVault: build the Bitwarden client from source'
+description: 'Build OxVault from source with pnpm, run the CLI with node today and from npm once the first release is tagged. Needs the official Bitwarden CLI.'
 nav: Install
 order: 5
 updated: 2026-10-10
 ---
 
-# Install Strongroom
+# Install OxVault
 
 No release is tagged yet. Today you build from source. Prebuilt desktop packages will come from [GitHub Releases](https://github.com/bodencrouch/strongroom/releases) once the first release is tagged, and the CLI will be on npm as `strongroom` at the same point.
 
@@ -14,7 +14,7 @@ No release is tagged yet. Today you build from source. Prebuilt desktop packages
 
 - Node.js 22.18, 24.11, or 26 and newer.
 - `pnpm` (the repo pins `pnpm@11.25.0` in `package.json`).
-- The official [Bitwarden CLI](https://bitwarden.com/help/cli/) (`bw`), installed and signed in. Strongroom does not ship it and does not replace it.
+- The official [Bitwarden CLI](https://bitwarden.com/help/cli/) (`bw`), installed and signed in. OxVault does not ship it and does not replace it.
 
 Check: `node --version`, `pnpm --version`, `bw --version`.
 

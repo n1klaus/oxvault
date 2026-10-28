@@ -6,10 +6,10 @@ import * as plist from 'plist';
 
 export async function buildSafari(
   root,
-  group = process.env.STRONGROOM_APP_GROUP ?? 'UNCONFIGURED.app.strongroom.vault',
+  group = process.env.OXVAULT_APP_GROUP ?? 'UNCONFIGURED.app.oxvault.vault',
 ) {
   if (process.platform !== 'darwin') return;
-  const contents = resolve(root, 'dist/native/StrongroomSafari.appex/Contents');
+  const contents = resolve(root, 'dist/native/OxVaultSafari.appex/Contents');
   await mkdir(resolve(contents, 'MacOS'), { recursive: true });
   await cp(resolve(root, '../extension/.output/safari-mv3'), resolve(contents, 'Resources'), {
     recursive: true,
@@ -34,7 +34,7 @@ export async function buildSafari(
       resolve(root, 'native/safari/Handler.m'),
       resolve(root, 'native/VerifyServer.c'),
       '-o',
-      resolve(contents, 'MacOS/StrongroomSafari'),
+      resolve(contents, 'MacOS/OxVaultSafari'),
     ],
     { stdio: 'inherit' },
   );
@@ -42,12 +42,12 @@ export async function buildSafari(
   await writeFile(
     resolve(contents, 'Info.plist'),
     plist.build({
-      CFBundleIdentifier: 'app.strongroom.vault.safari',
-      CFBundleName: 'Strongroom',
-      CFBundleDisplayName: 'Strongroom',
+      CFBundleIdentifier: 'app.oxvault.vault.safari',
+      CFBundleName: 'OxVault',
+      CFBundleDisplayName: 'OxVault',
       CFBundleInfoDictionaryVersion: '6.0',
       CFBundleSupportedPlatforms: ['MacOSX'],
-      CFBundleExecutable: 'StrongroomSafari',
+      CFBundleExecutable: 'OxVaultSafari',
       CFBundlePackageType: 'XPC!',
       CFBundleVersion: version,
       CFBundleShortVersionString: version,
@@ -55,7 +55,7 @@ export async function buildSafari(
       StrongroomAppGroup: group,
       NSExtension: {
         NSExtensionPointIdentifier: 'com.apple.Safari.web-extension',
-        NSExtensionPrincipalClass: 'StrongroomSafariHandler',
+        NSExtensionPrincipalClass: 'OxVaultSafariHandler',
       },
     }),
   );

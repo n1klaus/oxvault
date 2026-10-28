@@ -51,7 +51,7 @@ final class CredentialProvider: ASCredentialProviderViewController {
   }
 
   private func show(
-    _ message: String, title: String = "AutoFill from Strongroom", retry: Bool = false,
+    _ message: String, title: String = "AutoFill from OxVault", retry: Bool = false,
     options: [(String, () -> Void)] = []
   ) {
     loadViewIfNeeded()
@@ -93,7 +93,7 @@ final class CredentialProvider: ASCredentialProviderViewController {
         } else if let failure = error as? VaultClient.Failure {
           self.show(failure.localizedDescription, retry: true)
         } else {
-          self.show("Could not complete AutoFill. Unlock Strongroom and try again.", retry: true)
+          self.show("Could not complete AutoFill. Unlock OxVault and try again.", retry: true)
         }
       }
     }
@@ -129,7 +129,7 @@ final class CredentialProvider: ASCredentialProviderViewController {
     let urls = services.prefix(16).map(url).filter { $0.count <= 4096 }
     run { [self] in
       guard !urls.isEmpty else {
-        self.show("This app did not provide a website to match. Open Strongroom to copy your login.")
+        self.show("This app did not provide a website to match. Open OxVault to copy your login.")
         return
       }
       self.show("Looking for matching logins…")
@@ -147,7 +147,7 @@ final class CredentialProvider: ASCredentialProviderViewController {
       }
       self.show(
         options.isEmpty
-          ? "No matching logins. Add this website to a login in Strongroom." : "Choose a login.",
+          ? "No matching logins. Add this website to a login in OxVault." : "Choose a login.",
         retry: true, options: options)
     }
   }
@@ -178,7 +178,7 @@ final class CredentialProvider: ASCredentialProviderViewController {
       self?.prepareCredentialList(for: services, requestParameters: parameters)
     }
     run { [self] in
-      self.show("Looking for passkeys…", title: "Passkey from Strongroom")
+      self.show("Looking for passkeys…", title: "Passkey from OxVault")
       // Refuse oversized allow lists, never truncate security constraints.
       guard parameters.allowedCredentials.count <= 64 else {
         throw VaultClient.Failure("This passkey request is too large.")
@@ -192,7 +192,7 @@ final class CredentialProvider: ASCredentialProviderViewController {
         keys.isEmpty
           ? "No saved passkey for \(parameters.relyingPartyIdentifier)."
           : "Choose a passkey for \(parameters.relyingPartyIdentifier).",
-        title: "Passkey from Strongroom", retry: true,
+        title: "Passkey from OxVault", retry: true,
         options: keys.prefix(12).map { key in
           (
             "\(key.name) — \(key.userName)",
@@ -218,7 +218,7 @@ final class CredentialProvider: ASCredentialProviderViewController {
         record: record, credential: credential, rp: rp, hash: hash)
     }
     run { [self] in
-      self.show("Signing in to \(rp)…", title: "Passkey from Strongroom")
+      self.show("Signing in to \(rp)…", title: "Passkey from OxVault")
       let result: Assertion = try await VaultClient().request([
         "type": "assert", "id": record, "credentialId": credential,
         "rpId": rp, "clientDataHash": hash.base64URL,
@@ -244,7 +244,7 @@ final class CredentialProvider: ASCredentialProviderViewController {
     retryAction = { [weak self] in self?.prepareInterface(forPasskeyRegistration: request) }
     show(
       "Create a passkey for \(identity.relyingPartyIdentifier) as \(identity.userName)? It will be saved in your Bitwarden vault.",
-      title: "Save a passkey in Strongroom",
+      title: "Save a passkey in OxVault",
       options: [("Save Passkey", { [weak self] in self?.register(request, identity: identity) })])
   }
 
@@ -262,7 +262,7 @@ final class CredentialProvider: ASCredentialProviderViewController {
       else {
         throw VaultClient.Failure("This passkey request is not supported.")
       }
-      self.show("Creating a passkey for \(rp)…", title: "Save a passkey in Strongroom")
+      self.show("Creating a passkey for \(rp)…", title: "Save a passkey in OxVault")
       let result: Registration = try await VaultClient().request([
         "type": "register", "rpId": rp,
         "userName": identity.userName, "userHandle": identity.userHandle.base64URL,

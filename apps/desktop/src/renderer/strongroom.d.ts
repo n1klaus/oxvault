@@ -1,7 +1,7 @@
-import type { StrongroomApi } from '@strongroom/shared/types';
+import type { StrongroomApi } from '@oxvault/shared/types';
 
 declare global {
   interface Window {
-    strongroom: StrongroomApi;
+    oxvault: StrongroomApi;
   }
 }

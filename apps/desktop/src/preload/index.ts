@@ -4,10 +4,10 @@ import type {
   VaultState,
   WindowCommand,
   WindowAppearance,
-} from '@strongroom/shared/types';
-import type { DesktopRequest } from '@strongroom/shared/protocol';
+} from '@oxvault/shared/types';
+import type { DesktopRequest } from '@oxvault/shared/protocol';
 
-const request = (message: DesktopRequest) => ipcRenderer.invoke('strongroom:request', message);
+const request = (message: DesktopRequest) => ipcRenderer.invoke('oxvault:request', message);
 
 const api: LatchApi = {
   lockTimeout: () => request({ type: 'lockTimeout' }),
@@ -52,22 +52,22 @@ const api: LatchApi = {
   openExtensionFolder: () => request({ type: 'openExtensionFolder' }),
   onState: (listener) => {
     const handler = (_event: Electron.IpcRendererEvent, state: VaultState) => listener(state);
-    ipcRenderer.on('strongroom:state', handler);
-    return () => ipcRenderer.removeListener('strongroom:state', handler);
+    ipcRenderer.on('oxvault:state', handler);
+    return () => ipcRenderer.removeListener('oxvault:state', handler);
   },
   appearance: () => request({ type: 'appearance' }),
   onAppearance: (listener) => {
     const handler = (_event: Electron.IpcRendererEvent, value: WindowAppearance) => listener(value);
-    ipcRenderer.on('strongroom:appearance', handler);
-    return () => ipcRenderer.removeListener('strongroom:appearance', handler);
+    ipcRenderer.on('oxvault:appearance', handler);
+    return () => ipcRenderer.removeListener('oxvault:appearance', handler);
   },
   onCommand: (listener) => {
     const handler = (_event: Electron.IpcRendererEvent, command: WindowCommand) => {
       if (command === 'search' || command === 'new' || command === 'settings') listener(command);
     };
-    ipcRenderer.on('strongroom:command', handler);
-    return () => ipcRenderer.removeListener('strongroom:command', handler);
+    ipcRenderer.on('oxvault:command', handler);
+    return () => ipcRenderer.removeListener('oxvault:command', handler);
   },
 };
 
-contextBridge.exposeInMainWorld('strongroom', api);
+contextBridge.exposeInMainWorld('oxvault', api);

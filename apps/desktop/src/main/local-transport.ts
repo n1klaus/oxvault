@@ -5,7 +5,7 @@ import { randomBytes, createHash, timingSafeEqual } from 'node:crypto';
 import { chmod, mkdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { safely, UserError } from '@strongroom/shared/protocol';
+import { safely, UserError } from '@oxvault/shared/protocol';
 import type { ZodType } from 'zod';
 
 import { launcherName, launcherPolicies } from './launchers';
@@ -56,7 +56,7 @@ export class LocalTransport<Request> {
 
   constructor(private readonly options: LocalTransportOptions<Request>) {
     const name = createHash('sha256').update(options.dataDir).digest('hex').slice(0, 16);
-    const basename = `strongroom-${options.channel ? `${options.channel}-` : ''}${name}`;
+    const basename = `oxvault-${options.channel ? `${options.channel}-` : ''}${name}`;
     this.socketPath =
       process.platform === 'win32'
         ? `\\\\.\\pipe\\${basename}`
@@ -72,12 +72,12 @@ export class LocalTransport<Request> {
     if (process.platform !== 'win32') await rm(this.socketPath, { force: true });
     if (process.platform === 'darwin' && app.isPackaged) {
       const native = createRequire(__filename)(
-        join(process.resourcesPath, 'app.asar.unpacked/dist/native/strongroom-autofill.node'),
+        join(process.resourcesPath, 'app.asar.unpacked/dist/native/oxvault-autofill.node'),
       ) as VerifiedListener;
       const identifier =
         this.options.channel === 'safari'
-          ? 'app.strongroom.vault.safari'
-          : 'app.strongroom.vault.bridgehost';
+          ? 'app.oxvault.vault.safari'
+          : 'app.oxvault.vault.bridgehost';
       const launchers =
         launcherPolicies[this.options.channel === 'raycast' ? 'raycast' : 'browser'];
       const handle = native.startVerifiedSocket(
@@ -182,7 +182,7 @@ export class LocalTransport<Request> {
         const expected = Buffer.from(this.token);
         if (token.length !== expected.length || !timingSafeEqual(token, expected))
           throw new UserError(
-            'Browser pairing failed. Restart Strongroom and reload the extension.',
+            'Browser pairing failed. Restart OxVault and reload the extension.',
           );
         const parsed = this.options.schema.safeParse(message.request);
         if (!parsed.success) throw new UserError('Unsupported browser request.');

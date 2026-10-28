@@ -10,28 +10,28 @@ import {
   type CliPort,
 } from './cli';
 import { WarmBitwardenCli } from './serve';
-import { UserError } from '@strongroom/shared/protocol';
+import { UserError } from '@oxvault/shared/protocol';
 
 export const ENGINE_SETUP_MESSAGE =
   process.platform === 'darwin'
-    ? 'Install the official Bitwarden CLI with “brew install bitwarden-cli”, then restart Strongroom.'
-    : 'Install the official Bitwarden CLI and add it to PATH, or set STRONGROOM_BW_PATH to its full path, then restart Strongroom.';
+    ? 'Install the official Bitwarden CLI with “brew install bitwarden-cli”, then restart OxVault.'
+    : 'Install the official Bitwarden CLI and add it to PATH, or set OXVAULT_BW_PATH to its full path, then restart OxVault.';
 
 /** Without the preload, keys would sit in the CLI's environment, where other apps can read them. */
 const PRIVATE_CHANNEL_MESSAGE =
   process.platform === 'darwin'
-    ? 'This Bitwarden CLI cannot receive keys privately. Install the official CLI with “brew install bitwarden-cli”, then restart Strongroom.'
-    : 'This Bitwarden CLI cannot receive keys privately. Install the official CLI with “npm install -g @bitwarden/cli”, then restart Strongroom.';
+    ? 'This Bitwarden CLI cannot receive keys privately. Install the official CLI with “brew install bitwarden-cli”, then restart OxVault.'
+    : 'This Bitwarden CLI cannot receive keys privately. Install the official CLI with “npm install -g @bitwarden/cli”, then restart OxVault.';
 
 /**
  * Puts a warm vault server in front of the one-shot CLI, so reads and writes
- * skip a CLI start. Set STRONGROOM_DISABLE_SERVE=1 to run every command one-shot.
+ * skip a CLI start. Set OXVAULT_DISABLE_SERVE=1 to run every command one-shot.
  */
 function engineCli(options: CliOptions): CliPort {
   const cold = new BitwardenCli(options);
   // Node cannot pass connected sockets to a child on Windows. Never replace
   // descriptor mode with a listening, unauthenticated bw serve port.
-  return process.platform === 'win32' || process.env.STRONGROOM_DISABLE_SERVE === '1'
+  return process.platform === 'win32' || process.env.OXVAULT_DISABLE_SERVE === '1'
     ? cold
     : new WarmBitwardenCli(cold, options);
 }
@@ -55,7 +55,7 @@ export async function localEngine(options: {
       ];
   directories.push(...(process.env.PATH ?? '').split(delimiter));
   const candidates = new Set([
-    process.env.STRONGROOM_BW_PATH,
+    process.env.OXVAULT_BW_PATH,
     ...directories
       .filter(isAbsolute)
       .flatMap((directory) => names.map((name) => join(directory, name))),
@@ -64,7 +64,7 @@ export async function localEngine(options: {
     await access(options.bootstrap, constants.R_OK);
   } catch {
     return unavailable(
-      'Strongroom is missing one of its files. Reinstall Strongroom, then try again.',
+      'OxVault is missing one of its files. Reinstall OxVault, then try again.',
     );
   }
   await removeVerifyCopies(options.dataDir);

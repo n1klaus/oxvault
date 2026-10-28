@@ -1,8 +1,8 @@
 import { app, clipboard, globalShortcut, powerMonitor } from 'electron';
 import { readFile, writeFile } from 'node:fs/promises';
-import { UserError, lockTimeoutSchema, type DesktopRequest } from '@strongroom/shared/protocol';
-import { detailRowValue } from '@strongroom/shared/item-fields';
-import type { ItemDetail, LockTimeoutMinutes } from '@strongroom/shared/types';
+import { UserError, lockTimeoutSchema, type DesktopRequest } from '@oxvault/shared/protocol';
+import { detailRowValue } from '@oxvault/shared/item-fields';
+import type { ItemDetail, LockTimeoutMinutes } from '@oxvault/shared/types';
 import type { Vault } from './vault';
 import type { CliPort } from './cli';
 import type { createUpdates } from './updates';
@@ -95,7 +95,7 @@ export class DesktopLifecycle {
   }
 
   assertRunning() {
-    if (this.quitting) throw new UserError('Strongroom is shutting down.');
+    if (this.quitting) throw new UserError('OxVault is shutting down.');
   }
 
   track<T extends { stop(): Promise<void> }>(resource: T): T {

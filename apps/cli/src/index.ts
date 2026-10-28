@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Strongroom command line. It wraps the official Bitwarden CLI (`bw`), which keeps
+// OxVault command line. It wraps the official Bitwarden CLI (`bw`), which keeps
 // authentication and vault cryptography. This tool only reads items that `bw`
 // has already decrypted and never prints passwords or one-time secrets.
 import { execFile } from 'node:child_process';
@@ -24,24 +24,24 @@ interface BwItem {
   login?: { password?: string | null; totp?: string | null; uris?: { uri?: string | null }[] };
 }
 
-const USAGE = `strongroom - extras for your Bitwarden vault
+const USAGE = `oxvault - extras for your Bitwarden vault
 
 Usage:
-  strongroom totp <search>        Print the current one-time code for a matching login
-  strongroom attach <file> <item-id>
+  oxvault totp <search>        Print the current one-time code for a matching login
+  oxvault attach <file> <item-id>
                             Attach a file to a login. Needs an account or server
-                            that allows attachments; Strongroom does not change that.
-  strongroom health [--breaches] [--inactive-2fa]
+                            that allows attachments; OxVault does not change that.
+  oxvault health [--breaches] [--inactive-2fa]
                             Report reused, weak and unencrypted-website logins.
                             --breaches also checks passwords against known leaks
                             (sends only 5-character hash prefixes).
                             --inactive-2fa lists logins whose site offers one-time
                             codes but that have none set (downloads the public
                             2fa.directory list).
-  strongroom send <file> [--days N]
+  oxvault send <file> [--days N]
                             Create a file Send (default expiry 7 days) and print
                             its link. Needs an account or server that allows file
-                            Sends; Strongroom does not change that.
+                            Sends; OxVault does not change that.
 
 Unlock first, then export the session for this shell:
   export BW_SESSION="$(bw unlock --raw)"`;
@@ -65,7 +65,7 @@ async function bwItems(search?: string): Promise<BwItem[]> {
 }
 
 async function totp(search: string | undefined) {
-  if (!search) throw new Error('Give a search term, e.g. strongroom totp github');
+  if (!search) throw new Error('Give a search term, e.g. oxvault totp github');
   const logins = (await bwItems(search)).filter((item) => item.type === 1 && item.login?.totp);
   if (logins.length === 0) throw new Error('No login with a one-time secret matches that search.');
   const exact = logins.filter((item) => item.name.toLowerCase() === search.toLowerCase());
@@ -77,7 +77,7 @@ async function totp(search: string | undefined) {
     return;
   }
   const code = await totpFromField(matches[0]!.login!.totp!);
-  if (!code) throw new Error('That login has a secret Strongroom cannot read.');
+  if (!code) throw new Error('That login has a secret OxVault cannot read.');
   console.log(code.code);
   console.error(`${matches[0]!.name}: valid for ${code.remaining}s`);
 }
@@ -125,7 +125,7 @@ async function send(args: string[]) {
       throw new Error('--days needs a whole number of days.');
   }
   const file = args.find((_, i) => daysAt < 0 || (i !== daysAt && i !== daysAt + 1));
-  if (!file) throw new Error('Usage: strongroom send <file> [--days N]');
+  if (!file) throw new Error('Usage: oxvault send <file> [--days N]');
   const session = process.env.BW_SESSION;
   if (!session) throw new Error('Vault is locked. Run: export BW_SESSION="$(bw unlock --raw)"');
   const env = { ...process.env, BW_SESSION: session };
@@ -155,7 +155,7 @@ async function send(args: string[]) {
 }
 
 async function attach(file: string | undefined, itemId: string | undefined) {
-  if (!file || !itemId) throw new Error('Usage: strongroom attach <file> <item-id>');
+  if (!file || !itemId) throw new Error('Usage: oxvault attach <file> <item-id>');
   const session = process.env.BW_SESSION;
   if (!session) throw new Error('Vault is locked. Run: export BW_SESSION="$(bw unlock --raw)"');
   try {

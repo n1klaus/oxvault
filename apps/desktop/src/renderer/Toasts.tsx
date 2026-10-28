@@ -39,7 +39,7 @@ const fallback = {
   error: 'Could not complete the action. Try again.',
 };
 let nextId = 0;
-const toasterId = 'strongroom-vault';
+const toasterId = 'oxvault-vault';
 
 function publish(id: number, kind: ToastKind, message: string, forget: () => void) {
   const title = messages.has(message) ? message : fallback[kind];
@@ -69,7 +69,7 @@ export function useToasts() {
       for (const id of owned.current.keys()) toast.dismiss(id);
       owned.current.clear();
     };
-    const unsubscribe = window.strongroom.onState((state) => {
+    const unsubscribe = window.oxvault.onState((state) => {
       if (state.status !== 'unlocked') invalidate();
     });
     return () => {
@@ -104,7 +104,7 @@ export function Toasts() {
   const [active, setActive] = useState(true);
   useLayoutEffect(
     () =>
-      window.strongroom.onState((state) => {
+      window.oxvault.onState((state) => {
         if (state.status !== 'unlocked') setActive(false);
       }),
     [],

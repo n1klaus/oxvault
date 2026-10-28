@@ -5,8 +5,8 @@ import { mkdir, rm, writeFile, rename } from 'node:fs/promises';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { join } from 'node:path';
 import { z } from 'zod';
-import { UserError } from '@strongroom/shared/protocol';
-import type { MacAutoFillState } from '@strongroom/shared/types';
+import { UserError } from '@oxvault/shared/protocol';
+import type { MacAutoFillState } from '@oxvault/shared/types';
 import type { VerifiedListener } from './local-transport';
 import type { Vault } from './vault';
 
@@ -71,7 +71,7 @@ export class MacAutoFill {
     if (process.platform !== 'darwin' || !app.isPackaged) return;
     try {
       this.native = createRequire(__filename)(
-        join(process.resourcesPath, 'app.asar.unpacked/dist/native/strongroom-autofill.node'),
+        join(process.resourcesPath, 'app.asar.unpacked/dist/native/oxvault-autofill.node'),
       ) as Native;
     } catch {}
   }
@@ -101,7 +101,7 @@ export class MacAutoFill {
   }
 
   async status(): Promise<MacAutoFillState> {
-    if (process.env.STRONGROOM_DATA_DIR)
+    if (process.env.OXVAULT_DATA_DIR)
       return {
         available: false,
         enabled: false,
@@ -123,7 +123,7 @@ export class MacAutoFill {
       available: !!state.available && !!this.listener && !this.stopped,
       enabled: this.enabled,
       ...(!state.available
-        ? { reason: 'macOS AutoFill requires a signed Strongroom app with its AutoFill extension.' }
+        ? { reason: 'macOS AutoFill requires a signed OxVault app with its AutoFill extension.' }
         : {}),
     };
   }
@@ -135,7 +135,7 @@ export class MacAutoFill {
 
   async enable(): Promise<MacAutoFillState> {
     if (!(await this.status()).available)
-      throw new UserError('Install a signed Strongroom build with macOS AutoFill support first.');
+      throw new UserError('Install a signed OxVault build with macOS AutoFill support first.');
     if (this.enabled) return this.status();
     if (this.requesting || Date.now() - this.lastRequest < 10_000)
       throw new UserError('Wait 10 seconds before asking macOS again.');
@@ -155,14 +155,14 @@ export class MacAutoFill {
   }
 
   async safariStatus() {
-    if (process.env.STRONGROOM_DATA_DIR) return { available: false, enabled: false };
+    if (process.env.OXVAULT_DATA_DIR) return { available: false, enabled: false };
     const state = await this.call('safariStatus');
     return { available: !!state.available, enabled: !!state.enabled };
   }
 
   async safariSettings() {
     if (!(await this.safariStatus()).available)
-      throw new UserError('Install a signed Strongroom app with the Safari extension first.');
+      throw new UserError('Install a signed OxVault app with the Safari extension first.');
     try {
       await this.call('safariSettings');
     } catch {
@@ -197,7 +197,7 @@ export class MacAutoFill {
     try {
       this.listener = this.native.startVerifiedSocket(
         socketPath,
-        'app.strongroom.vault.autofill',
+        'app.oxvault.vault.autofill',
         null,
         false,
         (fd) => {

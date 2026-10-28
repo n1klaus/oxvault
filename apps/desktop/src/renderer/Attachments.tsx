@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { DownloadSimple, Paperclip, Plus, Trash } from '@phosphor-icons/react';
-import type { ItemDetail } from '@strongroom/shared/types';
+import type { ItemDetail } from '@oxvault/shared/types';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import './tasks.css';
@@ -35,24 +35,24 @@ export function Attachments({
 
   const download = (id: string) =>
     run(id, async () => {
-      const result = await window.strongroom.downloadAttachment(item.id, id);
+      const result = await window.oxvault.downloadAttachment(item.id, id);
       if (!result.ok) setMessage(result.error);
       else if (result.value) setMessage('Saved.');
     });
 
   const remove = (id: string) =>
     run(id, async () => {
-      const confirmation = await window.strongroom.confirm('deleteAttachment');
+      const confirmation = await window.oxvault.confirm('deleteAttachment');
       if (!confirmation.ok) return setMessage(confirmation.error);
       if (!confirmation.value) return;
-      const result = await window.strongroom.deleteAttachment(item.id, id);
+      const result = await window.oxvault.deleteAttachment(item.id, id);
       if (result.ok) onUpdated(result.value);
       else setMessage(result.error);
     });
 
   const add = () =>
     run('add', async () => {
-      const result = await window.strongroom.addAttachment(item.id);
+      const result = await window.oxvault.addAttachment(item.id);
       if (!result.ok) setMessage(result.error);
       else if (result.value) onUpdated(result.value);
     });

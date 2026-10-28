@@ -1,5 +1,5 @@
 import { nativeTheme, systemPreferences } from 'electron';
-import type { WindowAppearance } from '@strongroom/shared/types';
+import type { WindowAppearance } from '@oxvault/shared/types';
 
 /** Resolve semantic NSColors in the main process, never in the web renderer. */
 export function systemColors(): WindowAppearance['colors'] {

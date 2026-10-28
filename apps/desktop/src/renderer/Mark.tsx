@@ -1,4 +1,4 @@
-import { strongroomPaths } from '@strongroom/shared/brand';
+import { strongroomPaths } from '@oxvault/shared/brand';
 
 export function Mark({ size = 22 }: { size?: number }) {
   return (

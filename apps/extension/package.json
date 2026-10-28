@@ -1,5 +1,5 @@
 {
-  "name": "@strongroom/extension",
+  "name": "@oxvault/extension",
   "version": "0.3.7",
   "private": true,
   "type": "module",
@@ -17,7 +17,7 @@
     "build:extras": "vp run build:firefox && vp run build:safari"
   },
   "devDependencies": {
-    "@strongroom/shared": "workspace:*",
+    "@oxvault/shared": "workspace:*",
     "@types/chrome": "^0.3.5",
     "@types/node": "^26.6.5",
     "wxt": "^0.21.4",

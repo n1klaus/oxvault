@@ -6,7 +6,7 @@ import {
 } from 'electron';
 import { createRequire } from 'node:module';
 
-import type { WindowAppearance, WindowMaterial } from '@strongroom/shared/types';
+import type { WindowAppearance, WindowMaterial } from '@oxvault/shared/types';
 import { systemColors } from './system-colors';
 type Addon = {
   addView(handle: Buffer, options?: { cornerRadius?: number; opaque?: boolean }): number;

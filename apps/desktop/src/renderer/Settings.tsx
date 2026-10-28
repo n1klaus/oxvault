@@ -19,7 +19,7 @@ import {
   type LockTimeoutMinutes,
   type MacAutoFillState,
   type VaultState,
-} from '@strongroom/shared/types';
+} from '@oxvault/shared/types';
 import { useWebsiteIcons } from './WebsiteIcons';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -54,7 +54,7 @@ const sections = [
     id: 'browser',
     label: 'Browser',
     icon: Globe,
-    description: 'Connect Strongroom to your browser for quick, secure autofill.',
+    description: 'Connect OxVault to your browser for quick, secure autofill.',
   },
   {
     id: 'security',
@@ -64,13 +64,13 @@ const sections = [
   },
   {
     id: 'about',
-    label: 'About Strongroom',
+    label: 'About OxVault',
     icon: Info,
     description: 'A quiet companion for your Bitwarden vault.',
   },
 ] as const;
 const browsers = [
-  { id: 'safari', name: 'Safari', description: 'Enable Strongroom in Safari settings.' },
+  { id: 'safari', name: 'Safari', description: 'Enable OxVault in Safari settings.' },
   {
     id: 'chrome',
     name: 'Chrome',
@@ -79,7 +79,7 @@ const browsers = [
   {
     id: 'firefox',
     name: 'Firefox',
-    description: 'Install the signed Strongroom extension in Firefox.',
+    description: 'Install the signed OxVault extension in Firefox.',
   },
 ] as const;
 
@@ -116,7 +116,7 @@ export function Settings({
   useLayoutEffect(() => {
     alive.current = true;
     back.current?.focus({ preventScroll: true });
-    const unsubscribe = window.strongroom.onState((state) => {
+    const unsubscribe = window.oxvault.onState((state) => {
       if (state.status !== 'unlocked') {
         alive.current = false;
         epoch.current++;
@@ -131,7 +131,7 @@ export function Settings({
   }, []);
   useEffect(() => {
     let current = true;
-    void window.strongroom
+    void window.oxvault
       .lockTimeout()
       .then((result) => {
         if (!current || !alive.current) return;
@@ -152,7 +152,7 @@ export function Settings({
     const refresh = async () => {
       if (working.current) return;
       const request = ++revision;
-      const result = await window.strongroom.macAutoFill().catch(() => null);
+      const result = await window.oxvault.macAutoFill().catch(() => null);
       if (!current || !alive.current || request !== revision || working.current) return;
       if (result?.ok) setAutoFill(result.value);
       else
@@ -174,7 +174,7 @@ export function Settings({
     let current = true;
     let timer: ReturnType<typeof setTimeout>;
     const refresh = async () => {
-      const result = await window.strongroom.browserConnection().catch(() => null);
+      const result = await window.oxvault.browserConnection().catch(() => null);
       if (!current || !alive.current) return;
       setConnection(result?.ok ? result.value : 'setup-error');
       timer = setTimeout(refresh, 2000);
@@ -189,7 +189,7 @@ export function Settings({
     if (section !== 'browser') return;
     let current = true;
     const refresh = async () => {
-      const result = await window.strongroom.browserSetup().catch(() => null);
+      const result = await window.oxvault.browserSetup().catch(() => null);
       if (!current || !alive.current) return;
       if (result?.ok) setBrowserSetup(result.value);
       else setError('Could not check browser setup. Reopen Settings to try again.');
@@ -212,11 +212,11 @@ export function Settings({
     const request = ++epoch.current;
     try {
       if (kind === 'safari' || kind === 'chrome' || kind === 'firefox') {
-        const result = await window.strongroom.connectBrowser(kind);
+        const result = await window.oxvault.connectBrowser(kind);
         if (!alive.current || request !== epoch.current) return;
         if (!result.ok) setError(result.error);
       } else if (kind === 'timeout' && minutes !== undefined) {
-        const result = await window.strongroom.setLockTimeout(minutes);
+        const result = await window.oxvault.setLockTimeout(minutes);
         if (!alive.current || request !== epoch.current) return;
         if (result.ok) setTimeoutMinutes(result.value);
         else setError(result.error);
@@ -224,16 +224,16 @@ export function Settings({
       else if (kind === 'icons') await icons.setEnabled(!icons.enabled);
       else if (kind === 'autofill' || kind === 'autofillSettings') {
         if (kind === 'autofillSettings') {
-          const result = await window.strongroom.macAutoFillSettings();
+          const result = await window.oxvault.macAutoFillSettings();
           if (!result.ok && alive.current && request === epoch.current) setError(result.error);
         } else {
-          const result = await window.strongroom.enableMacAutoFill();
+          const result = await window.oxvault.enableMacAutoFill();
           if (!alive.current || request !== epoch.current) return;
           if (result.ok) setAutoFill(result.value);
           else setError(result.error);
         }
       } else {
-        const result = await window.strongroom.openExtensionFolder();
+        const result = await window.oxvault.openExtensionFolder();
         if (!alive.current || request !== epoch.current) return;
         if (!result.ok) setError(result.error);
       }
@@ -270,7 +270,7 @@ export function Settings({
           </span>
           <div>
             <strong>Settings</strong>
-            <small>Strongroom</small>
+            <small>OxVault</small>
           </div>
         </div>
         <nav aria-label="Settings categories">
@@ -323,10 +323,10 @@ export function Settings({
               <div className="settings-group">
                 <div className="settings-row">
                   <div>
-                    <strong>Use Strongroom for AutoFill</strong>
+                    <strong>Use OxVault for AutoFill</strong>
                     <p>
                       {autoFill?.enabled
-                        ? 'Strongroom is enabled in macOS.'
+                        ? 'OxVault is enabled in macOS.'
                         : 'Let macOS suggest logins from your vault.'}
                     </p>
                   </div>
@@ -353,7 +353,7 @@ export function Settings({
               <p className="settings-caption">
                 {autoFill && !autoFill.available
                   ? autoFill.reason
-                  : 'macOS will ask you to confirm. Keep Strongroom running and unlocked to fill a login.'}
+                  : 'macOS will ask you to confirm. Keep OxVault running and unlocked to fill a login.'}
               </p>
               <p className="settings-caption">
                 Login websites and usernames are shared with macOS for suggestions. Passwords are
@@ -398,12 +398,12 @@ export function Settings({
                     <strong>Connection</strong>
                     <p>
                       {connection === 'connected'
-                        ? 'Your browser extension is communicating with Strongroom.'
+                        ? 'Your browser extension is communicating with OxVault.'
                         : connection === 'setup-error'
-                          ? 'Browser setup could not finish. Restart Strongroom to try again.'
+                          ? 'Browser setup could not finish. Restart OxVault to try again.'
                           : connection === 'unavailable'
-                            ? 'Browser connections need the macOS app for now. Here Strongroom cannot check which app asks for a password.'
-                            : 'Open the Strongroom extension in your browser to connect.'}
+                            ? 'Browser connections need the macOS app for now. Here OxVault cannot check which app asks for a password.'
+                            : 'Open the OxVault extension in your browser to connect.'}
                     </p>
                   </div>
                   <Badge
@@ -456,7 +456,7 @@ export function Settings({
               {connection !== 'unavailable' && (
                 <>
                   <p className="settings-caption">
-                    Install the extension in your browser, then open it to connect. Keep Strongroom
+                    Install the extension in your browser, then open it to connect. Keep OxVault
                     running for autofill. The connection above updates automatically.
                   </p>
                   <details className="settings-caption">
@@ -465,7 +465,7 @@ export function Settings({
                       <p>
                         For Chrome, Aside and other Chromium browsers: open the extension folder,
                         enable Developer mode on your browser’s extensions page, then choose Load
-                        unpacked and select that folder. After updating Strongroom, reload the
+                        unpacked and select that folder. After updating OxVault, reload the
                         extension and refresh open website tabs.
                       </p>
                       <Button
@@ -491,7 +491,7 @@ export function Settings({
                   <FieldContent>
                     <FieldLabel htmlFor="settings-lock-timeout">Lock when idle</FieldLabel>
                     <FieldDescription id="lock-timeout-description">
-                      How long your Mac can be inactive before Strongroom locks.
+                      How long your Mac can be inactive before OxVault locks.
                     </FieldDescription>
                   </FieldContent>
                   <NativeSelect
@@ -515,7 +515,7 @@ export function Settings({
               </FieldGroup>
               <p id="lock-timeout-limits" className="settings-caption">
                 Timed locking also locks on sleep or screen lock. Never keeps the vault unlocked
-                until you lock it or quit Strongroom. Lock anytime with ⌘L.
+                until you lock it or quit OxVault. Lock anytime with ⌘L.
               </p>
               <h3>Unlock</h3>
               <FieldGroup className="settings-group">
@@ -555,7 +555,7 @@ export function Settings({
               )}
               <p id="touch-id-limits" className="settings-caption">
                 Keeps the session key in your login Keychain while locked. Touch ID is checked by
-                Strongroom. Turn this off to remove the stored key.
+                OxVault. Turn this off to remove the stored key.
               </p>
             </section>
           )}
@@ -566,7 +566,7 @@ export function Settings({
                 <div className="settings-row">
                   <div>
                     <strong>Bitwarden account</strong>
-                    <p>Strongroom connects to your existing Bitwarden vault.</p>
+                    <p>OxVault connects to your existing Bitwarden vault.</p>
                   </div>
                 </div>
                 <div className="settings-row">

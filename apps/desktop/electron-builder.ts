@@ -16,9 +16,9 @@ function compressDmgs({ artifactPaths }: BuildResult) {
 }
 
 export default {
-  appId: 'app.strongroom.vault',
-  productName: 'Strongroom',
-  artifactName: 'Strongroom-${version}-${os}-${arch}.${ext}',
+  appId: 'app.oxvault.vault',
+  productName: 'OxVault',
+  artifactName: 'OxVault-${version}-${os}-${arch}.${ext}',
   publish: null,
   directories: { output: 'release' },
   files: [
@@ -28,7 +28,7 @@ export default {
     '!dist/native/icon-info.plist',
     'package.json',
   ],
-  // Strongroom is English-only; other Chromium locales are about 45 MB per app.
+  // OxVault is English-only; other Chromium locales are about 45 MB per app.
   electronLanguages: ['en', 'en-US'],
   asar: true,
   electronFuses: {
@@ -48,7 +48,7 @@ export default {
   afterPack: 'build/embed-autofill.cjs',
   mac: {
     target: ['dmg', 'zip'],
-    icon: 'dist/native/StrongroomAutoFill.appex/Contents/Resources/Strongroom.icns',
+    icon: 'dist/native/StrongroomAutoFill.appex/Contents/Resources/OxVault.icns',
     category: 'public.app-category.productivity',
     identity: '-',
     minimumSystemVersion: '14.0',
@@ -64,8 +64,8 @@ export default {
     target: ['AppImage', 'deb'],
     icon: '../../assets/brand/macos/icon-1024.png',
     category: 'Utility',
-    executableName: 'strongroom',
-    maintainer: 'Strongroom contributors',
+    executableName: 'oxvault',
+    maintainer: 'OxVault contributors',
     // Matches the .desktop file to Electron's app ID, which Wayland shortcuts need.
     syncDesktopName: true,
   },

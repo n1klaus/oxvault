@@ -9,15 +9,15 @@ import type {
   SshKeyFields as SshKey,
   ItemDraft,
   UriDraft,
-} from '@strongroom/shared/types';
+} from '@oxvault/shared/types';
 import {
   cardBrands,
   emptyCard,
   emptyIdentity,
   itemDraft,
   uriMatchOptions,
-} from '@strongroom/shared/item-drafts';
-import { uriMatchSchema } from '@strongroom/shared/protocol';
+} from '@oxvault/shared/item-drafts';
+import { uriMatchSchema } from '@oxvault/shared/protocol';
 import type { Notifier } from './Toasts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -153,7 +153,7 @@ export function Editor({
   const nameInput = useRef<HTMLInputElement>(null);
   useLayoutEffect(() => {
     alive.current = true;
-    const unsubscribe = window.strongroom.onState((state) => {
+    const unsubscribe = window.oxvault.onState((state) => {
       if (state.status !== 'unlocked') {
         alive.current = false;
         epoch.current++;
@@ -177,7 +177,7 @@ export function Editor({
     setDiscarding(true);
     const request = ++epoch.current;
     try {
-      const result = await window.strongroom.confirm('discard');
+      const result = await window.oxvault.confirm('discard');
       if (!alive.current || request !== epoch.current) return;
       if (!result.ok) setError(result.error);
       else if (result.value) onClose();
@@ -242,7 +242,7 @@ export function Editor({
     setError('');
     const pending = notify.show('pending', 'Saving…');
     try {
-      const response = await window.strongroom.save(draft);
+      const response = await window.oxvault.save(draft);
       if (!alive.current || request !== epoch.current) return;
       if (response.ok) {
         notify.settle(pending, 'done', 'Saved to Bitwarden');
@@ -615,7 +615,7 @@ export function Editor({
                         {item?.fields[row.sourceIndex]?.name || 'This field'}
                         {item?.fields[row.sourceIndex]?.kind === 'linked'
                           ? ' links to another field'
-                          : ' has a type Strongroom cannot edit'}{' '}
+                          : ' has a type OxVault cannot edit'}{' '}
                         and is kept as it is. Edit it in Bitwarden or remove it.
                       </p>
                     ) : (
@@ -769,7 +769,7 @@ export function Editor({
   );
 }
 
-/** Lists an imported value Strongroom does not offer, so saving keeps it. */
+/** Lists an imported value OxVault does not offer, so saving keeps it. */
 function choices(options: { value: string; label: string }[], current: string) {
   const known = !current || options.some((option) => option.value === current);
   return [
@@ -847,7 +847,7 @@ function SshKeyFields({
             variant="outline"
             disabled={disabled || working}
             aria-busy={working}
-            onClick={() => void use(() => window.strongroom.generateSshKey())}
+            onClick={() => void use(() => window.oxvault.generateSshKey())}
           >
             {working && <Spinner />}
             {sshKey ? 'Generate a different key' : 'Generate key'}
@@ -866,7 +866,7 @@ function SshKeyFields({
             type="button"
             variant="outline"
             disabled={disabled || working || !pasted.trim()}
-            onClick={() => void use(() => window.strongroom.importSshKey(pasted))}
+            onClick={() => void use(() => window.oxvault.importSshKey(pasted))}
           >
             Import private key
           </Button>

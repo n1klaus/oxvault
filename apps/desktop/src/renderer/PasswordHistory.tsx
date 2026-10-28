@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { CaretDown, Check, Copy, Eye, EyeSlash as EyeOff } from '@phosphor-icons/react';
-import type { PasswordHistoryEntry } from '@strongroom/shared/types';
+import type { PasswordHistoryEntry } from '@oxvault/shared/types';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import './tasks.css';
@@ -26,7 +26,7 @@ export function PasswordHistory({
   async function copy(index: number) {
     setError('');
     try {
-      const result = await window.strongroom.copyHistory(itemId, index);
+      const result = await window.oxvault.copyHistory(itemId, index);
       if (result.ok) setCopied(index);
       else setError(result.error);
     } catch {

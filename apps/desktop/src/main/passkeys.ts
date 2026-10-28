@@ -6,11 +6,11 @@ import {
   randomUUID,
   sign,
 } from 'node:crypto';
-import { UserError } from '@strongroom/shared/protocol';
+import { UserError } from '@oxvault/shared/protocol';
 
 /**
  * A passkey as Bitwarden stores it on a login item. Field names, string
- * encodings and the counter rule match the official clients so an item Strongroom
+ * encodings and the counter rule match the official clients so an item OxVault
  * writes is usable everywhere else, and vice versa.
  */
 export interface Fido2Credential {
@@ -35,7 +35,7 @@ export const ES256 = -7;
 
 /**
  * Bitwarden's authenticator identifier, borrowed on purpose. Relying parties such
- * as Chase reject identifiers they do not list, and an unlisted Strongroom one fails
+ * as Chase reject identifiers they do not list, and an unlisted OxVault one fails
  * registration. Sites will label these passkeys as Bitwarden and may apply
  * Bitwarden-specific policy to them.
  */

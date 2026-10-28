@@ -1,5 +1,5 @@
 name: Feature request
-description: Something Strongroom should do.
+description: Something OxVault should do.
 labels: [enhancement]
 body:
   - type: markdown
@@ -15,7 +15,7 @@ body:
   - type: textarea
     id: idea
     attributes:
-      label: What would you like Strongroom to do?
+      label: What would you like OxVault to do?
     validations:
       required: true
   - type: textarea

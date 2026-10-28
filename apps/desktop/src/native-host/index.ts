@@ -1,8 +1,8 @@
 import { basename, isAbsolute } from 'node:path';
-import { FIREFOX_EXTENSION_ID } from '@strongroom/shared/browser-targets';
+import { FIREFOX_EXTENSION_ID } from '@oxvault/shared/browser-targets';
 import { createConnection } from 'node:net';
 import { readBridgeConfig, MAX_MESSAGE_BYTES } from '../main/native-config';
-import type { Result } from '@strongroom/shared/types';
+import type { Result } from '@oxvault/shared/types';
 
 const [configPath, extensionId, origin, callerArgument, ...extraArguments] = process.argv.slice(2);
 const chromiumCaller =
@@ -13,7 +13,7 @@ const firefoxCaller =
   callerArgument === FIREFOX_EXTENSION_ID &&
   typeof origin === 'string' &&
   isAbsolute(origin) &&
-  basename(origin) === 'app.strongroom.vault.json';
+  basename(origin) === 'app.oxvault.vault.json';
 if (!configPath || !extensionId || extraArguments.length || (!chromiumCaller && !firefoxCaller))
   process.exit(1);
 
@@ -32,7 +32,7 @@ process.stdin.on('data', (chunk: Buffer) => {
       try {
         response = await forward(JSON.parse(payload));
       } catch {
-        response = { ok: false, error: 'Open Strongroom on your computer to connect your vault.' };
+        response = { ok: false, error: 'Open OxVault on your computer to connect your vault.' };
       }
       const body = Buffer.from(JSON.stringify(response));
       const header = Buffer.alloc(4);

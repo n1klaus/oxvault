@@ -1,6 +1,6 @@
 {
   "$schema": "https://www.raycast.com/schemas/extension.json",
-  "name": "strongroom-raycast",
+  "name": "oxvault-raycast",
   "title": "Strongroom",
   "description": "Unlock and search your Strongroom logins and secure notes.",
   "icon": "icon.png",
@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@raycast/api": "2.7.3",
-    "@strongroom/shared": "workspace:*"
+    "@oxvault/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "26.6.5",

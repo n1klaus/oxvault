@@ -20,9 +20,9 @@ export async function notarizeRelease({ root, app, identity, notarizationProfile
     run('xcrun', ['stapler', 'staple', file]);
     run('xcrun', ['stapler', 'validate', file]);
   };
-  const temporary = await mkdtemp(join(tmpdir(), 'strongroom-notarize-'));
+  const temporary = await mkdtemp(join(tmpdir(), 'oxvault-notarize-'));
   try {
-    const submission = join(temporary, 'Strongroom.zip');
+    const submission = join(temporary, 'OxVault.zip');
     run('ditto', ['-c', '-k', '--keepParent', app, submission]);
     notarize(submission);
     staple(app);

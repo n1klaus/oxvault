@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
 const source = resolve(root, 'apps/raycast');
-const output = resolve(root, 'release/raycast/strongroom');
+const output = resolve(root, 'release/raycast/oxvault');
 const lockfile = resolve(source, 'store/package-lock.json');
 const updateLock = process.argv.includes('--update-lock');
 const readJson = (file) => JSON.parse(readFileSync(file, 'utf8'));
@@ -30,11 +30,11 @@ for (const file of ['protocol.ts', 'types.ts'])
 const bridge = resolve(output, 'src/bridge.ts');
 writeFileSync(
   bridge,
-  readFileSync(bridge, 'utf8').replace('@strongroom/shared/protocol', './protocol'),
+  readFileSync(bridge, 'utf8').replace('@oxvault/shared/protocol', './protocol'),
 );
 
 const manifest = readJson(resolve(source, 'package.json'));
-delete manifest.dependencies['@strongroom/shared'];
+delete manifest.dependencies['@oxvault/shared'];
 delete manifest.scripts.typecheck;
 manifest.access = 'public';
 manifest.scripts.build = 'ray build -e dist';
@@ -63,9 +63,9 @@ run('npm', ['ci']);
 run('npm', ['run', 'build']);
 run('npm', ['run', 'lint']);
 const { version } = readJson(resolve(root, 'apps/desktop/package.json'));
-const archive = resolve(root, `release/strongroom-${version}-raycast.zip`);
+const archive = resolve(root, `release/oxvault-${version}-raycast.zip`);
 rmSync(archive, { force: true });
-execFileSync('zip', ['-qr', archive, 'strongroom', '-x', '*/node_modules/*', '*/dist/*'], {
+execFileSync('zip', ['-qr', archive, 'oxvault', '-x', '*/node_modules/*', '*/dist/*'], {
   cwd: resolve(output, '..'),
   stdio: 'inherit',
 });

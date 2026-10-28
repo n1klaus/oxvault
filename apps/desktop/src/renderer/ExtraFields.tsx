@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Check, Copy, Eye, EyeSlash as EyeOff } from '@phosphor-icons/react';
-import type { ExtraField } from '@strongroom/shared/types';
+import type { ExtraField } from '@oxvault/shared/types';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import './tasks.css';
@@ -25,8 +25,8 @@ export function ExtraFields({
     setError('');
     try {
       const result = await (kind === 'custom'
-        ? window.strongroom.copyCustomField(itemId, index)
-        : window.strongroom.copyExtra(itemId, index));
+        ? window.oxvault.copyCustomField(itemId, index)
+        : window.oxvault.copyExtra(itemId, index));
       if (result.ok) setCopied(index);
       else setError(result.error);
     } catch {

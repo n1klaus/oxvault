@@ -148,7 +148,7 @@ export interface CardFields {
 export interface CustomField {
   name: string;
   value: string;
-  /** `unknown` is a field type Strongroom does not know; it shows masked and is never rewritten. */
+  /** `unknown` is a field type OxVault does not know; it shows masked and is never rewritten. */
   kind: 'text' | 'hidden' | 'boolean' | 'linked' | 'unknown';
 }
 
@@ -276,7 +276,7 @@ export interface FillCredential {
   password: string;
 }
 
-/** What Strongroom would do with a sign-in the browser just watched happen. */
+/** What OxVault would do with a sign-in the browser just watched happen. */
 export interface CaptureOffer {
   action: 'none' | 'save' | 'update';
   /** The item that would be written, for the prompt to name. */

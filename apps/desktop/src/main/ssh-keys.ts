@@ -2,11 +2,11 @@ import { execFile } from 'node:child_process';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
-import { UserError } from '@strongroom/shared/protocol';
-import type { SshKeyFields } from '@strongroom/shared/types';
+import { UserError } from '@oxvault/shared/protocol';
+import type { SshKeyFields } from '@oxvault/shared/types';
 
 const run = promisify(execFile);
-// The system's own OpenSSH writes and reads the keys; Strongroom adds no key code.
+// The system's own OpenSSH writes and reads the keys; OxVault adds no key code.
 const SSH_KEYGEN =
   process.platform === 'win32'
     ? join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'OpenSSH', 'ssh-keygen.exe')
@@ -23,16 +23,16 @@ async function keygen(args: string[]) {
       throw new UserError('Remove the passphrase from this key, then import it again.');
     if (/invalid format|not a key|error in libcrypto/i.test(stderr))
       throw new UserError(
-        'Strongroom can import OpenSSH keys and RSA or ECDSA PEM keys. Convert other keys to OpenSSH format first.',
+        'OxVault can import OpenSSH keys and RSA or ECDSA PEM keys. Convert other keys to OpenSSH format first.',
       );
     if ((error as NodeJS.ErrnoException).code === 'ENOENT')
-      throw new UserError('Strongroom needs OpenSSH’s ssh-keygen to create SSH keys.');
+      throw new UserError('OxVault needs OpenSSH’s ssh-keygen to create SSH keys.');
     throw new UserError('Could not read the SSH key. Try again.');
   }
 }
 
 /**
- * Runs `work` in a private directory beside Strongroom's data, which holds the
+ * Runs `work` in a private directory beside OxVault's data, which holds the
  * key only while ssh-keygen needs it.
  */
 async function inTemporaryDirectory<T>(parent: string, work: (file: string) => Promise<T>) {

@@ -1,5 +1,5 @@
 import { screen, systemPreferences, type BrowserWindow, type Rectangle } from 'electron';
-import type { VaultState } from '@strongroom/shared/types';
+import type { VaultState } from '@oxvault/shared/types';
 
 /** Compact authentication without losing the user's workspace position. */
 export function manageWindowLayout(window: BrowserWindow) {

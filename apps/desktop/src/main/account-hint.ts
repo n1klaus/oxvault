@@ -1,6 +1,6 @@
 import { readFile, rename, writeFile } from 'node:fs/promises';
 import { z } from 'zod';
-import type { VaultState } from '@strongroom/shared/types';
+import type { VaultState } from '@oxvault/shared/types';
 
 const schema = z.object({ email: z.email().max(320), server: z.url().max(2_048) });
 export type AccountHint = z.infer<typeof schema>;

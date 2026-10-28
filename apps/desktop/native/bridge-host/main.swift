@@ -56,15 +56,15 @@ private func connectSocket(_ path: String) -> Int32? {
 private func forward(_ request: Any, raycast: Bool) -> Any {
   let configPath = FileManager.default.homeDirectoryForCurrentUser
     .appendingPathComponent(
-      raycast ? "Library/Application Support/Strongroom/raycast-bridge.json"
-        : "Library/Application Support/Strongroom/bridge.json")
+      raycast ? "Library/Application Support/OxVault/raycast-bridge.json"
+        : "Library/Application Support/OxVault/bridge.json")
   guard let data = try? Data(contentsOf: configPath),
     let config = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
     let path = config["socketPath"] as? String,
     let token = config["token"] as? String,
     token.count == 64,
     let fd = connectSocket(path)
-  else { return ["ok": false, "error": "Open Strongroom to connect your vault."] }
+  else { return ["ok": false, "error": "Open OxVault to connect your vault."] }
   defer { Darwin.close(fd) }
   var noSignal: Int32 = 1
   _ = setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &noSignal, socklen_t(MemoryLayout<Int32>.size))
@@ -74,7 +74,7 @@ private func forward(_ request: Any, raycast: Bool) -> Any {
   guard let payload = try? JSONSerialization.data(withJSONObject: ["token": token, "request": request]),
     payload.count < maxMessageBytes,
     writeAll(fd, bytes: Array(payload) + [10])
-  else { return ["ok": false, "error": "Strongroom request failed."] }
+  else { return ["ok": false, "error": "OxVault request failed."] }
   var reply = [UInt8]()
   var buffer = [UInt8](repeating: 0, count: 4096)
   var complete = false
@@ -90,7 +90,7 @@ private func forward(_ request: Any, raycast: Bool) -> Any {
   }
   guard complete, reply.count < maxMessageBytes,
     let response = try? JSONSerialization.jsonObject(with: Data(reply)) else {
-    return ["ok": false, "error": "Strongroom disconnected."]
+    return ["ok": false, "error": "OxVault disconnected."]
   }
   return response
 }

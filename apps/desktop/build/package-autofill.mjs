@@ -8,19 +8,19 @@ import { buildSafari } from './build-safari.mjs';
 // Explicit signing inputs keep an unsigned development build from claiming a
 // restricted capability, or silently choosing a different Apple team.
 const root = resolve(import.meta.dirname, '..');
-const identity = process.env.STRONGROOM_SIGN_IDENTITY;
-const appProfile = process.env.STRONGROOM_APP_PROFILE;
-const extensionProfile = process.env.STRONGROOM_AUTOFILL_PROFILE;
+const identity = process.env.OXVAULT_SIGN_IDENTITY;
+const appProfile = process.env.OXVAULT_APP_PROFILE;
+const extensionProfile = process.env.OXVAULT_AUTOFILL_PROFILE;
 const release = process.argv.includes('--release');
-const notarizationProfile = process.env.STRONGROOM_NOTARY_PROFILE;
+const notarizationProfile = process.env.OXVAULT_NOTARY_PROFILE;
 let localDeviceIds;
 if (process.platform !== 'darwin' || !identity || !appProfile || !extensionProfile)
   throw new Error(
-    'Set STRONGROOM_SIGN_IDENTITY, STRONGROOM_APP_PROFILE and STRONGROOM_AUTOFILL_PROFILE on a Mac. See native/autofill/README.md.',
+    'Set OXVAULT_SIGN_IDENTITY, OXVAULT_APP_PROFILE and OXVAULT_AUTOFILL_PROFILE on a Mac. See native/autofill/README.md.',
   );
 if (release && (!identity.startsWith('Developer ID Application:') || !notarizationProfile))
   throw new Error(
-    'Release builds require a Developer ID Application identity and STRONGROOM_NOTARY_PROFILE.',
+    'Release builds require a Developer ID Application identity and OXVAULT_NOTARY_PROFILE.',
   );
 
 function profile(path, identifier, autofill = true) {
@@ -59,26 +59,26 @@ function profile(path, identifier, autofill = true) {
   }
   return { team, applicationIdentifier };
 }
-const host = profile(appProfile, 'app.strongroom.vault');
-const extension = profile(extensionProfile, 'app.strongroom.vault.autofill');
+const host = profile(appProfile, 'app.oxvault.vault');
+const extension = profile(extensionProfile, 'app.oxvault.vault.autofill');
 if (host.team !== extension.team)
   throw new Error('Both profiles must belong to the same Apple team.');
-const group = `${host.team}.app.strongroom.vault`;
-const safariProfile = process.env.STRONGROOM_SAFARI_PROFILE;
+const group = `${host.team}.app.oxvault.vault`;
+const safariProfile = process.env.OXVAULT_SAFARI_PROFILE;
 const safari = safariProfile
-  ? profile(safariProfile, 'app.strongroom.vault.safari', false)
+  ? profile(safariProfile, 'app.oxvault.vault.safari', false)
   : undefined;
 if (safari && safari.team !== host.team)
-  throw new Error('Safari and Strongroom must use the same signing team.');
+  throw new Error('Safari and OxVault must use the same signing team.');
 const env = {
   ...process.env,
-  STRONGROOM_APP_GROUP: group,
-  STRONGROOM_RELEASE: release ? '1' : '0',
+  OXVAULT_APP_GROUP: group,
+  OXVAULT_RELEASE: release ? '1' : '0',
   CSC_IDENTITY_AUTO_DISCOVERY: 'false',
 };
 execFileSync('pnpm', ['run', 'build'], { cwd: root, env, stdio: 'inherit' });
 if (safari) {
-  execFileSync('pnpm', ['--filter', '@strongroom/extension', 'build:safari'], {
+  execFileSync('pnpm', ['--filter', '@oxvault/extension', 'build:safari'], {
     cwd: root,
     env,
     stdio: 'inherit',
@@ -103,7 +103,7 @@ execFileSync(
     stdio: 'inherit',
   },
 );
-const app = join(root, 'release/mac-arm64/Strongroom.app');
+const app = join(root, 'release/mac-arm64/OxVault.app');
 const appex = join(app, 'Contents/PlugIns/LatchAutoFill.appex');
 const signing = join(root, 'release/autofill-signing');
 await mkdir(signing, { recursive: true, mode: 0o700 });
@@ -197,6 +197,6 @@ if (release) {
   await notarizeRelease({ root, app, identity, notarizationProfile, env });
 } else {
   console.log(
-    'Signed AutoFill build: release/mac-arm64/Strongroom.app. Not installed or notarized.',
+    'Signed AutoFill build: release/mac-arm64/OxVault.app. Not installed or notarized.',
   );
 }

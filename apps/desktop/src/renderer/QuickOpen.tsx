@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import type { ItemSummary } from '@strongroom/shared/types';
+import type { ItemSummary } from '@oxvault/shared/types';
 import { ItemIcon, displayWebsite, typeName } from './items';
 import {
   Command,

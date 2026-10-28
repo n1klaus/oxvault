@@ -10,9 +10,9 @@ import {
   Trash as Trash2,
   WarningCircle as CircleAlert,
 } from '@phosphor-icons/react';
-import { uriMatchOptions } from '@strongroom/shared/item-drafts';
-import { detailRows, inSentence } from '@strongroom/shared/item-fields';
-import type { CardFields, CopyTarget, ItemDetail } from '@strongroom/shared/types';
+import { uriMatchOptions } from '@oxvault/shared/item-drafts';
+import { detailRows, inSentence } from '@oxvault/shared/item-fields';
+import type { CardFields, CopyTarget, ItemDetail } from '@oxvault/shared/types';
 import { ItemIcon, displayWebsite, fieldLabels, typeName, type CopyField } from './items';
 import type { Notifier } from './Toasts';
 import { Button } from '@/components/ui/button';
@@ -65,7 +65,7 @@ export function Detail({
     epoch.current++;
     working.current = false;
     copyWorking.current = false;
-    const unsubscribe = window.strongroom.onState((state) => {
+    const unsubscribe = window.oxvault.onState((state) => {
       if (state.status !== 'unlocked') {
         alive.current = false;
         epoch.current++;
@@ -92,7 +92,7 @@ export function Detail({
     let pending: ReturnType<Notifier['show']> | undefined;
     try {
       if (!restore) {
-        const confirmation = await window.strongroom.confirm('trash');
+        const confirmation = await window.oxvault.confirm('trash');
         if (!alive.current || version !== epoch.current) return;
         if (!confirmation.ok) {
           setError(confirmation.error);
@@ -102,8 +102,8 @@ export function Detail({
       }
       pending = notify.show('pending', restore ? 'Restoring…' : 'Moving to Trash…');
       const result = await (restore
-        ? window.strongroom.restore(item.id)
-        : window.strongroom.remove(item.id));
+        ? window.oxvault.restore(item.id)
+        : window.oxvault.remove(item.id));
       if (!alive.current || version !== epoch.current) return;
       if (result.ok) {
         notify.settle(pending, 'done', restore ? 'Restored to your vault' : 'Moved to Trash');
@@ -131,7 +131,7 @@ export function Detail({
     setError('');
     const version = epoch.current;
     try {
-      const result = await window.strongroom.copy(item.id, copyable.target);
+      const result = await window.oxvault.copy(item.id, copyable.target);
       if (!alive.current || version !== epoch.current) return;
       if (result.ok) setCopied(copyable);
       else setError(result.error);
@@ -270,7 +270,7 @@ export function Detail({
           <div className="task-actions">
             {item.restorable && <Badge variant="secondary">In Trash</Badge>}
             {!item.editable && !item.restorable && (
-              <Badge variant="outline">Read-only in Strongroom</Badge>
+              <Badge variant="outline">Read-only in OxVault</Badge>
             )}
           </div>
         )}
@@ -351,7 +351,7 @@ export function Detail({
             <Fingerprint />
             <AlertTitle>Passkey</AlertTitle>
             <AlertDescription>
-              Signs in through macOS AutoFill when Strongroom is unlocked. Edit it in Bitwarden.
+              Signs in through macOS AutoFill when OxVault is unlocked. Edit it in Bitwarden.
             </AlertDescription>
           </Alert>
         )}
@@ -363,7 +363,7 @@ export function Detail({
         )}
         {![1, 2, 3].includes(item.type) && !item.details && (
           <Alert>
-            <AlertTitle>Read-only in Strongroom</AlertTitle>
+            <AlertTitle>Read-only in OxVault</AlertTitle>
             <AlertDescription>
               Use the official Bitwarden client for this item's full details.
             </AlertDescription>

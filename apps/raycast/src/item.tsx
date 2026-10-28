@@ -5,9 +5,9 @@ import { CopyField, DetailRow, ItemDetail, request, VaultItem } from './bridge';
 export function OpenLatch() {
   return (
     <Action
-      title="Open Strongroom"
+      title="Open OxVault"
       icon={Icon.AppWindow}
-      onAction={() => open('/Applications/Strongroom.app')}
+      onAction={() => open('/Applications/OxVault.app')}
     />
   );
 }
@@ -27,7 +27,7 @@ export function ItemActions({
       await showToast({
         style: Toast.Style.Success,
         title: `${label} copied`,
-        message: 'Strongroom clears it after 30 seconds.',
+        message: 'OxVault clears it after 30 seconds.',
       });
     } catch (error) {
       onFailure();
@@ -114,7 +114,7 @@ export function ItemActions({
   );
 }
 
-/** Copies one detail row through Strongroom, which clears the clipboard after 30 seconds. */
+/** Copies one detail row through OxVault, which clears the clipboard after 30 seconds. */
 function RowActions({
   item,
   row,
@@ -137,7 +137,7 @@ function RowActions({
               await showToast({
                 style: Toast.Style.Success,
                 title: `${row.label} copied`,
-                message: 'Strongroom clears it after 30 seconds.',
+                message: 'OxVault clears it after 30 seconds.',
               });
             } catch (error) {
               onFailure();

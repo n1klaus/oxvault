@@ -30,7 +30,7 @@ import type {
   ItemSummary,
   MenuPosition,
   VaultState,
-} from '@strongroom/shared/types';
+} from '@oxvault/shared/types';
 import { Auth } from './Auth';
 import { Editor } from './Editor';
 import { FolderDialog } from './FolderDialog';
@@ -232,9 +232,9 @@ export function App() {
 
   useEffect(() => {
     let active = true;
-    const unsubscribe = window.strongroom.onState(receiveState);
+    const unsubscribe = window.oxvault.onState(receiveState);
     const version = stateVersion.current;
-    void window.strongroom
+    void window.oxvault
       .state()
       .then((response) => {
         if (!active || version !== stateVersion.current) return;
@@ -243,7 +243,7 @@ export function App() {
             ? response.value
             : {
                 ...initialState,
-                setupError: 'Could not connect to Strongroom. Reopen the app to try again.',
+                setupError: 'Could not connect to OxVault. Reopen the app to try again.',
               },
         );
       })
@@ -251,7 +251,7 @@ export function App() {
         if (active && version === stateVersion.current)
           receiveState({
             ...initialState,
-            setupError: 'Could not connect to Strongroom. Reopen the app to try again.',
+            setupError: 'Could not connect to OxVault. Reopen the app to try again.',
           });
       });
     return () => {
@@ -264,7 +264,7 @@ export function App() {
     if (stateRef.current.status !== 'unlocked' || locking.current) return;
     locking.current = true;
     receiveState({ ...stateRef.current, status: 'locked', itemCount: 0, trashCount: 0 });
-    void window.strongroom
+    void window.oxvault
       .lock()
       .then((response) => {
         if (response.ok && response.value.status !== 'unlocked') receiveState(response.value);
@@ -293,7 +293,7 @@ export function App() {
     return (
       <div className="boot" role="status">
         <Mark size={30} />
-        <span>Strongroom</span>
+        <span>OxVault</span>
       </div>
     );
   if (state.status !== 'unlocked')
@@ -330,7 +330,7 @@ function VaultWorkspace({
   // Leaving an item that asks for the master password closes it, even mid-check.
   useEffect(() => {
     if (!selectedId || !selectedReprompt) return;
-    return () => void window.strongroom.closeProtected(selectedId).catch(() => undefined);
+    return () => void window.oxvault.closeProtected(selectedId).catch(() => undefined);
   }, [selectedId, selectedReprompt]);
   const selectedSummary =
     selection.status === 'protected'
@@ -375,13 +375,13 @@ function VaultWorkspace({
 
   useEffect(() => {
     const version = ++listVersion.current;
-    void window.strongroom
+    void window.oxvault
       .folders()
       .then((listed) => {
         if (alive.current && version === listVersion.current && listed.ok) setFolders(listed.value);
       })
       .catch(() => undefined);
-    void window.strongroom
+    void window.oxvault
       .items()
       .then((listed) => {
         if (!alive.current || version !== listVersion.current) return;
@@ -409,7 +409,7 @@ function VaultWorkspace({
     if (filter !== 'trash') return;
     let current = true;
     setTrashLoading(true);
-    void window.strongroom
+    void window.oxvault
       .trash()
       .then((result) => {
         if (!alive.current || !current) return;
@@ -455,7 +455,7 @@ function VaultWorkspace({
     }
   }, []);
 
-  useEffect(() => window.strongroom.onCommand(runCommand), [runCommand]);
+  useEffect(() => window.oxvault.onCommand(runCommand), [runCommand]);
   useEffect(() => {
     const keyboard = (event: KeyboardEvent) => {
       if (!(event.metaKey || event.ctrlKey) || event.altKey || event.isComposing) return;
@@ -508,9 +508,9 @@ function VaultWorkspace({
   const selectedFolder = folders.find((folder) => `folder:${folder.id}` === filter) ?? null;
   async function deleteFolder(folder: Folder) {
     if (hasModal()) return;
-    const confirmed = await window.strongroom.confirm('deleteFolder').catch(() => null);
+    const confirmed = await window.oxvault.confirm('deleteFolder').catch(() => null);
     if (!alive.current || !confirmed?.ok || !confirmed.value) return;
-    const result = await window.strongroom.deleteFolder(folder.id).catch(() => null);
+    const result = await window.oxvault.deleteFolder(folder.id).catch(() => null);
     if (!alive.current) return;
     if (result?.ok) {
       notify.show('done', 'Folder deleted');
@@ -554,7 +554,7 @@ function VaultWorkspace({
     if (!reopened || blocked) setSelection({ status: blocked ?? 'loading', id: item.id });
     if (blocked) return;
     try {
-      const response = await window.strongroom.detail(item.id);
+      const response = await window.oxvault.detail(item.id);
       if (!alive.current || version !== selectionVersion.current) return;
       if (response.ok) {
         setSelection({ status: 'ready', item: response.value });
@@ -573,7 +573,7 @@ function VaultWorkspace({
     favoriteWorking.current = true;
     setFavoritePending(item.id);
     try {
-      const result = await window.strongroom.setFavorite(item.id, !item.favorite);
+      const result = await window.oxvault.setFavorite(item.id, !item.favorite);
       if (!alive.current) return;
       if (result.ok)
         setItems((current) =>
@@ -603,7 +603,7 @@ function VaultWorkspace({
       if (!detail || !alive.current || hasModal()) return;
       const version = selectionVersion.current;
       const current = () => alive.current && version === selectionVersion.current;
-      const result = await window.strongroom.itemMenu(item.id, position);
+      const result = await window.oxvault.itemMenu(item.id, position);
       if (!current() || hasModal()) return;
       if (!result.ok) {
         notify.show('error', result.error);
@@ -617,7 +617,7 @@ function VaultWorkspace({
       }
       if (action !== 'trash' && action !== 'restore') {
         const field = copyFields[action];
-        const copied = await window.strongroom.copy(item.id, field);
+        const copied = await window.oxvault.copy(item.id, field);
         if (current())
           notify.show(
             copied.ok ? 'done' : 'error',
@@ -626,7 +626,7 @@ function VaultWorkspace({
         return;
       }
       if (action === 'trash') {
-        const confirmation = await window.strongroom.confirm('trash');
+        const confirmation = await window.oxvault.confirm('trash');
         if (!current()) return;
         if (!confirmation.ok) {
           notify.show('error', confirmation.error);
@@ -637,8 +637,8 @@ function VaultWorkspace({
       const restore = action === 'restore';
       pending = notify.show('pending', restore ? 'Restoring…' : 'Moving to Trash…');
       const changed = await (restore
-        ? window.strongroom.restore(item.id)
-        : window.strongroom.remove(item.id));
+        ? window.oxvault.restore(item.id)
+        : window.oxvault.remove(item.id));
       if (!alive.current) return;
       notify.settle(
         pending,
@@ -677,7 +677,7 @@ function VaultWorkspace({
       enabled ? 'Setting up Touch ID…' : 'Turning off Touch ID…',
     );
     try {
-      const result = await window.strongroom.setBiometrics(enabled);
+      const result = await window.oxvault.setBiometrics(enabled);
       if (!alive.current) return;
       if (result.ok) {
         notify.settle(pending, 'done', enabled ? 'Touch ID is on' : 'Touch ID is off');
@@ -693,7 +693,7 @@ function VaultWorkspace({
     setSyncing(true);
     const pending = notify.show('pending', 'Syncing with Bitwarden…');
     try {
-      const response = await window.strongroom.sync();
+      const response = await window.oxvault.sync();
       if (!alive.current) return;
       setSyncing(false);
       if (response.ok) {

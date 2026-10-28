@@ -10,9 +10,9 @@ const root = resolve(import.meta.dirname, '..');
 const desktop = resolve(root, 'dist/desktop');
 await mkdir(desktop, { recursive: true });
 // Native and browser development have their own rebuild commands. Reuse their outputs.
-if (!existsSync(resolve(root, 'dist/native/strongroom-autofill.node'))) await buildAutoFill(root);
+if (!existsSync(resolve(root, 'dist/native/oxvault-autofill.node'))) await buildAutoFill(root);
 if (!existsSync(resolve(root, '../extension/.output/chrome-mv3/manifest.json')))
-  execFileSync('pnpm', ['--filter', '@strongroom/extension', 'build:chrome'], {
+  execFileSync('pnpm', ['--filter', '@oxvault/extension', 'build:chrome'], {
     cwd: root,
     stdio: 'inherit',
   });
@@ -31,7 +31,7 @@ const server = await createServer({
 await server.listen();
 server.printUrls();
 const electronPath = createRequire(import.meta.url)('electron');
-const env = { ...process.env, STRONGROOM_RENDERER_URL: 'http://127.0.0.1:5173/' };
+const env = { ...process.env, OXVAULT_RENDERER_URL: 'http://127.0.0.1:5173/' };
 delete env.ELECTRON_RUN_AS_NODE;
 let electron;
 let stopping = false;

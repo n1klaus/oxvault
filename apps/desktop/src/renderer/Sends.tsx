@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { LinkSimple, PaperPlaneTilt, Plus, Trash } from '@phosphor-icons/react';
-import type { SendDraft, SendSummary } from '@strongroom/shared/types';
+import type { SendDraft, SendSummary } from '@oxvault/shared/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -52,7 +52,7 @@ export function Sends() {
 
   const load = useCallback(async () => {
     try {
-      const result = await window.strongroom.sends();
+      const result = await window.oxvault.sends();
       if (!alive.current) return;
       if (result.ok) setSends(result.value);
       else setMessage(result.error);
@@ -65,7 +65,7 @@ export function Sends() {
     alive.current = true;
     void load();
     // A locked vault drops everything shown here at once.
-    const unsubscribe = window.strongroom.onState((state) => {
+    const unsubscribe = window.oxvault.onState((state) => {
       if (state.status !== 'unlocked') {
         alive.current = false;
         setSends(null);
@@ -113,7 +113,7 @@ export function Sends() {
         draft.type === 'text'
           ? { ...base, type: 'text', text: draft.text, hidden: draft.hidden }
           : { ...base, type: 'file' };
-      const result = await window.strongroom.createSend(request);
+      const result = await window.oxvault.createSend(request);
       if (!alive.current) return;
       if (!result.ok) return setMessage(result.error);
       // null means the person closed the file dialog.
@@ -127,7 +127,7 @@ export function Sends() {
 
   const copyLink = (send: SendSummary) =>
     run(send.id, async () => {
-      const result = await window.strongroom.copySendLink(send.id);
+      const result = await window.oxvault.copySendLink(send.id);
       setMessage(
         result.ok ? 'Link copied. It clears from the clipboard in 30 seconds.' : result.error,
       );
@@ -135,7 +135,7 @@ export function Sends() {
 
   const removePassword = (send: SendSummary) =>
     run(send.id, async () => {
-      const result = await window.strongroom.removeSendPassword(send.id);
+      const result = await window.oxvault.removeSendPassword(send.id);
       if (!alive.current) return;
       if (result.ok) setSends(result.value);
       else setMessage(result.error);
@@ -143,10 +143,10 @@ export function Sends() {
 
   const remove = (send: SendSummary) =>
     run(send.id, async () => {
-      const confirmation = await window.strongroom.confirm('deleteSend');
+      const confirmation = await window.oxvault.confirm('deleteSend');
       if (!confirmation.ok) return setMessage(confirmation.error);
       if (!confirmation.value) return;
-      const result = await window.strongroom.deleteSend(send.id);
+      const result = await window.oxvault.deleteSend(send.id);
       if (!alive.current) return;
       if (result.ok) setSends(result.value);
       else setMessage(result.error);

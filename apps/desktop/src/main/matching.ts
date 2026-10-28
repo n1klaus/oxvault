@@ -1,5 +1,5 @@
-import { isLocalHost, webUrl, parsedWebUrl } from '@strongroom/shared/urls';
-export { webUrl } from '@strongroom/shared/urls';
+import { isLocalHost, webUrl, parsedWebUrl } from '@oxvault/shared/urls';
+export { webUrl } from '@oxvault/shared/urls';
 import { parse } from 'tldts';
 
 export interface CipherUri {
@@ -8,7 +8,7 @@ export interface CipherUri {
 }
 
 /**
- * A web address Strongroom is willing to hand a credential to. Plain HTTP puts the
+ * A web address OxVault is willing to hand a credential to. Plain HTTP puts the
  * password on the wire, so it is only filled where the traffic stays on this
  * machine or the local network, which is also where a certificate is not
  * possible. Routers and other local devices live here; the open internet does

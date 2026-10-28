@@ -1,7 +1,7 @@
-import { detailRows } from '@strongroom/shared/item-fields';
-import type { CopyTarget, ItemDetail } from '@strongroom/shared/types';
+import { detailRows } from '@oxvault/shared/item-fields';
+import type { CopyTarget, ItemDetail } from '@oxvault/shared/types';
 
-/** A row Raycast shows. Secret rows carry a mask, never the value; copying goes through Strongroom. */
+/** A row Raycast shows. Secret rows carry a mask, never the value; copying goes through OxVault. */
 export interface LauncherRow {
   id: string;
   label: string;

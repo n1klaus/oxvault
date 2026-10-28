@@ -14,7 +14,7 @@ import {
   MagnifyingGlass as Search,
   Star,
 } from '@phosphor-icons/react';
-import type { ItemSummary, MenuPosition } from '@strongroom/shared/types';
+import type { ItemSummary, MenuPosition } from '@oxvault/shared/types';
 import { ItemIcon, displayWebsite, typeName } from './items';
 import { VAULT_LIST_OVERSCAN, VAULT_ROW_HEIGHT } from './metrics';
 import { Button } from '@/components/ui/button';

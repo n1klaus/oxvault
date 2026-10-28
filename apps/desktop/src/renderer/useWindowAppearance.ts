@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { windowColorTokens, type WindowAppearance } from '@strongroom/shared/types';
+import { windowColorTokens, type WindowAppearance } from '@oxvault/shared/types';
 
 /** Subscribe first; a delayed initial read must not replace a newer event. */
 export function useWindowAppearance() {
@@ -23,8 +23,8 @@ export function useWindowAppearance() {
         else root.style.removeProperty(`--${token}`);
       }
     };
-    const unsubscribe = window.strongroom.onAppearance(apply);
-    void window.strongroom
+    const unsubscribe = window.oxvault.onAppearance(apply);
+    void window.oxvault
       .appearance()
       .then((result) => {
         if (result.ok) apply(result.value);

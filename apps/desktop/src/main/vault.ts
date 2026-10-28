@@ -2,9 +2,9 @@ import { EventEmitter } from 'node:events';
 import { randomInt } from 'node:crypto';
 import { CodeRejectedError, type CliPort, type CliPrompt } from './cli';
 import { fillableUrl, matchesUri, normalizeServer, webUrl, type CipherUri } from './matching';
-import { UserError, type BrowserVaultQuery } from '@strongroom/shared/protocol';
-import { cardLabel } from '@strongroom/shared/item-drafts';
-import { detailSections } from '@strongroom/shared/item-fields';
+import { UserError, type BrowserVaultQuery } from '@oxvault/shared/protocol';
+import { cardLabel } from '@oxvault/shared/item-drafts';
+import { detailSections } from '@oxvault/shared/item-fields';
 import {
   ES256,
   attestationObject,
@@ -39,7 +39,7 @@ import type {
   PasswordOptions,
   TwoStepMethod,
   VaultState,
-} from '@strongroom/shared/types';
+} from '@oxvault/shared/types';
 
 export interface Cipher {
   id: string;
@@ -255,7 +255,7 @@ export class Vault extends EventEmitter {
       };
       try {
         session = await this.cli.run(
-          ['unlock', '--passwordenv', 'STRONGROOM_MASTER_PASSWORD', '--raw'],
+          ['unlock', '--passwordenv', 'OXVAULT_MASTER_PASSWORD', '--raw'],
           { password: input.password },
         );
       } catch (error) {
@@ -315,7 +315,7 @@ export class Vault extends EventEmitter {
               'login',
               email,
               '--passwordenv',
-              'STRONGROOM_MASTER_PASSWORD',
+              'OXVAULT_MASTER_PASSWORD',
               '--raw',
               ...(pending.method ? ['--method', METHOD_FLAGS[pending.method]] : []),
             ],
@@ -348,7 +348,7 @@ export class Vault extends EventEmitter {
     if (this.pending !== pending) return undefined;
     if (prompt.kind === 'unknown') {
       pending.failure = new UserError(
-        'Bitwarden asked a question Strongroom cannot answer. Use Personal API key sign-in.',
+        'Bitwarden asked a question OxVault cannot answer. Use Personal API key sign-in.',
       );
       return undefined;
     }
@@ -383,7 +383,7 @@ export class Vault extends EventEmitter {
     if (this.state.status !== 'locked') throw new UserError('The vault is not locked.');
     const generation = ++this.generation;
     const session = await this.cli.run(
-      ['unlock', '--passwordenv', 'STRONGROOM_MASTER_PASSWORD', '--raw'],
+      ['unlock', '--passwordenv', 'OXVAULT_MASTER_PASSWORD', '--raw'],
       { password },
     );
     this.assertGeneration(generation);
@@ -643,7 +643,7 @@ export class Vault extends EventEmitter {
 
   /** Raycast never receives items that ask for the master password. */
   requireLauncherItem(id: string) {
-    if (isRestricted(this.item(id))) throw new UserError('Open this item in Strongroom.');
+    if (isRestricted(this.item(id))) throw new UserError('Open this item in OxVault.');
   }
 
   detail(id: string): ItemDetail {
@@ -867,7 +867,7 @@ export class Vault extends EventEmitter {
     if (this.state.status !== 'unlocked' || !password) return { action: 'none' };
     const site = fillableUrl(url);
     if (!site) return { action: 'none' };
-    // Items with passkeys still count as saved; Strongroom just never edits them.
+    // Items with passkeys still count as saved; OxVault just never edits them.
     const known = [...this.ciphers.values()].filter(
       (cipher) =>
         cipher.type === 1 &&
@@ -1031,7 +1031,7 @@ export class Vault extends EventEmitter {
    * Saves the next signature counter and returns the value saved, which is past
    * `counter` when another client signed since the last sync. Writes run one at
    * a time, so two sign-ins never save or sign the same value. A sign-in never
-   * writes back an item Strongroom trashed or one the server already reports as
+   * writes back an item OxVault trashed or one the server already reports as
    * trashed; another client trashing it mid-write is not detected.
    */
   private writeCounter(id: string, credentialId: string, counter: number, generation: number) {
@@ -1046,9 +1046,9 @@ export class Vault extends EventEmitter {
       );
       if (latest.deletedDate) throw new UserError('This passkey is in the trash.');
       if (hidesPasswords(latest))
-        throw new UserError('Your organization does not let Strongroom update this passkey.');
+        throw new UserError('Your organization does not let OxVault update this passkey.');
       if (!credential)
-        throw new UserError('This passkey is no longer in your vault. Sync Strongroom.');
+        throw new UserError('This passkey is no longer in your vault. Sync OxVault.');
       const saved = Math.max(counter, (Number(credential.counter) || 0) + 1);
       credential.counter = String(saved);
       const payload = Buffer.from(JSON.stringify(latest)).toString('base64');
@@ -1078,7 +1078,7 @@ export class Vault extends EventEmitter {
     if (!isValidRpId(input.rpId))
       throw new UserError('This website did not provide a valid passkey identifier.');
     if (!input.algorithms.includes(ES256))
-      throw new UserError('This website does not accept the key type Strongroom can create.');
+      throw new UserError('This website does not accept the key type OxVault can create.');
     const clientDataHash = fromBase64Url(input.clientDataHash);
     if (clientDataHash.length !== 32) throw new UserError('The passkey request is malformed.');
     const userHandle = fromBase64Url(input.userHandle);
@@ -1088,7 +1088,7 @@ export class Vault extends EventEmitter {
     for (const cipher of this.ciphers.values())
       for (const credential of passkeysOf(cipher))
         if (excluded.some((raw) => sameCredential(credential.credentialId, raw)))
-          throw new UserError('A passkey for this account is already saved in Strongroom.');
+          throw new UserError('A passkey for this account is already saved in OxVault.');
     const key = createCredentialKey();
     const credential: Fido2Credential = {
       credentialId: key.credentialId,
@@ -1349,7 +1349,7 @@ export class Vault extends EventEmitter {
 
   private requireUnlocked() {
     if (this.state.status !== 'unlocked' || !this.session)
-      throw new UserError('Unlock Strongroom to continue.');
+      throw new UserError('Unlock OxVault to continue.');
   }
 
   private assertGeneration(generation: number) {
@@ -1378,7 +1378,7 @@ const browserItemTypes = {
 } as const;
 const browserTypes = new Set<number>(Object.values(browserItemTypes));
 const UPDATE_FOR_SHARED =
-  'Update the Bitwarden CLI to 2026.8.0 or later to open shared items in Strongroom.';
+  'Update the Bitwarden CLI to 2026.8.0 or later to open shared items in OxVault.';
 /**
  * Items whose secrets stay out of the cache: those that ask for the master
  * password, and shared items when the CLI cannot redact what organizations hide.
@@ -1444,7 +1444,7 @@ function passkeysOf(cipher: Cipher): Fido2Credential[] {
   return (cipher.login?.fido2Credentials ?? []).filter(usableCredential);
 }
 /**
- * Whether Strongroom will move an item to the trash; `opened` means the master
+ * Whether OxVault will move an item to the trash; `opened` means the master
  * password was entered for it. For organization items the server decides.
  */
 function isRemovable(cipher: Cipher, opened = false) {

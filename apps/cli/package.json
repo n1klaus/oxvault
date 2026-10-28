@@ -1,32 +1,32 @@
 {
-  "name": "strongroom",
+  "name": "oxvault",
   "version": "0.2.1",
   "private": false,
   "description": "Unofficial command-line extras for Bitwarden: one-time codes and vault health, on top of the official bw CLI.",
   "keywords": [
     "bitwarden",
-    "strongroom",
+    "oxvault",
     "totp",
     "password-manager",
     "vault",
     "cli"
   ],
-  "homepage": "https://bodencrouch.github.io/strongroom/",
+  "homepage": "https://n1klaus.github.io/oxvault/",
   "bugs": {
-    "url": "https://github.com/bodencrouch/strongroom/issues"
+    "url": "https://github.com/n1klaus/oxvault/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bodencrouch/strongroom.git",
+    "url": "git+https://github.com/n1klaus/oxvault.git",
     "directory": "apps/cli"
   },
   "license": "MIT",
   "type": "module",
   "bin": {
-    "strongroom": "dist/strongroom.mjs"
+    "oxvault": "dist/oxvault.mjs"
   },
   "files": [
-    "dist/strongroom.mjs",
+    "dist/oxvault.mjs",
     "README.md",
     "LICENSE"
   ],

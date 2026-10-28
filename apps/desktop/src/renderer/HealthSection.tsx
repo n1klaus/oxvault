@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { WarningCircle as CircleAlert } from '@phosphor-icons/react';
-import type { HealthSummary } from '@strongroom/shared/types';
+import type { HealthSummary } from '@oxvault/shared/types';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -19,7 +19,7 @@ export function HealthSection() {
     setRunning(true);
     setError('');
     try {
-      const result = await window.strongroom.health(breaches);
+      const result = await window.oxvault.health(breaches);
       if (result.ok) setSummary(result.value);
       else setError(result.error);
     } catch {

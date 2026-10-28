@@ -1,5 +1,5 @@
 import { useRef, useState, type FormEvent } from 'react';
-import type { Folder } from '@strongroom/shared/types';
+import type { Folder } from '@oxvault/shared/types';
 import type { Notifier } from './Toasts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,7 +37,7 @@ export function FolderDialog({
     setBusy(true);
     setError('');
     try {
-      const result = await window.strongroom.saveFolder(folder?.id ?? null, name.trim());
+      const result = await window.oxvault.saveFolder(folder?.id ?? null, name.trim());
       if (result.ok) {
         notify.show('done', folder ? 'Folder renamed' : 'Folder created');
         onSaved(result.value);

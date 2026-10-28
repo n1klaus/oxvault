@@ -1,4 +1,4 @@
-import type { LauncherRequest } from '@strongroom/shared/protocol';
+import type { LauncherRequest } from '@oxvault/shared/protocol';
 import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
@@ -31,7 +31,7 @@ function requestThroughHost<T>(
   signal?: AbortSignal,
 ): Promise<T> {
   if (!host || hostPath !== path) {
-    if (host) closeHost(new Error('Strongroom connection changed. Try again.'));
+    if (host) closeHost(new Error('OxVault connection changed. Try again.'));
     hostPath = path;
     const child = spawn(path, ['--raycast'], {
       stdio: 'pipe',
@@ -40,16 +40,16 @@ function requestThroughHost<T>(
     });
     host = child;
     child.stderr.resume();
-    child.on('error', () => closeHost(new Error('Open the updated Strongroom app first.'), child));
-    child.on('exit', () => closeHost(new Error('Strongroom disconnected.'), child));
-    child.stdin.on('error', () => closeHost(new Error('Strongroom disconnected.'), child));
+    child.on('error', () => closeHost(new Error('Open the updated OxVault app first.'), child));
+    child.on('exit', () => closeHost(new Error('OxVault disconnected.'), child));
+    child.stdin.on('error', () => closeHost(new Error('OxVault disconnected.'), child));
     child.stdout.on('data', (chunk: Buffer) => {
       if (host !== child) return;
       output = Buffer.concat([output, chunk]);
       while (output.length >= 4) {
         const size = output.readUInt32LE(0);
         if (size > MAX_RESPONSE) {
-          closeHost(new Error('Strongroom response is too large.'));
+          closeHost(new Error('OxVault response is too large.'));
           return;
         }
         if (output.length < size + 4) break;
@@ -57,7 +57,7 @@ function requestThroughHost<T>(
         output = output.subarray(size + 4);
         const entry = pending.shift();
         if (!entry) {
-          closeHost(new Error('Unexpected Strongroom response.'));
+          closeHost(new Error('Unexpected OxVault response.'));
           return;
         }
         try {
@@ -66,15 +66,15 @@ function requestThroughHost<T>(
           else
             entry.finish(
               new Error(
-                typeof result.error === 'string' ? result.error : 'Strongroom request failed.',
+                typeof result.error === 'string' ? result.error : 'OxVault request failed.',
               ),
             );
         } catch {
-          entry.finish(new Error('Invalid Strongroom response.'));
+          entry.finish(new Error('Invalid OxVault response.'));
         }
       }
       if (output.length > MAX_RESPONSE + 4)
-        closeHost(new Error('Strongroom response is too large.'));
+        closeHost(new Error('OxVault response is too large.'));
     });
   }
   return new Promise<T>((resolve, reject) => {
@@ -84,7 +84,7 @@ function requestThroughHost<T>(
     }
     const body = Buffer.from(JSON.stringify(request));
     if (body.length > MAX_RESPONSE) {
-      reject(new Error('Strongroom request is too large.'));
+      reject(new Error('OxVault request is too large.'));
       return;
     }
     const header = Buffer.alloc(4);
@@ -103,7 +103,7 @@ function requestThroughHost<T>(
     };
     const abort = () => entry.finish(new Error('Request cancelled.'));
     signal?.addEventListener('abort', abort, { once: true });
-    timer = setTimeout(() => closeHost(new Error('Strongroom did not respond.')), 120_000);
+    timer = setTimeout(() => closeHost(new Error('OxVault did not respond.')), 120_000);
     pending.push(entry);
     host!.stdin.write(Buffer.concat([header, body]));
   });
@@ -120,7 +120,7 @@ export interface VaultItem {
   type: number;
 }
 export type CopyField = Extract<LauncherRequest, { type: 'copy' }>['field'];
-/** A field Strongroom shows in Raycast. Secret rows hold a mask, never the value. */
+/** A field OxVault shows in Raycast. Secret rows hold a mask, never the value. */
 export interface DetailRow {
   id: string;
   label: string;
@@ -149,14 +149,14 @@ export async function request<T = void>(
   try {
     config = JSON.parse(
       await readFile(
-        join(homedir(), 'Library/Application Support/Strongroom/raycast-bridge.json'),
+        join(homedir(), 'Library/Application Support/OxVault/raycast-bridge.json'),
         'utf8',
       ),
     );
     if (typeof config.socketPath !== 'string' || !/^[a-f0-9]{64}$/.test(config.token))
       throw new Error();
   } catch {
-    throw new Error('Open the updated Strongroom app first.');
+    throw new Error('Open the updated OxVault app first.');
   }
   signal?.throwIfAborted();
   if (config.hostPath) return requestThroughHost<T>(config.hostPath, request, signal);
@@ -176,17 +176,17 @@ export async function request<T = void>(
     signal?.addEventListener('abort', abort, { once: true });
     socket.setEncoding('utf8');
     socket.setTimeout(request.type === 'biometricUnlock' ? 120_000 : 5000, () =>
-      finish(new Error('Strongroom did not respond. Reopen Strongroom.')),
+      finish(new Error('OxVault did not respond. Reopen OxVault.')),
     );
-    socket.on('error', () => finish(new Error('Open the updated Strongroom app first.')));
-    socket.on('end', () => finish(new Error('Strongroom disconnected.')));
+    socket.on('error', () => finish(new Error('Open the updated OxVault app first.')));
+    socket.on('end', () => finish(new Error('OxVault disconnected.')));
     socket.on('connect', () =>
       socket.write(JSON.stringify({ token: config.token, request }) + '\n'),
     );
     socket.on('data', (chunk) => {
       buffer += chunk;
       if (Buffer.byteLength(buffer) > 1024 * 1024)
-        return finish(new Error('Strongroom response is too large.'));
+        return finish(new Error('OxVault response is too large.'));
       if (!buffer.includes('\n')) return;
       try {
         const result = JSON.parse(buffer.slice(0, buffer.indexOf('\n')));
@@ -194,11 +194,11 @@ export async function request<T = void>(
         else
           finish(
             new Error(
-              typeof result.error === 'string' ? result.error : 'Strongroom request failed.',
+              typeof result.error === 'string' ? result.error : 'OxVault request failed.',
             ),
           );
       } catch {
-        finish(new Error('Invalid Strongroom response.'));
+        finish(new Error('Invalid OxVault response.'));
       }
     });
   });

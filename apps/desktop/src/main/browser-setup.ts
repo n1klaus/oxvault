@@ -2,8 +2,8 @@ import { execFile, spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
-import { UserError } from '@strongroom/shared/protocol';
-import type { Browser, BrowserSetup } from '@strongroom/shared/types';
+import { UserError } from '@oxvault/shared/protocol';
+import type { Browser, BrowserSetup } from '@oxvault/shared/types';
 import type { MacAutoFill } from './macos-autofill';
 
 // Set these to the published store listing / Mozilla-signed download when available.
@@ -21,7 +21,7 @@ export async function browserSetup(macAutoFill: MacAutoFill): Promise<BrowserSet
       reason: safari.available
         ? undefined
         : process.platform === 'darwin'
-          ? 'Requires a signed Strongroom app with the Safari extension.'
+          ? 'Requires a signed OxVault app with the Safari extension.'
           : 'Safari is available on macOS.',
     },
     chrome: {

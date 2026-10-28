@@ -15,7 +15,7 @@ export function isLocalHost(hostname: string): boolean {
   );
 }
 
-/** A web address Strongroom is willing to store on an item. */
+/** A web address OxVault is willing to store on an item. */
 export function webUrl(input: string): URL | null {
   return parsedWebUrl(input)?.url ?? null;
 }

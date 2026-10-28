@@ -1,12 +1,12 @@
 import { browser } from 'wxt/browser';
-import '@strongroom/shared/theme.css';
+import '@oxvault/shared/theme.css';
 import './popup.css';
 import { element, mark } from './content/render';
-import { itemDraft, uriMatchOptions } from '@strongroom/shared/item-drafts';
-import { detailRows, inSentence, typeName } from '@strongroom/shared/item-fields';
-import { browserVaultQuerySchema, uriMatchSchema } from '@strongroom/shared/protocol';
-import { defaultPasswordOptions } from '@strongroom/shared/types';
-import type { BrowserVaultQuery } from '@strongroom/shared/protocol';
+import { itemDraft, uriMatchOptions } from '@oxvault/shared/item-drafts';
+import { detailRows, inSentence, typeName } from '@oxvault/shared/item-fields';
+import { browserVaultQuerySchema, uriMatchSchema } from '@oxvault/shared/protocol';
+import { defaultPasswordOptions } from '@oxvault/shared/types';
+import type { BrowserVaultQuery } from '@oxvault/shared/protocol';
 import type {
   BrowserSuggestions,
   BrowserSaveResult,
@@ -19,7 +19,7 @@ import type {
   PasswordOptions,
   Result,
   VaultStatus,
-} from '@strongroom/shared/types';
+} from '@oxvault/shared/types';
 
 const status = document.querySelector<HTMLElement>('#status')!;
 const vaultBrowser = document.querySelector<HTMLElement>('#browser')!;
@@ -123,7 +123,7 @@ async function send<T>(request: object): Promise<Result<T>> {
   try {
     return (await browser.runtime.sendMessage(request)) as Result<T>;
   } catch {
-    return { ok: false, error: 'Open Strongroom on your computer to reconnect.' };
+    return { ok: false, error: 'Open OxVault on your computer to reconnect.' };
   }
 }
 function feedback(text: string, error = false) {
@@ -175,10 +175,10 @@ function setState(next: typeof state, error = '') {
     state === 'locked'
       ? 'Your vault is locked'
       : state === 'signed-out'
-        ? 'Sign in to Strongroom'
+        ? 'Sign in to OxVault'
         : state === 'disconnected'
-          ? 'Connect to Strongroom'
-          : 'Connecting to Strongroom';
+          ? 'Connect to OxVault'
+          : 'Connecting to OxVault';
   const description = document.querySelector<HTMLElement>('#empty-description')!;
   description.hidden = state === 'locked';
   description.textContent =
@@ -187,7 +187,7 @@ function setState(next: typeof state, error = '') {
       ? 'Sign in on your computer to access your vault.'
       : 'Your vault stays on your computer.');
   connect.hidden = state === 'connecting' || state === 'locked';
-  connect.textContent = 'Open Strongroom';
+  connect.textContent = 'Open OxVault';
   return changed;
 }
 async function openDesktop() {

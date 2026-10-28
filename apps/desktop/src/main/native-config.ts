@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
-import { MAX_BROWSER_MESSAGE_BYTES } from '@strongroom/shared/types';
+import { MAX_BROWSER_MESSAGE_BYTES } from '@oxvault/shared/types';
 
-export const NATIVE_HOST = 'app.strongroom.vault';
+export const NATIVE_HOST = 'app.oxvault.vault';
 export const MAX_MESSAGE_BYTES = MAX_BROWSER_MESSAGE_BYTES;
 
 export async function readBridgeConfig(path: string) {

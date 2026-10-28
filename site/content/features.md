@@ -1,16 +1,16 @@
 ---
 title: 'Features: Bitwarden codes, vault health, folders, Sends'
-description: 'Every Strongroom feature, split by what the client computes and what the Bitwarden server decides: one-time codes, vault health, folders, attachments, Sends.'
+description: 'Every OxVault feature, split by what the client computes and what the Bitwarden server decides: one-time codes, vault health, folders, attachments, Sends.'
 nav: Features
 order: 2
 updated: 2026-10-10
 ---
 
-# Features: what Strongroom adds and where each one lives
+# Features: what OxVault adds and where each one lives
 
-Each feature below is either computed on your machine from vault data, or decided by the Bitwarden server. Strongroom provides the first kind fully. For the second kind it sends the request through `bw` and shows the answer. It does not fake an entitlement.
+Each feature below is either computed on your machine from vault data, or decided by the Bitwarden server. OxVault provides the first kind fully. For the second kind it sends the request through `bw` and shows the answer. It does not fake an entitlement.
 
-| Feature                        | Lives on                           | Strongroom                                                                  |
+| Feature                        | Lives on                           | OxVault                                                                  |
 | ------------------------------ | ---------------------------------- | --------------------------------------------------------------------------- |
 | Authenticator codes (TOTP)     | Client                             | Done: desktop item view, browser popup and `strongroom totp`                |
 | Steam Guard codes              | Client                             | Done, same module                                                           |
@@ -27,7 +27,7 @@ Each feature below is either computed on your machine from vault data, or decide
 
 ## One-time codes
 
-Strongroom computes RFC 6238 codes from the `login.totp` field of a login. It also handles Steam Guard's 5-character alphabet. The code comes from `crypto.subtle` HMAC in `packages/shared/src/totp.ts`, so this is code generation from your own stored secret, not vault encryption.
+OxVault computes RFC 6238 codes from the `login.totp` field of a login. It also handles Steam Guard's 5-character alphabet. The code comes from `crypto.subtle` HMAC in `packages/shared/src/totp.ts`, so this is code generation from your own stored secret, not vault encryption.
 
 Check: `strongroom totp github` prints the code on stdout and the seconds left on stderr. Compare it with your authenticator app.
 
@@ -51,7 +51,7 @@ Password, passphrase and username generators are built in. Passphrases use the E
 
 ## Why emergency access is not built
 
-It needs the server's trusted-contact API and an exchange of encryption keys between two accounts. `bw` has no command for it. Strongroom keeps vault cryptography with the official CLI, and the server decides whether an account may add contacts. On a self-hosted server, the official web vault already provides it.
+It needs the server's trusted-contact API and an exchange of encryption keys between two accounts. `bw` has no command for it. OxVault keeps vault cryptography with the official CLI, and the server decides whether an account may add contacts. On a self-hosted server, the official web vault already provides it.
 
 ## Where the classification comes from
 
