@@ -24,7 +24,8 @@ export interface TotpCode {
  * When the API shares the page's origin, leave `VITE_API_BASE` empty; point it
  * at an explicit URL only when that server is trusted to allow this origin.
  */
-const API_BASE = (import.meta.env['VITE_API_BASE'] as string | undefined)?.replace(/\/+$/, '') ?? '';
+const API_BASE =
+  (import.meta.env['VITE_API_BASE'] as string | undefined)?.replace(/\/+$/, '') ?? '';
 
 async function callJson(path: string, init: RequestInit): Promise<Response> {
   assertSameOrigin();

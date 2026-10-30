@@ -31,8 +31,11 @@ export function describeOriginProblem(): string | null {
   }
   if (!url.origin || url.origin === 'null')
     return 'OxVault web cannot run from pages with an opaque origin.';
-  const local = url.hostname === 'localhost' || url.hostname.endsWith('.localhost') ||
-    url.hostname === '127.0.0.1' || url.hostname === '[::1]';
+  const local =
+    url.hostname === 'localhost' ||
+    url.hostname.endsWith('.localhost') ||
+    url.hostname === '127.0.0.1' ||
+    url.hostname === '[::1]';
   if (url.protocol !== 'https:' && !local)
     return 'OxVault web requires HTTPS, except on localhost during development.';
   const allowed = trustedOrigins();

@@ -40,7 +40,7 @@ export function TotpList({ logins }: { logins: TotpCode[] }) {
     return () => clearInterval(interval);
   }, [logins]);
 
-  async function copyCode(id: string, name: string) {
+  async function copyCode(id: string) {
     const code = codes[id];
     if (!code) return;
 
@@ -83,7 +83,7 @@ export function TotpList({ logins }: { logins: TotpCode[] }) {
                 </span>
               </div>
               <button
-                onClick={() => copyCode(login.id, login.name)}
+                onClick={() => copyCode(login.id)}
                 disabled={!codes[login.id]}
                 style={{
                   padding: '8px 16px',

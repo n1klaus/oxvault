@@ -92,7 +92,8 @@ export { typeName } from '@oxvault/shared/item-fields';
 
 /** The secret-free summary fields of an item, without its detail. */
 export function summaryOf(item: ItemSummary): ItemSummary {
-  const { id, name, username, website, subtitle, folderId, organizationId, collectionIds, type } = item;
+  const { id, name, username, website, subtitle, folderId, organizationId, collectionIds, type } =
+    item;
   const { favorite, hasPasskey, restricted, reprompt } = item;
   // An item opened with the master password keeps its details out of the list.
   return {
@@ -100,7 +101,7 @@ export function summaryOf(item: ItemSummary): ItemSummary {
     name,
     username: restricted ? '' : username,
     website,
-    subtitle: restricted ? '' :    subtitle,
+    subtitle: restricted ? '' : subtitle,
     folderId,
     organizationId,
     collectionIds,

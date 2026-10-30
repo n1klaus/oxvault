@@ -185,7 +185,8 @@ export const desktopRequestSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('state') }).strict(),
   z.object({ type: z.literal('appearance') }).strict(),
   z
-    .object({      type: z.literal('confirm'),
+    .object({
+      type: z.literal('confirm'),
       action: z.enum(['discard', 'trash', 'deleteFolder', 'deleteSend']),
     })
     .strict(),

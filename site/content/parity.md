@@ -35,12 +35,12 @@ Status words. **Done** works in OxVault. **Partial** works with limits. **Planne
 
 ## Sending and sharing
 
-| Feature                                             | Status            | Notes                                                                    |
-| --------------------------------------------------- | ----------------- | ------------------------------------------------------------------------ |
+| Feature                                             | Status            | Notes                                                                 |
+| --------------------------------------------------- | ----------------- | --------------------------------------------------------------------- |
 | File Send: create                                   | Done              | Desktop app and `oxvault send`. The server decides if the account may |
-| Text Send, list, copy link, remove password, delete | Done              | Editing an existing Send is not built                                    |
-| Sharing items with an organization                  | Not possible here | Organization keys                                                        |
-| Emergency access                                    | Not possible here | Server API and a key exchange between accounts                           |
+| Text Send, list, copy link, remove password, delete | Done              | Editing an existing Send is not built                                 |
+| Sharing items with an organization                  | Not possible here | Organization keys                                                     |
+| Emergency access                                    | Not possible here | Server API and a key exchange between accounts                        |
 
 ## Filling and generating
 

@@ -341,11 +341,7 @@ export type SendDraft = {
   password: string;
   disabled: boolean;
   hideEmail: boolean;
-} &
-  (
-    | { type: 'text'; text: string; hidden: boolean }
-    | { type: 'file' }
-  );
+} & ({ type: 'text'; text: string; hidden: boolean } | { type: 'file' });
 
 export type Browser = 'safari' | 'chrome' | 'firefox';
 export type BrowserSetup = Record<Browser, { available: boolean; reason?: string }>;

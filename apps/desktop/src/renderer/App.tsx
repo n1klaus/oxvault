@@ -721,8 +721,8 @@ function VaultWorkspace({
           className="workspace"
           aria-label="Personal vault"
           data-settings-open={settings || sends}
-          aria-hidden={(settings || sends) || undefined}
-          inert={(settings || sends) || undefined}
+          aria-hidden={settings || sends || undefined}
+          inert={settings || sends || undefined}
         >
           <aside className="sidebar">
             <div className="workspace-titlebar" aria-hidden="true" />
