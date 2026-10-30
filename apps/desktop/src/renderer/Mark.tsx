@@ -1,4 +1,4 @@
-import { strongroomPaths } from '@oxvault/shared/brand';
+import { oxvaultPaths } from '@oxvault/shared/brand';
 
 export function Mark({ size = 22 }: { size?: number }) {
   return (
@@ -9,7 +9,7 @@ export function Mark({ size = 22 }: { size?: number }) {
       fill="currentColor"
       aria-hidden="true"
     >
-      {strongroomPaths.map((d) => (
+      {oxvaultPaths.map((d) => (
         <path key={d} d={d} />
       ))}
     </svg>

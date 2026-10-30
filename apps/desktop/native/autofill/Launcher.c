@@ -84,8 +84,8 @@ static bool parent_unchanged(pid_t relay, pid_t parent) {
          (pid_t)info.pbi_ppid == parent;
 }
 
-bool latch_find_launcher(pid_t relay, SecRequirementRef _Nullable requirement,
-                         bool requirement_names_parent, LatchLauncher *_Nonnull launcher) {
+bool oxvault_find_launcher(pid_t relay, SecRequirementRef _Nullable requirement,
+                         bool requirement_names_parent, OxVaultLauncher *_Nonnull launcher) {
   struct proc_bsdinfo info, parent;
   if (proc_pidinfo(relay, PROC_PIDTBSDINFO, 0, &info, sizeof(info)) != sizeof(info) ||
       info.pbi_ppid <= 1) return false;

@@ -33,10 +33,7 @@ import type { DesktopRequest } from '@oxvault/shared/protocol';
 process.umask(0o077);
 // Keep the existing data directory and OS encryption identity across the rename.
 app.setName('OxVault');
-app.setPath(
-  'userData',
-  process.env.OXVAULT_DATA_DIR ?? join(app.getPath('appData'), 'OxVault'),
-);
+app.setPath('userData', process.env.OXVAULT_DATA_DIR ?? join(app.getPath('appData'), 'OxVault'));
 if (!app.requestSingleInstanceLock()) app.quit();
 
 let window: BrowserWindow;
@@ -145,7 +142,7 @@ lifecycle.startup = app
               process.platform === 'darwin' && app.isPackaged
                 ? join(
                     process.resourcesPath,
-                    '../Helpers/LatchBridgeHost.app/Contents/MacOS/LatchBridgeHost',
+                    '../Helpers/OxVaultBridgeHost.app/Contents/MacOS/OxVaultBridgeHost',
                   )
                 : undefined,
             vault,
@@ -340,6 +337,10 @@ async function handleRequest(request: DesktopRequest, fromWindow = false): Promi
       return vault.closeProtected(request.id);
     case 'generate':
       return generatePassword(request.options);
+    case 'sends':
+      return vault.sends();
+    case 'copySendLink':
+      return lifecycle.copySendLink(request.id);
     case 'browserSetup':
       return browserSetup(macAutoFill);
     case 'connectBrowser':
@@ -372,6 +373,9 @@ async function mutateVault(
         | 'setFavorite'
         | 'delete'
         | 'restore'
+        | 'createSend'
+        | 'deleteSend'
+        | 'removeSendPassword'
         | 'biometricUnlock'
         | 'setBiometrics';
     }
@@ -426,6 +430,12 @@ async function mutateVault(
         return await vault.remove(request.id);
       case 'restore':
         return await vault.restore(request.id);
+      case 'createSend':
+        return await vault.createSend(request.draft, () => nativeInteractions.chooseOpenPath());
+      case 'deleteSend':
+        return await vault.deleteSend(request.id);
+      case 'removeSendPassword':
+        return await vault.removeSendPassword(request.id);
     }
   } finally {
     busy = false;

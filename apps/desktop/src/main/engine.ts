@@ -63,9 +63,7 @@ export async function localEngine(options: {
   try {
     await access(options.bootstrap, constants.R_OK);
   } catch {
-    return unavailable(
-      'OxVault is missing one of its files. Reinstall OxVault, then try again.',
-    );
+    return unavailable('OxVault is missing one of its files. Reinstall OxVault, then try again.');
   }
   await removeVerifyCopies(options.dataDir);
   let privateChannelMissing = false;

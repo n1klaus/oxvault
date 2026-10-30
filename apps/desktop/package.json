@@ -1,13 +1,13 @@
 {
   "version": "0.3.7",
   "private": true,
-  "description": "Strongroom, a modern, unofficial Bitwarden client.",
-  "homepage": "https://bodencrouch.github.io/strongroom/",
-  "author": "Strongroom contributors",
+  "description": "OxVault, a modern, unofficial Bitwarden client.",
+  "homepage": "https://n1klaus.github.io/oxvault/",
+  "author": "OxVault contributors",
   "license": "MIT",
   "type": "module",
   "main": "dist/desktop/main.cjs",
-  "desktopName": "strongroom.desktop",
+  "desktopName": "oxvault.desktop",
   "name": "@oxvault/desktop",
   "scripts": {
     "dev": "node build/dev.mjs",

@@ -246,7 +246,7 @@ export async function startBridges({
     await launcherBridge.start().catch(() => {
       console.warn('OxVault Raycast connection unavailable. Check the app signature.');
     });
-    if (existsSync(join(process.resourcesPath, '../PlugIns/LatchSafari.appex'))) {
+    if (existsSync(join(process.resourcesPath, '../PlugIns/OxVaultSafari.appex'))) {
       try {
         const container = await macAutoFill.sharedContainer();
         if (!container) throw new Error('Safari shared container unavailable');
@@ -265,9 +265,7 @@ export async function startBridges({
         await safariBridge?.stop().catch(() => undefined);
         if (safariBridge) transports.splice(transports.indexOf(safariBridge), 1);
         // Optional browser setup must not prevent access to the desktop vault.
-        console.warn(
-          'OxVault Safari connection unavailable. Check signing and App Group setup.',
-        );
+        console.warn('OxVault Safari connection unavailable. Check signing and App Group setup.');
       }
     }
     // Registration is setup, not proof that an extension is connected. A failure

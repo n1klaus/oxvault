@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { LinkSimple, PaperPlaneTilt, Plus, Trash } from '@phosphor-icons/react';
-import type { SendDraft, SendSummary } from '@oxvault/shared/types';
+import type { SendDraft, SendSummary, VaultState } from '@oxvault/shared/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -41,7 +41,7 @@ function describe(send: SendSummary) {
 }
 
 /** The account's Sends. Links, text and passwords stay in the main process. */
-export function Sends() {
+export function Sends({ onClose }: { onClose: () => void }) {
   const [sends, setSends] = useState<SendSummary[] | null>(null);
   const [creating, setCreating] = useState(false);
   const [draft, setDraft] = useState(emptyDraft);
@@ -65,7 +65,7 @@ export function Sends() {
     alive.current = true;
     void load();
     // A locked vault drops everything shown here at once.
-    const unsubscribe = window.oxvault.onState((state) => {
+    const unsubscribe = window.oxvault.onState((state: VaultState) => {
       if (state.status !== 'unlocked') {
         alive.current = false;
         setSends(null);
@@ -156,8 +156,18 @@ export function Sends() {
     draft.name.trim() !== '' && (draft.type === 'file' || draft.text !== '') && !busy;
 
   return (
-    <section className="detail-pane sends-panel" aria-label="Sends" aria-busy={sends === null}>
-      <div className="task-settings-section" style={{ padding: 24, maxWidth: 640 }}>
+    <main
+      className="sends-screen"
+      aria-label="Sends"
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          onClose();
+        }
+      }}
+    >
+      <section className="detail-pane sends-panel" aria-label="Send list" aria-busy={sends === null}>
+        <div className="task-settings-section" style={{ padding: 24, maxWidth: 640 }}>
         <div className="task-label-actions">
           <h2 className="text-base font-semibold">
             <PaperPlaneTilt /> Sends
@@ -407,6 +417,7 @@ export function Sends() {
           </div>
         ))}
       </div>
-    </section>
+      </section>
+    </main>
   );
 }

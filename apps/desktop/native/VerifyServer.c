@@ -4,7 +4,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
-bool latch_verify_server(int fd) {
+bool oxvault_verify_server(int fd) {
   audit_token_t audit;
   socklen_t size = sizeof(audit);
   if (getsockopt(fd, SOL_LOCAL, LOCAL_PEERTOKEN, &audit, &size) != 0 || size != sizeof(audit))
@@ -26,7 +26,7 @@ bool latch_verify_server(int fd) {
   if (!team || CFGetTypeID(team) != CFStringGetTypeID()) goto done;
   text = CFStringCreateWithFormat(
       kCFAllocatorDefault, NULL,
-      CFSTR("anchor apple generic and identifier \"app.strongroom.vault\" and certificate leaf[subject.OU] = \"%@\""),
+      CFSTR("anchor apple generic and identifier \"app.oxvault.vault\" and certificate leaf[subject.OU] = \"%@\""),
       team);
   if (!text || SecRequirementCreateWithString(text, kSecCSDefaultFlags, &requirement) != errSecSuccess)
     goto done;

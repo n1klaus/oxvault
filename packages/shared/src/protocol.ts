@@ -150,6 +150,29 @@ const browserDraftSchema = z.discriminatedUnion('type', [
 ]);
 export { MAX_BROWSER_MESSAGE_BYTES } from './types';
 
+const sendDays = z.number().int().min(1).max(31);
+const sendDraftBase = {
+  name: z.string().trim().min(1).max(500),
+  notes: z.string().max(1_000),
+  deleteInDays: sendDays,
+  expireInDays: sendDays.nullable(),
+  maxAccessCount: z.number().int().min(1).max(1_000_000).nullable(),
+  password: z.string().max(1_024),
+  disabled: z.boolean(),
+  hideEmail: z.boolean(),
+};
+export const sendDraftSchema = z.discriminatedUnion('type', [
+  z
+    .object({
+      ...sendDraftBase,
+      type: z.literal('text'),
+      text: z.string().min(1).max(16_384),
+      hidden: z.boolean(),
+    })
+    .strict(),
+  z.object({ ...sendDraftBase, type: z.literal('file') }).strict(),
+]);
+
 export const desktopRequestSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('lockTimeout') }).strict(),
   z.object({ type: z.literal('setLockTimeout'), minutes: lockTimeoutSchema }).strict(),
@@ -162,7 +185,9 @@ export const desktopRequestSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('state') }).strict(),
   z.object({ type: z.literal('appearance') }).strict(),
   z
-    .object({ type: z.literal('confirm'), action: z.enum(['discard', 'trash', 'deleteFolder']) })
+    .object({      type: z.literal('confirm'),
+      action: z.enum(['discard', 'trash', 'deleteFolder', 'deleteSend']),
+    })
     .strict(),
   z
     .object({
@@ -225,6 +250,11 @@ export const desktopRequestSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('setFavorite'), id, favorite: z.boolean() }).strict(),
   z.object({ type: z.literal('delete'), id }).strict(),
   z.object({ type: z.literal('restore'), id }).strict(),
+  z.object({ type: z.literal('sends') }).strict(),
+  z.object({ type: z.literal('createSend'), draft: sendDraftSchema }).strict(),
+  z.object({ type: z.literal('deleteSend'), id }).strict(),
+  z.object({ type: z.literal('removeSendPassword'), id }).strict(),
+  z.object({ type: z.literal('copySendLink'), id }).strict(),
   z
     .object({
       type: z.literal('copy'),

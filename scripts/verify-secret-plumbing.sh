@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Verify the CLI secret-plumbing invariants after a rebrand.
 #
-# The upstream fix (bitlatch #10) moves vault secrets off the child's
-# environment and onto a pipe. Four names must agree across three files, or
-# the CLI silently falls back to reading secrets from the real environment:
+# The upstream fix (upstream #10, see docs/UPSTREAM-SYNC.md) moves vault
+# secrets off the child's environment and onto a pipe. Four names must agree
+# across three files, or the CLI silently falls back to reading secrets from
+# the real environment:
 #
 #   1. payload.ts   secretNames[]      names the proxy protects
 #   2. cli.ts       --passwordenv <N>  the name the CLI reads the password from

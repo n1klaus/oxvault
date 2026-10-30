@@ -2,7 +2,7 @@ import { Action, ActionPanel, Detail, Icon, List, open, showToast, Toast } from 
 import { useEffect, useState } from 'react';
 import { CopyField, DetailRow, ItemDetail, request, VaultItem } from './bridge';
 
-export function OpenLatch() {
+export function OpenVault() {
   return (
     <Action
       title="Open OxVault"
@@ -95,7 +95,7 @@ export function ItemActions({
           />
         ))}
       {primary !== 'open' && canOpen && <Action.OpenInBrowser url={item.website} />}
-      <OpenLatch />
+      <OpenVault />
       <Action
         title="Lock Vault"
         icon={Icon.Lock}
@@ -192,7 +192,7 @@ export function ItemPage({ id, showNote = false }: { id: string; showNote?: bool
   }
   const actions = (primary?: CopyField | 'open') => (
     <ActionPanel>
-      {item ? <ItemActions item={item} primary={primary} onFailure={unavailable} /> : <OpenLatch />}
+      {item ? <ItemActions item={item} primary={primary} onFailure={unavailable} /> : <OpenVault />}
     </ActionPanel>
   );
   if (!item || (item.type === 2 && !item.rows.length) || showNote) {

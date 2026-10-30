@@ -25,7 +25,7 @@ export async function buildAutoFill(root) {
     ],
     { stdio: 'inherit' },
   );
-  const bridgeHost = resolve(output, 'LatchBridgeHost.app/Contents');
+  const bridgeHost = resolve(output, 'OxVaultBridgeHost.app/Contents');
   await mkdir(resolve(bridgeHost, 'MacOS'), { recursive: true });
   const extension = JSON.parse(
     await readFile(resolve(root, '../../packages/shared/extension.json'), 'utf8'),
@@ -48,7 +48,7 @@ export async function buildAutoFill(root) {
       '-framework',
       'Security',
       '-o',
-      resolve(bridgeHost, 'MacOS/LatchBridgeHost'),
+      resolve(bridgeHost, 'MacOS/OxVaultBridgeHost'),
     ],
     { stdio: 'inherit' },
   );
@@ -58,13 +58,13 @@ export async function buildAutoFill(root) {
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
 <key>CFBundleIdentifier</key><string>app.oxvault.vault.bridgehost</string>
-<key>CFBundleExecutable</key><string>LatchBridgeHost</string>
+<key>CFBundleExecutable</key><string>OxVaultBridgeHost</string>
 <key>CFBundleName</key><string>OxVault Bridge Host</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>LSMinimumSystemVersion</key><string>14.0</string>
 </dict></plist>`,
   );
-  const contents = resolve(output, 'LatchAutoFill.appex/Contents');
+  const contents = resolve(output, 'OxVaultAutoFill.appex/Contents');
   await mkdir(resolve(contents, 'MacOS'), { recursive: true });
   await mkdir(resolve(contents, 'Resources'), { recursive: true });
   // Use the approved default appearance in a conventional macOS icon catalog.
@@ -186,12 +186,11 @@ export async function buildAutoFill(root) {
     '-framework',
     'Security',
     '-o',
-    resolve(contents, 'MacOS/LatchAutoFill'),
+    resolve(contents, 'MacOS/OxVaultAutoFill'),
   ]);
   await rm(verifiedServer);
   const group = process.env.OXVAULT_APP_GROUP ?? 'UNCONFIGURED.app.oxvault.vault';
-  if (!/^[A-Z0-9]+\.app\.oxvault\.vault$/.test(group))
-    throw new Error('Invalid OXVAULT_APP_GROUP');
+  if (!/^[A-Z0-9]+\.app\.oxvault\.vault$/.test(group)) throw new Error('Invalid OXVAULT_APP_GROUP');
   const { version } = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8'));
   if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error('Invalid native bundle version');
   await writeFile(
@@ -205,17 +204,17 @@ export async function buildAutoFill(root) {
 <key>CFBundleSupportedPlatforms</key><array><string>MacOSX</string></array>
 <key>CFBundleName</key><string>OxVault</string>
 <key>CFBundleDisplayName</key><string>OxVault</string>
-<key>CFBundleExecutable</key><string>LatchAutoFill</string>
+<key>CFBundleExecutable</key><string>OxVaultAutoFill</string>
 <key>CFBundleIconName</key><string>OxVault</string>
 <key>CFBundleIconFile</key><string>OxVault.icns</string>
 <key>CFBundlePackageType</key><string>XPC!</string>
 <key>CFBundleVersion</key><string>${version}</string>
 <key>CFBundleShortVersionString</key><string>${version}</string>
 <key>LSMinimumSystemVersion</key><string>14.0</string>
-<key>LatchAppGroup</key><string>${group}</string>
+<key>OxVaultAppGroup</key><string>${group}</string>
 <key>NSExtension</key><dict>
 <key>NSExtensionPointIdentifier</key><string>com.apple.authentication-services-credential-provider-ui</string>
-<key>NSExtensionPrincipalClass</key><string>LatchCredentialProvider</string>
+<key>NSExtensionPrincipalClass</key><string>OxVaultCredentialProvider</string>
 <key>NSExtensionAttributes</key><dict><key>ASCredentialProviderExtensionCapabilities</key><dict>
 <key>ProvidesPasswords</key><true/>
 <key>ProvidesPasskeys</key><true/>

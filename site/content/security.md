@@ -10,11 +10,11 @@ updated: 2026-10-10
 
 OxVault does not do vault cryptography. `bw` does. What OxVault adds is a boundary between the window that draws the UI and the process that talks to `bw`.
 
-This is a description of code, not an audit. Nobody independent has reviewed it. If you find a hole, follow the [security policy](https://github.com/bodencrouch/strongroom/security) in the repo.
+This is a description of code, not an audit. Nobody independent has reviewed it. If you find a hole, follow the [security policy](https://github.com/n1klaus/oxvault/security) in the repo.
 
 ## The window is sandboxed
 
-The desktop window is created with `nodeIntegration: false`, `contextIsolation: true` and `sandbox: true`. Check: `grep -n "nodeIntegration\|contextIsolation\|sandbox" apps/desktop/src/main/main.ts`. The only bridge is `contextBridge.exposeInMainWorld('strongroom', api)` in `apps/desktop/src/preload/index.ts`.
+The desktop window is created with `nodeIntegration: false`, `contextIsolation: true` and `sandbox: true`. Check: `grep -n "nodeIntegration\|contextIsolation\|sandbox" apps/desktop/src/main/main.ts`. The only bridge is `contextBridge.exposeInMainWorld('oxvault', api)` in `apps/desktop/src/preload/index.ts`.
 
 ## What stays in the main process
 

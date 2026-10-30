@@ -1,4 +1,4 @@
-import { strongroomPaths } from '@oxvault/shared/brand';
+import { oxvaultPaths } from '@oxvault/shared/brand';
 
 export function element<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -24,7 +24,7 @@ export function mark() {
   background.setAttribute('rx', '194');
   background.setAttribute('fill', '#0F766E');
   svg.append(background);
-  for (const d of strongroomPaths) {
+  for (const d of oxvaultPaths) {
     const path = document.createElementNS(svg.namespaceURI, 'path');
     path.setAttribute('d', d);
     svg.append(path);

@@ -1,5 +1,5 @@
 ---
-title: 'OxVault changelog: what changed since the bitlatch fork'
+title: 'OxVault changelog: what changed since the upstream fork'
 description: 'A short changelog for OxVault, the unofficial Bitwarden client, taken from git history. No release is tagged yet, so entries are grouped by change.'
 nav: Changelog
 order: 9
@@ -19,7 +19,7 @@ No release is tagged yet. This list is hand-written from `git log` and goes newe
 - Folders: sidebar filter, editor select, create, rename, delete.
 - `docs/PARITY.md`: what is done, planned, and not possible from a client.
 - Vault health in Settings, the inactive two-step report, file Sends in the CLI and desktop app, and a new icon.
-- The `strongroom` CLI with `totp`, `health` and `attach`.
+- The `oxvault` CLI with `totp`, `health` and `attach`.
 - The one-time code in the desktop item view and the browser popup.
 - `health.ts`: reused, weak and plain-http checks, with an opt-in breach lookup.
 

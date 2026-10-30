@@ -38,13 +38,13 @@ Commits from upstream Bitlatch are classified into tiers based on their content:
 
 These are security-critical commits that must be applied immediately:
 
-| Commit | Description |
-|--------|-------------|
-| `912b2aac3` | Keep CLI secrets out of process environments |
-| `a5b86b0f8` | Lock after 15 minutes by default |
-| `b1e3343` | Verify macOS IPC peers and gate vault access |
+| Commit      | Description                                        |
+| ----------- | -------------------------------------------------- |
+| `912b2aac3` | Keep CLI secrets out of process environments       |
+| `a5b86b0f8` | Lock after 15 minutes by default                   |
+| `b1e3343`   | Verify macOS IPC peers and gate vault access       |
 | `d0e55c62d` | Approve browser access once per browser until lock |
-| `a4e4dea2b` | Turn off browser/Raycast bridges on macOS |
+| `a4e4dea2b` | Turn off browser/Raycast bridges on macOS          |
 
 These changes protect sensitive credentials from being exposed in environment variables visible to other processes running under the same user account.
 
@@ -80,9 +80,10 @@ After any security port, verify with:
 ```
 
 This checks four invariant names across three files:
+
 1. `payload.ts` declares the secret name
 2. `cli.ts --passwordenv` argument matches
-3. `cli.ts` secrets object key matches  
+3. `cli.ts` secrets object key matches
 4. `index.ts` fd variable naming matches
 
 A failure means the master password falls back to real environment variables, leaking secrets.
@@ -92,11 +93,19 @@ A failure means the master password falls back to real environment variables, le
 Run this grep to ensure no upstream brand tokens survived:
 
 ```bash
-git grep -In "bitlatch\|Bitlatch\|latch\|LATCH_" \
-  -- ':!(exclude)pnpm-lock.yaml' ':!(exclude)UPSTREAM-SYNC.md'
+rg -In 'bitlatch|[Ss]trongroom|Latch|LATCH_|app\.strongroom' \
+  -g '!pnpm-lock.yaml' -g '!site/package-lock.json' -g '!apps/raycast/store/package-lock.json' \
+  -g '!upstream-commits.txt' -g '!docs/UPSTREAM-SYNC.md' -g '!docs/PARITY.md' \
+  -g '!scripts/sync-upstream-bitlatch.sh'
 ```
 
-Expected: zero results outside excluded files.
+Expected: zero results outside the excluded files, plus these intentional exceptions:
+
+- `site/build.mjs` and `README.md` keep the MIT fork attribution line (`dillionverma/bitlatch`).
+- `site/content/faq.md` and `site/content/home.md` state the fork origin for the same reason.
+- `scripts/verify-secret-plumbing.sh` keeps its `\bbitlatch\b` guard tokens on purpose: they fail if the legacy names return to the CLI payload files.
+- `packages/shared/src/wordlist.ts` matches are English words from the EFF passphrase list.
+- `site/content/changelog.md` may mention the fork date and old name in rename-history entries.
 
 ## Current Upstream State
 
@@ -116,7 +125,7 @@ See `upstream-commits.txt` in the repository root for the full commit list captu
 
 2. **No organization items**: See `PARITY.md` for the rationale behind declining #21.
 
-3. **Web app self-hosting constraint**: Due to Vaultwarden CORS, the web app (Step 9) can only run from the vault server's origin, not GitHub Pages. See `apps/web/guard.ts`.
+3. **Web app needs a same-origin vault API**: Due to Vaultwarden CORS, the web app can only run from the vault server's origin, not GitHub Pages. See `apps/web/src/lib/guard.ts`.
 
 ## Maintaining the Fork
 

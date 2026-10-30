@@ -104,7 +104,7 @@ execFileSync(
   },
 );
 const app = join(root, 'release/mac-arm64/OxVault.app');
-const appex = join(app, 'Contents/PlugIns/LatchAutoFill.appex');
+const appex = join(app, 'Contents/PlugIns/OxVaultAutoFill.appex');
 const signing = join(root, 'release/autofill-signing');
 await mkdir(signing, { recursive: true, mode: 0o700 });
 const shared = {
@@ -133,7 +133,7 @@ await writeFile(
 );
 const infoPath = join(app, 'Contents/Info.plist');
 const info = plist.parse(await readFile(infoPath, 'utf8'));
-info.LatchAppGroup = group;
+info.OxVaultAppGroup = group;
 await writeFile(infoPath, plist.build(info));
 await copyFile(resolve(appProfile), join(app, 'Contents/embedded.provisionprofile'));
 await copyFile(resolve(extensionProfile), join(appex, 'Contents/embedded.provisionprofile'));
@@ -157,9 +157,9 @@ function signNested(path, entitlements) {
   );
 }
 signNested(appex, extensionEntitlements);
-const bridgeHost = join(app, 'Contents/Helpers/LatchBridgeHost.app');
+const bridgeHost = join(app, 'Contents/Helpers/OxVaultBridgeHost.app');
 signNested(bridgeHost);
-const safariApp = join(app, 'Contents/PlugIns/LatchSafari.appex');
+const safariApp = join(app, 'Contents/PlugIns/OxVaultSafari.appex');
 if (safari && safariProfile) {
   const safariEntitlements = join(signing, 'safari.plist');
   await writeFile(
@@ -196,7 +196,5 @@ if (release) {
   const { notarizeRelease } = await import('./notarize-release.mjs');
   await notarizeRelease({ root, app, identity, notarizationProfile, env });
 } else {
-  console.log(
-    'Signed AutoFill build: release/mac-arm64/OxVault.app. Not installed or notarized.',
-  );
+  console.log('Signed AutoFill build: release/mac-arm64/OxVault.app. Not installed or notarized.');
 }

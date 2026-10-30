@@ -1,15 +1,10 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type {
-  LatchApi,
-  VaultState,
-  WindowCommand,
-  WindowAppearance,
-} from '@oxvault/shared/types';
+import type { VaultApi, VaultState, WindowCommand, WindowAppearance } from '@oxvault/shared/types';
 import type { DesktopRequest } from '@oxvault/shared/protocol';
 
 const request = (message: DesktopRequest) => ipcRenderer.invoke('oxvault:request', message);
 
-const api: LatchApi = {
+const api: VaultApi = {
   lockTimeout: () => request({ type: 'lockTimeout' }),
   setLockTimeout: (minutes) => request({ type: 'setLockTimeout', minutes }),
   macAutoFill: () => request({ type: 'macAutoFill' }),
@@ -68,6 +63,11 @@ const api: LatchApi = {
     ipcRenderer.on('oxvault:command', handler);
     return () => ipcRenderer.removeListener('oxvault:command', handler);
   },
+  sends: () => request({ type: 'sends' }),
+  createSend: (draft) => request({ type: 'createSend', draft }),
+  deleteSend: (id) => request({ type: 'deleteSend', id }),
+  removeSendPassword: (id) => request({ type: 'removeSendPassword', id }),
+  copySendLink: (id) => request({ type: 'copySendLink', id }),
 };
 
 contextBridge.exposeInMainWorld('oxvault', api);

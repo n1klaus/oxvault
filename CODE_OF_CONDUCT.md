@@ -15,4 +15,4 @@ Issues, pull requests, discussions and any other space run for this project.
 
 ## Enforcement
 
-The maintainer enforces this. Comments that break it may be edited or removed, threads locked, and people blocked from the repository. To report a problem, use GitHub's report option on the comment, or contact the maintainer through the profile at <https://github.com/bodencrouch>. Reports are handled privately.
+The maintainer enforces this. Comments that break it may be edited or removed, threads locked, and people blocked from the repository. To report a problem, use GitHub's report option on the comment, or contact the maintainer through the profile at <https://github.com/n1klaus>. Reports are handled privately.

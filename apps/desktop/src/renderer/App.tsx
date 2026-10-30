@@ -13,6 +13,7 @@ import {
   CreditCard,
   FolderSimple,
   PencilSimple,
+  PaperPlaneTilt,
   IdentificationBadge,
   IdentificationCard,
   Terminal,
@@ -33,6 +34,7 @@ import type {
 } from '@oxvault/shared/types';
 import { Auth } from './Auth';
 import { Editor } from './Editor';
+import { Sends } from './Sends';
 import { FolderDialog } from './FolderDialog';
 import { Protected } from './Protected';
 import { Settings } from './Settings';
@@ -82,7 +84,7 @@ type Selection =
   | { status: 'unselected' }
   | { status: 'loading' | 'restricted' | 'protected' | 'error'; id: string }
   | { status: 'ready'; item: ItemDetail };
-type Modal = 'new' | 'edit' | 'settings' | 'search' | 'newFolder' | 'renameFolder' | null;
+type Modal = 'new' | 'edit' | 'settings' | 'sends' | 'search' | 'newFolder' | 'renameFolder' | null;
 /** `match` selects a filter's items; `optional` filters show only while they have items. */
 interface FilterSpec {
   id: string;
@@ -341,6 +343,7 @@ function VaultWorkspace({
   const [filter, setFilter] = useState('all');
   const [modal, setModal] = useState<Modal>(null);
   const settings = modal === 'settings';
+  const sends = modal === 'sends';
   const [syncing, setSyncing] = useState(false);
   const [favoritePending, setFavoritePending] = useState('');
   const favoriteWorking = useRef(false);
@@ -352,6 +355,7 @@ function VaultWorkspace({
   const listVersion = useRef(0);
   const searchInput = useRef<HTMLInputElement>(null);
   const newButton = useRef<HTMLButtonElement>(null);
+  const sendsButton = useRef<HTMLButtonElement>(null);
   const settingsButton = useRef<HTMLButtonElement>(null);
   const { show, settle } = useToasts();
   const notify = useMemo<Notifier>(
@@ -716,9 +720,9 @@ function VaultWorkspace({
         <main
           className="workspace"
           aria-label="Personal vault"
-          data-settings-open={settings}
-          aria-hidden={settings || undefined}
-          inert={settings}
+          data-settings-open={settings || sends}
+          aria-hidden={(settings || sends) || undefined}
+          inert={(settings || sends) || undefined}
         >
           <aside className="sidebar">
             <div className="workspace-titlebar" aria-hidden="true" />
@@ -787,6 +791,16 @@ function VaultWorkspace({
             </nav>
             <div className="sidebar-bottom">
               <Separator />
+              <Button
+                ref={sendsButton}
+                type="button"
+                variant="sidebar"
+                className="nav-item"
+                onClick={() => setModal('sends')}
+              >
+                <PaperPlaneTilt size={16} />
+                <span>Sends</span>
+              </Button>
               <Button
                 ref={settingsButton}
                 type="button"
@@ -1101,6 +1115,15 @@ function VaultWorkspace({
             biometrics={state.biometrics}
             biometricsOn={state.biometricsOn}
             onBiometrics={setBiometrics}
+          />
+        )}
+        {sends && (
+          <Sends
+            onClose={() => {
+              if (!alive.current) return;
+              flushSync(() => setModal(null));
+              sendsButton.current?.focus({ preventScroll: true });
+            }}
           />
         )}
         <Toasts />

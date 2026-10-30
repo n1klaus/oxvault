@@ -73,8 +73,7 @@ function requestThroughHost<T>(
           entry.finish(new Error('Invalid OxVault response.'));
         }
       }
-      if (output.length > MAX_RESPONSE + 4)
-        closeHost(new Error('OxVault response is too large.'));
+      if (output.length > MAX_RESPONSE + 4) closeHost(new Error('OxVault response is too large.'));
     });
   }
   return new Promise<T>((resolve, reject) => {
@@ -193,9 +192,7 @@ export async function request<T = void>(
         if (result.ok === true) finish(undefined, result.value);
         else
           finish(
-            new Error(
-              typeof result.error === 'string' ? result.error : 'OxVault request failed.',
-            ),
+            new Error(typeof result.error === 'string' ? result.error : 'OxVault request failed.'),
           );
       } catch {
         finish(new Error('Invalid OxVault response.'));

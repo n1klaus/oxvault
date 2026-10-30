@@ -8,7 +8,7 @@ updated: 2026-10-10
 
 # Install OxVault
 
-No release is tagged yet. Today you build from source. Prebuilt desktop packages will come from [GitHub Releases](https://github.com/bodencrouch/strongroom/releases) once the first release is tagged, and the CLI will be on npm as `strongroom` at the same point.
+No release is tagged yet. Today you build from source. Prebuilt desktop packages will come from [GitHub Releases](https://github.com/n1klaus/oxvault/releases) once the first release is tagged, and the CLI will be on npm as `oxvault` at the same point.
 
 ## Requirements
 
@@ -21,15 +21,15 @@ Check: `node --version`, `pnpm --version`, `bw --version`.
 ## Build from source
 
 ```sh
-git clone https://github.com/bodencrouch/strongroom
-cd strongroom
+git clone https://github.com/n1klaus/oxvault
+cd oxvault
 pnpm install --frozen-lockfile
 pnpm run dev        # desktop app
 pnpm run check      # types, lint, format, tests
 pnpm run build      # desktop, extensions, Raycast
 ```
 
-Check: `pnpm run check` exits 0. If it does not, open an [issue](https://github.com/bodencrouch/strongroom/issues) with the output.
+Check: `pnpm run check` exits 0. If it does not, open an [issue](https://github.com/n1klaus/oxvault/issues) with the output.
 
 ## The command line
 
@@ -38,7 +38,7 @@ export BW_SESSION="$(bw unlock --raw)"
 node apps/cli/src/index.ts totp github
 ```
 
-Once the first release is tagged, the same tool installs from npm as `strongroom`. Until then, `node apps/cli/src/index.ts` is the supported way. Details are on the [CLI page](/cli/).
+Once the first release is tagged, the same tool installs from npm as `oxvault`. Until then, `node apps/cli/src/index.ts` is the supported way. Details are on the [CLI page](/cli/).
 
 ## Desktop app on Linux
 

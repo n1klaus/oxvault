@@ -4,10 +4,10 @@ import LocalAuthentication
 import SafariServices
 
 // Runs inside Electron: Apple checks the containing app's bundle/entitlements.
-@_cdecl("strongroom_invoke")
+@_cdecl("oxvault_invoke")
 func invoke(
   _ operation: UnsafePointer<CChar>, _ input: UnsafePointer<CChar>,
-  _ context: UnsafeMutableRawPointer?, _ reply: @escaping StrongroomReply
+  _ context: UnsafeMutableRawPointer?, _ reply: @escaping OxVaultReply
 ) {
   let operation = String(cString: operation)
   let input = Data(String(cString: input).utf8)
@@ -32,13 +32,13 @@ func invoke(
       return
     }
     if operation == "safariStatus" || operation == "safariSettings" {
-      guard let extensionURL = Bundle.main.builtInPlugInsURL?.appendingPathComponent("StrongroomSafari.appex"),
+      guard let extensionURL = Bundle.main.builtInPlugInsURL?.appendingPathComponent("OxVaultSafari.appex"),
         FileManager.default.fileExists(atPath: extensionURL.path)
       else {
         finish(["ok": operation == "safariStatus", "available": false, "enabled": false])
         return
       }
-      let identifier = "app.strongroom.vault.safari"
+      let identifier = "app.oxvault.vault.safari"
       SFSafariExtensionManager.getStateOfSafariExtension(withIdentifier: identifier) { state, _ in
         if operation == "safariStatus" {
           finish(["ok": true, "available": state != nil, "enabled": state?.isEnabled ?? false])
@@ -58,9 +58,9 @@ func invoke(
         task,
         "com.apple.developer.authentication-services.autofill-credential-provider" as CFString, nil)
         as? Bool == true,
-      let extensionURL = bundle.builtInPlugInsURL?.appendingPathComponent("StrongroomAutoFill.appex"),
+      let extensionURL = bundle.builtInPlugInsURL?.appendingPathComponent("OxVaultAutoFill.appex"),
       FileManager.default.fileExists(atPath: extensionURL.path),
-      let group = bundle.object(forInfoDictionaryKey: "StrongroomAppGroup") as? String,
+      let group = bundle.object(forInfoDictionaryKey: "OxVaultAppGroup") as? String,
       let container = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: group)
     else {
       finish(["ok": true, "available": false, "enabled": false])
@@ -118,7 +118,7 @@ private struct Identity: Decodable {
 // Node-API's threadsafe function owns this context until its single completion.
 private struct Completion: @unchecked Sendable {
   let context: UnsafeMutableRawPointer?
-  let reply: StrongroomReply
+  let reply: OxVaultReply
 
   func callAsFunction(_ value: [String: Any]) {
     let data = (try? JSONSerialization.data(withJSONObject: value)) ?? Data("{\"ok\":false}".utf8)

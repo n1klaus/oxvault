@@ -1,6 +1,6 @@
 // OxVault mark: a oxvault plate over a staple, as filled shapes (assets/brand/source/oxvault-glyph.svg).
 // The slot and hole wind the opposite way so they cut out of the plate.
-export const strongroomPaths = [
+export const oxvaultPaths = [
   // Staple
   'M368 780 V610 A144 144 0 0 1 656 610 V780 H592 V610 A80 80 0 0 0 432 610 V780 Z',
   // Plate with slot and hole

@@ -48,7 +48,7 @@ export default {
   afterPack: 'build/embed-autofill.cjs',
   mac: {
     target: ['dmg', 'zip'],
-    icon: 'dist/native/StrongroomAutoFill.appex/Contents/Resources/OxVault.icns',
+    icon: 'dist/native/OxVaultAutoFill.appex/Contents/Resources/OxVault.icns',
     category: 'public.app-category.productivity',
     identity: '-',
     minimumSystemVersion: '14.0',

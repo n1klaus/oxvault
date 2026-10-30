@@ -2,7 +2,7 @@ export const MAX_BROWSER_MESSAGE_BYTES = 900_000;
 
 export type WindowMaterial = 'glass' | 'vibrancy' | 'solid';
 export type WindowCommand = 'search' | 'new' | 'settings';
-export type NativeConfirmation = 'discard' | 'trash' | 'deleteFolder';
+export type NativeConfirmation = 'discard' | 'trash' | 'deleteFolder' | 'deleteSend';
 export type ItemMenuAction =
   | 'copyUsername'
   | 'copyPassword'
@@ -331,27 +331,28 @@ export interface SendSummary {
   passwordSet: boolean;
 }
 
-/** A Send draft to create or update. */
-export interface SendDraft {
-  type: 'text' | 'file';
+/** A Send draft to create. All fields are required, matching the IPC schema. */
+export type SendDraft = {
   name: string;
-  notes?: string;
-  text?: string;
-  password?: string;
-  maxAccessCount?: number | null;
+  notes: string;
   deleteInDays: number;
   expireInDays: number | null;
-  hidden?: boolean;
-  disabled?: boolean;
-  hideEmail?: boolean;
-}
+  maxAccessCount: number | null;
+  password: string;
+  disabled: boolean;
+  hideEmail: boolean;
+} &
+  (
+    | { type: 'text'; text: string; hidden: boolean }
+    | { type: 'file' }
+  );
 
 export type Browser = 'safari' | 'chrome' | 'firefox';
 export type BrowserSetup = Record<Browser, { available: boolean; reason?: string }>;
 
 export type BrowserConnection = 'connected' | 'not-detected' | 'setup-error' | 'unavailable';
 
-export interface LatchApi {
+export interface VaultApi {
   lockTimeout(): Promise<Result<LockTimeoutMinutes>>;
   setLockTimeout(minutes: LockTimeoutMinutes): Promise<Result<LockTimeoutMinutes>>;
   macAutoFill(): Promise<Result<MacAutoFillState>>;
@@ -401,13 +402,11 @@ export interface LatchApi {
   browserConnection(): Promise<Result<BrowserConnection>>;
   openExtensionFolder(): Promise<Result<void>>;
   sends(): Promise<Result<SendSummary[]>>;
-  createSend(
-    draft: SendDraft,
-    pick: () => Promise<string | null>,
-  ): Promise<Result<SendSummary | null>>;
+  /** Resolves null when they close the file picker without choosing. */
+  createSend(draft: SendDraft): Promise<Result<SendSummary[] | null>>;
   deleteSend(id: string): Promise<Result<SendSummary[]>>;
   removeSendPassword(id: string): Promise<Result<SendSummary[]>>;
-  sendLink(id: string): Promise<Result<string>>;
+  copySendLink(id: string): Promise<Result<void>>;
   onState(listener: (state: VaultState) => void): () => void;
   appearance(): Promise<Result<WindowAppearance>>;
   onAppearance(listener: (appearance: WindowAppearance) => void): () => void;

@@ -52,7 +52,7 @@ export async function buildSafari(
       CFBundleVersion: version,
       CFBundleShortVersionString: version,
       LSMinimumSystemVersion: '14.0',
-      StrongroomAppGroup: group,
+      OxVaultAppGroup: group,
       NSExtension: {
         NSExtensionPointIdentifier: 'com.apple.Safari.web-extension',
         NSExtensionPrincipalClass: 'OxVaultSafariHandler',

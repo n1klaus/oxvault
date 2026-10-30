@@ -16,38 +16,40 @@ This means organization items appear as restricted and cannot be edited in OxVau
 
 Items marked with reprompt require unlocking with the master password before opening. OxVault implements this via Bitlatch #20 (`4f7e028ef`), which adds `openProtected(id, password)` to the API. Users can unlock such items directly without editing the cipher.
 
-### Web Vault (Self-Hosted Only)
+### Web Vault (Requires a Vault Server at the Same Origin)
 
-OxVault includes `apps/web`, a TOTP authenticator for browser-based access. However, Vaultwarden's CORS policy blocks external origins—GitHub Pages would fail. The web app must be served from the vault server's own origin, and the origin guard stays a hard failure. See `apps/web/guard.ts`.
+OxVault includes `apps/web`, a TOTP authenticator for browser-based access. Status: **Partial**. It is a static bundle with no server of its own — a vault server must serve the bundle and an `/api/v1/*` API at the same origin, and no such server ships with OxVault.
+
+Vaultwarden's CORS policy blocks external origins — GitHub Pages would fail. The deployment guard (`apps/web/src/lib/guard.ts`) rejects opaque origins, requires HTTPS (except localhost in development), and when `VITE_TRUSTED_ORIGINS` is set, rejects any origin not on that allowlist. `VITE_API_BASE` points the calls at a vault API on a trusted origin, if it is not same-origin.
 
 Scope is intentionally limited: unlock, list TOTP-bearing logins, show code and countdown, copy. No write-back operations, which sidesteps the #21 hazard entirely.
 
 ## Vault items
 
-| Item or feature                                       | Status            | Notes                                                                                       |
-| ----------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------- |
-| Logins: view, create, edit, trash, restore            | Done              |                                                                                             |
-| Secure notes: view, create, edit                      | Done              |                                                                                             |
-| Favorites                                             | Done              |                                                                                             |
-| Cards: view, copy, create, edit                       | Done              |                                                                                             |
-| Identities: view, copy, create, edit                  | Done              |                                                                                             |
-| SSH keys: view, copy, edit                            | Done              | New keys can be pasted in, not generated                                                    |
-| Passkeys                                              | Partial           | Used through macOS AutoFill. Editing a passkey item is left to Bitwarden                    |
-| One-time codes (TOTP)                                 | Done              | Desktop, browser popup and command line                                                     |
-| URI match rules                                       | Done              |                                                                                             |
-| Folders: view, filter, assign, create, rename, delete | Done              | Nested names such as `A/B` show as flat names, not a tree                                   |
-| Custom fields: view, copy, edit                       | Done              | Linked fields are kept but not editable                                                     |
-| Password history: view and copy                       | Done              |                                                                                             |
-| Attachments: add, download, delete                    | Done              | Desktop app. The server decides if the account may add files. Not run against a real server |
-| Attachments: list                                     | Done              | Shown in the item detail                                                                    |
+| Item or feature                                       | Status            | Notes                                                                                                  |
+| ----------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------ |
+| Logins: view, create, edit, trash, restore            | Done              |                                                                                                        |
+| Secure notes: view, create, edit                      | Done              |                                                                                                        |
+| Favorites                                             | Done              |                                                                                                        |
+| Cards: view, copy, create, edit                       | Done              |                                                                                                        |
+| Identities: view, copy, create, edit                  | Done              |                                                                                                        |
+| SSH keys: view, copy, edit                            | Done              | New keys can be pasted in, not generated                                                               |
+| Passkeys                                              | Partial           | Used through macOS AutoFill. Editing a passkey item is left to Bitwarden                               |
+| One-time codes (TOTP)                                 | Done              | Desktop, browser popup and command line                                                                |
+| URI match rules                                       | Done              |                                                                                                        |
+| Folders: view, filter, assign, create, rename, delete | Done              | Nested names such as `A/B` show as flat names, not a tree                                              |
+| Custom fields: view, copy, edit                       | Done              | Linked fields are kept but not editable                                                                |
+| Password history: view and copy                       | Done              |                                                                                                        |
+| Attachments: add, download, delete                    | Done              | Desktop app. The server decides if the account may add files. Not run against a real server            |
+| Attachments: list                                     | Done              | Shown in the item detail                                                                               |
 | Items with master password re-prompt                  | Partial           | Shown with reprompt flag; `openProtected(id, password)` unlocks them. Editing left to official client. |
-| Organization and collection items                     | Not possible here | Shown as restricted. Needs organization key handling                                        |
+| Organization and collection items                     | Not possible here | Shown as restricted. Needs organization key handling                                                   |
 
 ## Sending and sharing
 
 | Feature                                             | Status            | Notes                                                                          |
 | --------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------ |
-| File Send: create                                   | Done              | Desktop app and `oxvault send`. The server decides if the account may       |
+| File Send: create                                   | Done              | Desktop app and `oxvault send`. The server decides if the account may          |
 | Text Send, list, copy link, remove password, delete | Done              | Editing an existing Send is not built                                          |
 | Sharing items with an organization                  | Not possible here | Organization keys                                                              |
 | Emergency access                                    | Not possible here | Server API and a key exchange between accounts. See [FEATURES.md](FEATURES.md) |

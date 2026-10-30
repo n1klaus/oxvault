@@ -1,12 +1,12 @@
 import Darwin
 import Foundation
 
-@_silgen_name("latch_verify_server")
+@_silgen_name("oxvault_verify_server")
 private func verifyServer(_ fd: Int32) -> Bool
 
 private let maxMessageBytes = 1_048_576
 private let chromeOrigin = "chrome-extension://bigjnomcnbhpgdekneagdbikmneibplj/"
-private let firefoxId = "strongroom@strongroom.local"
+private let firefoxId = "oxvault@oxvault.local"
 
 private func readExact(_ fd: Int32, count: Int) -> [UInt8]? {
   var bytes = [UInt8](repeating: 0, count: count)
@@ -99,7 +99,7 @@ let arguments = Array(CommandLine.arguments.dropFirst())
 let chrome = arguments.first == chromeOrigin &&
   (arguments.count == 1 || arguments.count == 2 && arguments[1].hasPrefix("--parent-window="))
 let firefox = arguments.count == 2 &&
-  URL(fileURLWithPath: arguments[0]).lastPathComponent == "app.strongroom.vault.json" &&
+  URL(fileURLWithPath: arguments[0]).lastPathComponent == "app.oxvault.vault.json" &&
   arguments[1] == firefoxId
 let raycast = arguments == ["--raycast"]
 guard chrome || firefox || raycast else { exit(1) }

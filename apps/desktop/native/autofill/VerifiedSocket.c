@@ -23,7 +23,7 @@ typedef struct {
   pid_t pid;
   audit_token_t audit;
   bool attached;
-  LatchLauncher launcher;
+  OxVaultLauncher launcher;
 } AcceptedPeer;
 
 typedef struct {
@@ -59,7 +59,7 @@ static void deliver_peer(napi_env env, napi_value callback, void *context, void 
   bool adopted = false;
   if (env && !atomic_load(&listener->stopped)) {
     napi_value args[5], receiver, result;
-    const LatchLauncher *launcher = peer->attached ? &peer->launcher : NULL;
+    const OxVaultLauncher *launcher = peer->attached ? &peer->launcher : NULL;
     char audit_hex[sizeof(audit_token_t) * 2 + 1];
     const uint8_t *bytes = (const uint8_t *)&peer->audit;
     for (size_t i = 0; i < sizeof(audit_token_t); i++)
@@ -111,7 +111,7 @@ static bool verify_peer(int fd, const VerifiedListener *listener, AcceptedPeer *
   // The audit token carries the pid version, so this second check fails if the relay
   // exited and its pid now names another process.
   peer->attached =
-      latch_find_launcher(peer->pid, listener->launcher_requirement,
+      oxvault_find_launcher(peer->pid, listener->launcher_requirement,
                           listener->requirement_names_launcher_parent, &peer->launcher) &&
       peer_satisfies(&peer->audit, listener->requirement);
   return true;
@@ -195,7 +195,7 @@ static SecRequirementRef signing_requirement(const char *allowed_identifier) {
       SecCodeCopySigningInformation(self, kSecCSSigningInformation, &info) == errSecSuccess) {
     CFStringRef self_identifier = CFDictionaryGetValue(info, kSecCodeInfoIdentifier);
     CFStringRef self_team = CFDictionaryGetValue(info, kSecCodeInfoTeamIdentifier);
-    if (self_identifier && CFEqual(self_identifier, CFSTR("app.strongroom.vault")) &&
+    if (self_identifier && CFEqual(self_identifier, CFSTR("app.oxvault.vault")) &&
         self_team && CFGetTypeID(self_team) == CFStringGetTypeID()) {
       CFStringRef identifier = CFStringCreateWithCString(kCFAllocatorDefault, allowed_identifier,
                                                          kCFStringEncodingUTF8);
@@ -256,7 +256,7 @@ static napi_value start_verified_socket(napi_env env, napi_callback_info info) {
     if (requirement) CFRelease(requirement);
     if (launcher_requirement) CFRelease(launcher_requirement);
     napi_throw_error(env, NULL,
-                     "A signed Strongroom app, exact client identifier, and valid launcher "
+                     "A signed OxVault app, exact client identifier, and valid launcher "
                      "requirement are required");
     return NULL;
   }
@@ -282,7 +282,7 @@ static napi_value start_verified_socket(napi_env env, napi_callback_info info) {
   listener->path_inode = bound.st_ino;
   if (chmod(path, 0600) != 0 || listen(listener->listen_fd, 16) != 0) goto listener_failure;
   napi_value name;
-  if (napi_create_string_utf8(env, "Strongroom verified socket", NAPI_AUTO_LENGTH, &name) != napi_ok ||
+  if (napi_create_string_utf8(env, "OxVault verified socket", NAPI_AUTO_LENGTH, &name) != napi_ok ||
       napi_create_threadsafe_function(env, args[4], NULL, name, 64, 1, listener,
                                       callback_finished, listener, deliver_peer,
                                       &listener->callback) != napi_ok) goto listener_failure;
@@ -331,7 +331,7 @@ static napi_value stop_verified_socket(napi_env env, napi_callback_info info) {
   return undefined;
 }
 
-napi_status latch_register_verified_socket(napi_env env, napi_value exports) {
+napi_status oxvault_register_verified_socket(napi_env env, napi_value exports) {
   napi_value start, stop;
   napi_status status = napi_create_function(env, "startVerifiedSocket", NAPI_AUTO_LENGTH,
                                              start_verified_socket, NULL, &start);

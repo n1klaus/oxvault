@@ -10,17 +10,17 @@ updated: 2026-10-10
 
 Each feature below is either computed on your machine from vault data, or decided by the Bitwarden server. OxVault provides the first kind fully. For the second kind it sends the request through `bw` and shows the answer. It does not fake an entitlement.
 
-| Feature                        | Lives on                           | OxVault                                                                  |
+| Feature                        | Lives on                           | OxVault                                                                     |
 | ------------------------------ | ---------------------------------- | --------------------------------------------------------------------------- |
-| Authenticator codes (TOTP)     | Client                             | Done: desktop item view, browser popup and `strongroom totp`                |
+| Authenticator codes (TOTP)     | Client                             | Done: desktop item view, browser popup and `oxvault totp`                |
 | Steam Guard codes              | Client                             | Done, same module                                                           |
-| Reused password report         | Client                             | Done: Settings, Vault health, and `strongroom health`                       |
+| Reused password report         | Client                             | Done: Settings, Vault health, and `oxvault health`                       |
 | Weak password report           | Client                             | Done: same places                                                           |
 | Unsecured website report       | Client                             | Done: same places                                                           |
-| Exposed password report        | Client plus a public leak lookup   | Done, opt-in: Settings switch and `strongroom health --breaches`            |
-| Inactive two-step report       | Client plus a public list of sites | Done, opt-in: `strongroom health --inactive-2fa`                            |
-| File attachments               | Server                             | Wired: `strongroom attach`. Works where the account or server allows it     |
-| File Sends                     | Server                             | Wired: `strongroom send`. Works where the account or server allows it       |
+| Exposed password report        | Client plus a public leak lookup   | Done, opt-in: Settings switch and `oxvault health --breaches`            |
+| Inactive two-step report       | Client plus a public list of sites | Done, opt-in: `oxvault health --inactive-2fa`                            |
+| File attachments               | Server                             | Wired: `oxvault attach`. Works where the account or server allows it     |
+| File Sends                     | Server                             | Wired: `oxvault send`. Works where the account or server allows it       |
 | Emergency access               | Server                             | Not built                                                                   |
 | YubiKey and Duo two-step login | Server                             | Nothing to build: set on the account, and sign-in already asks for the code |
 | Priority support               | Bitwarden                          | Not applicable                                                              |
@@ -29,7 +29,7 @@ Each feature below is either computed on your machine from vault data, or decide
 
 OxVault computes RFC 6238 codes from the `login.totp` field of a login. It also handles Steam Guard's 5-character alphabet. The code comes from `crypto.subtle` HMAC in `packages/shared/src/totp.ts`, so this is code generation from your own stored secret, not vault encryption.
 
-Check: `strongroom totp github` prints the code on stdout and the seconds left on stderr. Compare it with your authenticator app.
+Check: `oxvault totp github` prints the code on stdout and the seconds left on stderr. Compare it with your authenticator app.
 
 ## Vault health
 
@@ -43,7 +43,7 @@ The desktop app can create, rename and delete folders, filter by folder and assi
 
 ## Attachments and file Sends
 
-Attachments can be added, downloaded and deleted in the desktop app, and added with `strongroom attach`. File Sends are created in the desktop app and with `strongroom send`. In both cases the account or server must allow it. The attachment path has not been run against a real server yet. See the [parity page](/parity/).
+Attachments can be added, downloaded and deleted in the desktop app, and added with `oxvault attach`. File Sends are created in the desktop app and with `oxvault send`. In both cases the account or server must allow it. The attachment path has not been run against a real server yet. See the [parity page](/parity/).
 
 ## Generators, import and export
 

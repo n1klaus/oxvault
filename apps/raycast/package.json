@@ -1,10 +1,10 @@
 {
   "$schema": "https://www.raycast.com/schemas/extension.json",
   "name": "oxvault-raycast",
-  "title": "Strongroom",
-  "description": "Unlock and search your Strongroom logins and secure notes.",
+  "title": "OxVault",
+  "description": "Unlock and search your OxVault logins and secure notes.",
   "icon": "icon.png",
-  "author": "Strongroom contributors",
+  "author": "OxVault contributors",
   "license": "MIT",
   "private": true,
   "platforms": [
@@ -18,15 +18,15 @@
     {
       "name": "search",
       "title": "Search Vault",
-      "subtitle": "Strongroom",
-      "description": "Unlock Strongroom, browse item details, and copy login fields or secure notes.",
+      "subtitle": "OxVault",
+      "description": "Unlock OxVault, browse item details, and copy login fields or secure notes.",
       "mode": "view"
     },
     {
       "name": "lock",
       "title": "Lock Vault",
-      "subtitle": "Strongroom",
-      "description": "Lock Strongroom immediately.",
+      "subtitle": "OxVault",
+      "description": "Lock OxVault immediately.",
       "mode": "no-view"
     }
   ],

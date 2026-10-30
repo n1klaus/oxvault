@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://strongroom.app">Website</a> ·
+  <a href="https://n1klaus.github.io/oxvault">Website</a> ·
   <a href="#highlights">Highlights</a> ·
   <a href="#screenshots">Screenshots</a> ·
   <a href="#installation">Installation</a> ·
@@ -50,31 +50,32 @@ OxVault is an independent project, not affiliated with or endorsed by Bitwarden.
 
 ```sh
 brew install bitwarden-cli
-brew install --cask dillionverma/tap/strongroom
 ```
+
+Prebuilt desktop packages are not published yet; see [Installation](#installation) to build from source.
 
 ### Direct download
 
-- <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/apple_dark.svg" /><img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/apple.svg" width="20" height="20" alt="" /></picture> **macOS 14+ · Apple Silicon:** [DMG](https://github.com/dillionverma/strongroom/releases/download/v0.3.5/OxVault-0.3.5-mac-arm64.dmg)
-- <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/windows.svg" width="20" height="20" alt="" /> **Windows · x64:** [Installer](https://github.com/dillionverma/strongroom/releases/download/v0.3.5/OxVault-0.3.5-win-x64.exe) · experimental
-- <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/linux.svg" width="20" height="20" alt="" /> **Linux · x64 / ARM64:** [AppImage & deb](https://github.com/dillionverma/strongroom/releases/tag/v0.3.5) · experimental
+- <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/apple_dark.svg" /><img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/apple.svg" width="20" height="20" alt="" /></picture> **macOS 14+ · Apple Silicon:** [DMG](https://github.com/n1klaus/oxvault/releases/download/v0.3.5/OxVault-0.3.5-mac-arm64.dmg)
+- <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/windows.svg" width="20" height="20" alt="" /> **Windows · x64:** [Installer](https://github.com/n1klaus/oxvault/releases/download/v0.3.5/OxVault-0.3.5-win-x64.exe) · experimental
+- <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/linux.svg" width="20" height="20" alt="" /> **Linux · x64 / ARM64:** [AppImage & deb](https://github.com/n1klaus/oxvault/releases/tag/v0.3.5) · experimental
 
 ### Browser extensions
 
 The extensions connect to the macOS app. Windows and Linux builds cannot yet check which app asks for a password, so they do not accept browser connections.
 
-- <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/chrome.svg" width="20" height="20" alt="" /> Chrome, <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/edge.svg" width="20" height="20" alt="" /> Edge, <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/brave.svg" width="20" height="20" alt="" /> Brave, <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/arc_browser.svg" width="20" height="20" alt="" /> Arc, Aside, <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/vivaldi.svg" width="20" height="20" alt="" /> Vivaldi & <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/chromium.svg" width="20" height="20" alt="" /> Chromium: [Download](https://github.com/dillionverma/strongroom/releases/download/v0.3.5/strongroom-0.3.5-chrome.zip) · [Setup](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world#load-unpacked)
-- <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/firefox.svg" width="20" height="20" alt="" /> **Firefox preview:** [Download](https://github.com/dillionverma/strongroom/releases/download/v0.3.5/strongroom-0.3.5-firefox.zip) · [Setup](https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/)
+- <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/chrome.svg" width="20" height="20" alt="" /> Chrome, <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/edge.svg" width="20" height="20" alt="" /> Edge, <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/brave.svg" width="20" height="20" alt="" /> Brave, <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/arc_browser.svg" width="20" height="20" alt="" /> Arc, Aside, <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/vivaldi.svg" width="20" height="20" alt="" /> Vivaldi & <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/chromium.svg" width="20" height="20" alt="" /> Chromium: [Download](https://github.com/n1klaus/oxvault/releases/download/v0.3.5/oxvault-0.3.5-chrome.zip) · [Setup](https://developer.chrome.com/docs/extensions/get-started/tutorial/hello-world#load-unpacked)
+- <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/firefox.svg" width="20" height="20" alt="" /> **Firefox preview:** [Download](https://github.com/n1klaus/oxvault/releases/download/v0.3.5/oxvault-0.3.5-firefox.zip) · [Setup](https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/)
 
 ### <img src="https://cdn.jsdelivr.net/gh/pheralb/svgl@ed75393dbe6eba6e446e208abb6826ecd1abd36d/static/library/raycast.svg" width="20" height="20" alt="" /> Raycast
 
-[Download source ZIP](https://github.com/dillionverma/strongroom/releases/download/v0.3.5/strongroom-0.3.5-raycast.zip) · [Setup](apps/raycast/README.md#install-from-source). Store installation coming soon.
+[Download source ZIP](https://github.com/n1klaus/oxvault/releases/download/v0.3.5/oxvault-0.3.5-raycast.zip) · [Setup](apps/raycast/README.md#install-from-source). Store installation coming soon.
 
 ## Development
 
 ```sh
-git clone https://github.com/dillionverma/strongroom.git
-cd strongroom
+git clone https://github.com/n1klaus/oxvault.git
+cd oxvault
 pnpm install --frozen-lockfile
 pnpm run dev
 ```

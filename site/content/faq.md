@@ -38,4 +38,4 @@ You can build it from source. See [install](/install/). No Linux package is publ
 
 ## How do I report a bug or a security problem?
 
-Bugs go in the [issue tracker](https://github.com/bodencrouch/strongroom/issues). For a security problem, use the repo's security policy and do not post details in public.
+Bugs go in the [issue tracker](https://github.com/n1klaus/oxvault/issues). For a security problem, use the repo's security policy and do not post details in public.

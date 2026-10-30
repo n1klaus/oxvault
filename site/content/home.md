@@ -16,7 +16,7 @@ It is not made by Bitwarden and not endorsed by Bitwarden. Bitwarden is a tradem
 
 ## What it adds on top of bw
 
-- One-time codes (TOTP and Steam Guard) in the desktop item view, the browser popup and `strongroom totp`. See [Bitwarden TOTP code viewer](/features/#one-time-codes).
+- One-time codes (TOTP and Steam Guard) in the desktop item view, the browser popup and `oxvault totp`. See [Bitwarden TOTP code viewer](/features/#one-time-codes).
 - Vault health: reused, weak and plain `http://` logins, plus two opt-in checks. See [Bitwarden vault health report from the command line](/cli/#health).
 - Folders, custom fields, password history, cards, identities and SSH keys in the desktop editor.
 - Attachments and file Sends, passed through `bw`. The server decides if your account may use them.
@@ -29,8 +29,8 @@ It does not unlock anything your Bitwarden server withholds. Attachments, file S
 ## Check it yourself
 
 ```sh
-git clone https://github.com/bodencrouch/strongroom
-cd strongroom
+git clone https://github.com/n1klaus/oxvault
+cd oxvault
 grep -rn "fetch(" apps packages --include=*.ts --include=*.tsx --exclude-dir=node_modules
 ```
 

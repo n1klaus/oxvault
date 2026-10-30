@@ -2,10 +2,10 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
-extern bool latch_verify_server(int fd);
+extern bool oxvault_verify_server(int fd);
 
 static NSDictionary *Request(NSDictionary *request) {
-  NSString *group = [NSBundle.mainBundle objectForInfoDictionaryKey:@"LatchAppGroup"];
+  NSString *group = [NSBundle.mainBundle objectForInfoDictionaryKey:@"OxVaultAppGroup"];
   NSURL *directory = group ? [NSFileManager.defaultManager containerURLForSecurityApplicationGroupIdentifier:group] : nil;
   NSData *configData = directory ? [NSData dataWithContentsOfURL:[directory URLByAppendingPathComponent:@"safari-bridge.json"]] : nil;
   NSDictionary *config = configData ? [NSJSONSerialization JSONObjectWithData:configData options:0 error:nil] : nil;
@@ -27,7 +27,7 @@ static NSDictionary *Request(NSDictionary *request) {
   int noSignal = 1;
   setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &noSignal, sizeof(noSignal));
   if (connect(fd, (struct sockaddr *)&address, sizeof(address)) != 0) { close(fd); return nil; }
-  if (!latch_verify_server(fd)) { close(fd); return nil; }
+  if (!oxvault_verify_server(fd)) { close(fd); return nil; }
   NSMutableData *payload = [[NSJSONSerialization dataWithJSONObject:@{@"token": config[@"token"], @"request": request} options:0 error:nil] mutableCopy];
   if (!payload || payload.length >= 900000) { close(fd); return nil; }
   [payload appendBytes:"\n" length:1];
@@ -52,15 +52,15 @@ static NSDictionary *Request(NSDictionary *request) {
 }
 
 
-@interface LatchSafariHandler : NSObject <NSExtensionRequestHandling>
+@interface OxVaultSafariHandler : NSObject <NSExtensionRequestHandling>
 @end
-@implementation LatchSafariHandler
+@implementation OxVaultSafariHandler
 - (void)beginRequestWithExtensionContext:(NSExtensionContext *)context {
   NSExtensionItem *input = context.inputItems.firstObject;
   id message = input.userInfo[SFExtensionMessageKey];
   dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
     NSDictionary *response = [message isKindOfClass:NSDictionary.class] ? Request(message) : nil;
-    if (!response) response = @{ @"ok": @NO, @"error": @"Open Strongroom on your Mac to connect your vault." };
+    if (!response) response = @{ @"ok": @NO, @"error": @"Open OxVault on your Mac to connect your vault." };
     NSExtensionItem *output = [NSExtensionItem new];
     output.userInfo = @{ SFExtensionMessageKey: response };
     [context completeRequestReturningItems:@[output] completionHandler:nil];

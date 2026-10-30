@@ -1,7 +1,7 @@
 import AppKit
 import AuthenticationServices
 
-@objc(LatchCredentialProvider)
+@objc(OxVaultCredentialProvider)
 @MainActor
 final class CredentialProvider: ASCredentialProviderViewController {
   private let stack = NSStackView()

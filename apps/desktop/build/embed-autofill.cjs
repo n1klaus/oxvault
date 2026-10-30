@@ -11,30 +11,30 @@ exports.default = async function ({ appOutDir, electronPlatformName, packager })
   if (publish) {
     await writeFile(
       path.join(contents, 'Resources/app-update.yml'),
-      JSON.stringify({ ...publish, updaterCacheDirName: 'strongroom-updater' }),
+      JSON.stringify({ ...publish, updaterCacheDirName: 'oxvault-updater' }),
     );
   }
   const iconResources = path.join(
     packager.projectDir,
-    'dist/native/StrongroomAutoFill.appex/Contents/Resources',
+    'dist/native/OxVaultAutoFill.appex/Contents/Resources',
   );
   for (const name of ['Assets.car', 'OxVault.icns']) {
     await cp(path.join(iconResources, name), path.join(contents, 'Resources', name));
   }
   await cp(
     path.join(packager.projectDir, '../../assets/brand/macos/icon-1024.png'),
-    path.join(contents, 'Resources/strongroom-dock.png'),
+    path.join(contents, 'Resources/oxvault-dock.png'),
   );
   await mkdir(path.join(contents, 'Helpers'), { recursive: true });
   await cp(
-    path.join(packager.projectDir, 'dist/native/StrongroomBridgeHost.app'),
-    path.join(contents, 'Helpers/StrongroomBridgeHost.app'),
+    path.join(packager.projectDir, 'dist/native/OxVaultBridgeHost.app'),
+    path.join(contents, 'Helpers/OxVaultBridgeHost.app'),
     { recursive: true },
   );
   await mkdir(path.join(contents, 'Helpers'), { recursive: true });
   await cp(
-    path.join(packager.projectDir, 'dist/native/LatchBridgeHost.app'),
-    path.join(contents, 'Helpers/LatchBridgeHost.app'),
+    path.join(packager.projectDir, 'dist/native/OxVaultBridgeHost.app'),
+    path.join(contents, 'Helpers/OxVaultBridgeHost.app'),
     { recursive: true },
   );
   const infoPath = path.join(contents, 'Info.plist');
@@ -52,14 +52,14 @@ exports.default = async function ({ appOutDir, electronPlatformName, packager })
   const plugins = path.join(appOutDir, 'OxVault.app/Contents/PlugIns');
   await mkdir(plugins, { recursive: true });
   await cp(
-    path.join(packager.projectDir, 'dist/native/StrongroomAutoFill.appex'),
-    path.join(plugins, 'StrongroomAutoFill.appex'),
+    path.join(packager.projectDir, 'dist/native/OxVaultAutoFill.appex'),
+    path.join(plugins, 'OxVaultAutoFill.appex'),
     { recursive: true },
   );
   if (process.env.OXVAULT_SAFARI_PROFILE) {
     await cp(
-      path.join(packager.projectDir, 'dist/native/StrongroomSafari.appex'),
-      path.join(plugins, 'StrongroomSafari.appex'),
+      path.join(packager.projectDir, 'dist/native/OxVaultSafari.appex'),
+      path.join(plugins, 'OxVaultSafari.appex'),
       { recursive: true },
     );
   }

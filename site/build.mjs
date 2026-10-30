@@ -6,9 +6,9 @@ import { marked } from 'marked';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const dist = join(here, 'dist');
-const ORIGIN = 'https://bodencrouch.github.io';
+const ORIGIN = 'https://n1klaus.github.io';
 const BASE = '/oxvault/';
-const REPO = 'https://github.com/bodencrouch/oxvault';
+const REPO = 'https://github.com/n1klaus/oxvault';
 const SITE_NAME = 'OxVault';
 const OG_IMAGE = `${ORIGIN}${BASE}og.png`;
 

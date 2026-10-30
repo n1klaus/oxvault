@@ -162,6 +162,27 @@ export class DesktopLifecycle {
     return this.clipboardQueue;
   }
 
+  copySendLink(id: string) {
+    const epoch = this.epoch;
+    this.clipboardQueue = this.clipboardQueue
+      .catch(() => undefined)
+      .then(async () => {
+        this.assertRunning();
+        if (!this.vault || epoch !== this.epoch)
+          throw new UserError('Vault locked. Try again after unlocking.');
+        const value = this.vault.sendLink(id);
+        if (!value) throw new UserError('There is nothing to copy.');
+        this.copiedValue = value;
+        await clipboard.writeText(this.copiedValue);
+        if (this.clipboardTimer) clearTimeout(this.clipboardTimer);
+        this.clipboardTimer = setTimeout(
+          () => void this.clearCopiedSecret().catch(() => undefined),
+          30_000,
+        );
+      });
+    return this.clipboardQueue;
+  }
+
   private clearCopiedSecret() {
     if (this.clipboardTimer) clearTimeout(this.clipboardTimer);
     this.clipboardQueue = this.clipboardQueue

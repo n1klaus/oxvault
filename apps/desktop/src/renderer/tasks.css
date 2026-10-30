@@ -394,3 +394,23 @@ html[data-reduced-motion='true'] .auth-mark[data-scanning='true'] {
   gap: 2px;
   overflow-wrap: anywhere;
 }
+
+.sends-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--window);
+}
+.sends-screen > * {
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  max-width: 820px;
+  margin-inline: auto;
+  overflow-y: auto;
+}
+.sends-screen .sends-panel {
+  padding-block: 24px;
+}

@@ -37,6 +37,8 @@ import type {
   ItemDraft,
   LoginInput,
   PasswordOptions,
+  SendDraft,
+  SendSummary,
   TwoStepMethod,
   VaultState,
 } from '@oxvault/shared/types';
@@ -88,6 +90,7 @@ const ALL_METHODS: TwoStepMethod[] = ['authenticator', 'yubikey', 'email'];
 const MAX_CODE_ATTEMPTS = 3;
 /** How long an unanswered save offer stays on the table. */
 const CAPTURE_TIMEOUT_MS = 3 * 60_000;
+const SEND_REFUSED = 'Bitwarden did not accept the Send. Your plan or server may not allow it.';
 
 /** A sign-in the browser saw, waiting for the user to accept or ignore it. */
 interface Captured {
@@ -154,6 +157,7 @@ export class Vault extends EventEmitter {
   private opened = new Map<string, Cipher>();
   private opening?: string;
   private openTicket = 0;
+  private sendList = new Map<string, { summary: SendSummary; url: string }>();
   private state: Omit<
     VaultState,
     'biometrics' | 'biometricsOn' | 'revision' | 'itemsRevision' | 'trashLoaded'
@@ -463,6 +467,7 @@ export class Vault extends EventEmitter {
     this.session = '';
     this.ciphers.clear();
     this.opened.clear();
+    this.sendList.clear();
     ++this.openTicket;
     this.organizationList = [];
     this.collectionList = [];
@@ -720,6 +725,120 @@ export class Vault extends EventEmitter {
     this.assertGeneration(generation);
     this.mark(id, null);
     return this.publish();
+  }
+
+  /** The account's Sends, read fresh from Bitwarden. Nothing is kept once the vault locks. */
+  async sends(): Promise<SendSummary[]> {
+    this.requireUnlocked();
+    return this.refreshSends(this.generation);
+  }
+
+  /** Creates a Send. A file Send asks `pick` for its file. Resolves null when they cancel. */
+  async createSend(draft: SendDraft, pick: () => Promise<string | null>) {
+    this.requireUnlocked();
+    const generation = this.generation;
+    let path = '';
+    if (draft.type === 'file') {
+      const picked = await pick();
+      this.assertGeneration(generation);
+      this.requireUnlocked();
+      if (!picked) return null;
+      path = picked;
+    }
+    const day = 86_400_000;
+    const payload = {
+      type: draft.type === 'text' ? 0 : 1,
+      name: draft.name,
+      notes: draft.notes || null,
+      text: draft.type === 'text' ? { text: draft.text, hidden: draft.hidden } : null,
+      file: draft.type === 'file' ? { fileName: path } : null,
+      maxAccessCount: draft.maxAccessCount,
+      deletionDate: new Date(Date.now() + draft.deleteInDays * day).toISOString(),
+      expirationDate:
+        draft.expireInDays === null
+          ? null
+          : new Date(Date.now() + draft.expireInDays * day).toISOString(),
+      password: draft.password || null,
+      emails: null,
+      disabled: draft.disabled,
+      hideEmail: draft.hideEmail,
+    };
+    this.sendList.clear();
+    try {
+      await this.serially(() =>
+        this.cli.run(['send', 'create'], {
+          session: this.session,
+          input: Buffer.from(JSON.stringify(payload)).toString('base64'),
+        }),
+      );
+    } catch {
+      this.assertGeneration(generation);
+      throw new UserError(SEND_REFUSED);
+    }
+    this.assertGeneration(generation);
+    this.requireUnlocked();
+    return this.refreshSends(generation);
+  }
+
+  async deleteSend(id: string) {
+    this.knownSend(id);
+    const generation = this.generation;
+    await this.serially(() =>
+      this.cli.run(['send', 'delete', id], { session: this.session }).catch(() => {
+        this.assertGeneration(generation);
+        throw new UserError('Bitwarden could not delete the Send.');
+      }),
+    );
+    this.sendList.delete(id);
+    return this.refreshSends(generation);
+  }
+
+  async removeSendPassword(id: string) {
+    this.knownSend(id);
+    const generation = this.generation;
+    await this.serially(() =>
+      this.cli.run(['send', 'remove-password', id], { session: this.session }).catch(() => {
+        this.assertGeneration(generation);
+        throw new UserError('Bitwarden could not remove the password.');
+      }),
+    );
+    return this.refreshSends(generation);
+  }
+
+  /** The Send's share link, for the renderer to offer to the user. */
+  sendLink(id: string): string {
+    const { url } = this.knownSend(id);
+    if (!url) throw new UserError('That Send has no link to copy.');
+    return url;
+  }
+
+  private knownSend(id: string) {
+    this.requireUnlocked();
+    const entry = this.sendList.get(id);
+    if (!entry) throw new UserError('That Send is no longer available. Reload your Sends.');
+    return entry;
+  }
+
+  private async refreshSends(generation: number) {
+    let listed: SendSummary[];
+    let entries: [string, { summary: SendSummary; url: string }][];
+    try {
+      const rows = JSON.parse(await this.cli.run(['send', 'list'], { session: this.session }));
+      if (!Array.isArray(rows)) throw new Error('not a list');
+      entries = rows.map((row) => {
+        const entry = parseSend(row);
+        return [entry.summary.id, entry] as const;
+      });
+      listed = entries.map(([, entry]) => entry.summary);
+    } catch {
+      this.assertGeneration(generation);
+      throw new UserError('Could not load your Sends. Try again.');
+    }
+    this.assertGeneration(generation);
+    this.sendList = new Map<string, { summary: SendSummary; url: string }>(
+      entries.map(([key, value]) => [key, value]),
+    );
+    return listed.sort((a, b) => a.name.localeCompare(b.name));
   }
 
   /** Runs trash, restore and counter writes one at a time, in call order. */
@@ -1578,6 +1697,35 @@ function summarize(cipher: Cipher, opened = false): ItemSummary {
     hasPasskey: Boolean(cipher.login?.fido2Credentials?.length),
     restricted: isRestricted(cipher),
     reprompt: Boolean(cipher.reprompt),
+  };
+}
+
+/** Turns one `bw send list` row into the share link plus the summary the UI shows. */
+function parseSend(row: unknown): { summary: SendSummary; url: string } {
+  const send = row as Record<string, unknown>;
+  const text = (value: unknown) => (typeof value === 'string' ? value : null);
+  const count = (value: unknown) => (typeof value === 'number' ? value : null);
+  if (
+    typeof send?.id !== 'string' ||
+    typeof send.name !== 'string' ||
+    (send.type !== 0 && send.type !== 1)
+  )
+    throw new Error('unexpected Send');
+  const file = send.file as Record<string, unknown> | null | undefined;
+  return {
+    summary: {
+      id: send.id,
+      name: send.name,
+      type: send.type,
+      fileName: send.type === 1 ? text(file?.fileName) : null,
+      deletionDate: text(send.deletionDate),
+      expirationDate: text(send.expirationDate),
+      maxAccessCount: count(send.maxAccessCount),
+      accessCount: count(send.accessCount) ?? 0,
+      disabled: send.disabled === true,
+      passwordSet: send.passwordSet === true,
+    },
+    url: text(send.accessUrl) ?? '',
   };
 }
 

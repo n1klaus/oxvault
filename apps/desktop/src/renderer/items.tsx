@@ -8,10 +8,10 @@ import {
   User as UserRound,
 } from '@phosphor-icons/react';
 import { useEffect, useRef, useState } from 'react';
-import type { ItemSummary, LatchApi } from '@oxvault/shared/types';
+import type { ItemSummary, VaultApi } from '@oxvault/shared/types';
 import { useWebsiteIcons } from './WebsiteIcons';
 
-export type CopyField = Extract<Parameters<LatchApi['copy']>[1], string>;
+export type CopyField = Extract<Parameters<VaultApi['copy']>[1], string>;
 export const fieldLabels: Record<CopyField, string> = {
   username: 'Username',
   password: 'Password',
@@ -92,7 +92,7 @@ export { typeName } from '@oxvault/shared/item-fields';
 
 /** The secret-free summary fields of an item, without its detail. */
 export function summaryOf(item: ItemSummary): ItemSummary {
-  const { id, name, username, website, subtitle, folderId, type } = item;
+  const { id, name, username, website, subtitle, folderId, organizationId, collectionIds, type } = item;
   const { favorite, hasPasskey, restricted, reprompt } = item;
   // An item opened with the master password keeps its details out of the list.
   return {
@@ -100,8 +100,10 @@ export function summaryOf(item: ItemSummary): ItemSummary {
     name,
     username: restricted ? '' : username,
     website,
-    subtitle: restricted ? '' : subtitle,
+    subtitle: restricted ? '' :    subtitle,
     folderId,
+    organizationId,
+    collectionIds,
     type,
     favorite,
     hasPasskey,

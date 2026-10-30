@@ -25,6 +25,11 @@ const confirmations: Record<
     detail: 'Its items move to No folder. They are not deleted.',
     buttons: ['Cancel', 'Delete folder'],
   },
+  deleteSend: {
+    message: 'Delete this Send?',
+    detail: 'Its link stops working for everyone, and the Send cannot be restored.',
+    buttons: ['Cancel', 'Delete Send'],
+  },
 };
 
 export function installNativeInteractions(window: BrowserWindow) {
@@ -119,6 +124,17 @@ export function installNativeInteractions(window: BrowserWindow) {
           },
         });
       });
+    },
+    /** Opens a native file picker for a file Send. Resolves null when it is cancelled. */
+    async chooseOpenPath(): Promise<string | null> {
+      if (confirmation || window.isDestroyed() || !window.isVisible()) return null;
+      const result = await dialog.showOpenDialog(window, {
+        title: 'Choose a file to share',
+        properties: ['openFile'],
+      });
+      const [picked] = result.filePaths;
+      if (result.canceled || picked === undefined) return null;
+      return picked;
     },
     async confirm(action: NativeConfirmation) {
       if (confirmation || window.isDestroyed() || !window.isVisible()) return false;
