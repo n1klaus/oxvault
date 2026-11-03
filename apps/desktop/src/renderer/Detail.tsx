@@ -14,6 +14,7 @@ import { uriMatchOptions } from '@oxvault/shared/item-drafts';
 import { detailRows, inSentence } from '@oxvault/shared/item-fields';
 import type { CardFields, CopyTarget, ItemDetail } from '@oxvault/shared/types';
 import { ItemIcon, displayWebsite, fieldLabels, typeName, type CopyField } from './items';
+import { Attachments } from './Attachments';
 import type { Notifier } from './Toasts';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -39,6 +40,7 @@ export function Detail({
   folder,
   onEdit,
   onGone,
+  onUpdated,
   notify,
 }: {
   item: ItemDetail;
@@ -48,6 +50,8 @@ export function Detail({
   folder?: string;
   onEdit: () => void;
   onGone: () => void;
+  /** Replaces the shown item after an attachment changes it. */
+  onUpdated: (item: ItemDetail) => void;
   notify: Notifier;
 }) {
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
@@ -361,6 +365,7 @@ export function Detail({
             <p className="text-sm text-foreground leading-relaxed">{item.notes}</p>
           </section>
         )}
+        <Attachments item={item} onUpdated={onUpdated} />
         {![1, 2, 3].includes(item.type) && !item.details && (
           <Alert>
             <AlertTitle>Read-only in OxVault</AlertTitle>

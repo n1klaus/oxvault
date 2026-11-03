@@ -26,24 +26,24 @@ Scope is intentionally limited: unlock, list TOTP-bearing logins, show code and 
 
 ## Vault items
 
-| Item or feature                                       | Status            | Notes                                                                                                  |
-| ----------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------ |
-| Logins: view, create, edit, trash, restore            | Done              |                                                                                                        |
-| Secure notes: view, create, edit                      | Done              |                                                                                                        |
-| Favorites                                             | Done              |                                                                                                        |
-| Cards: view, copy, create, edit                       | Done              |                                                                                                        |
-| Identities: view, copy, create, edit                  | Done              |                                                                                                        |
-| SSH keys: view, copy, edit                            | Done              | New keys can be pasted in, not generated                                                               |
-| Passkeys                                              | Partial           | Used through macOS AutoFill. Editing a passkey item is left to Bitwarden                               |
-| One-time codes (TOTP)                                 | Done              | Desktop, browser popup and command line                                                                |
-| URI match rules                                       | Done              |                                                                                                        |
-| Folders: view, filter, assign, create, rename, delete | Done              | Nested names such as `A/B` show as flat names, not a tree                                              |
-| Custom fields: view, copy, edit                       | Done              | Linked fields are kept but not editable                                                                |
-| Password history: view and copy                       | Done              |                                                                                                        |
-| Attachments: add, download, delete                    | Done              | Desktop app. The server decides if the account may add files. Not run against a real server            |
-| Attachments: list                                     | Done              | Shown in the item detail                                                                               |
-| Items with master password re-prompt                  | Partial           | Shown with reprompt flag; `openProtected(id, password)` unlocks them. Editing left to official client. |
-| Organization and collection items                     | Not possible here | Shown as restricted. Needs organization key handling                                                   |
+| Item or feature                                       | Status            | Notes                                                                                                                  |
+| ----------------------------------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Logins: view, create, edit, trash, restore            | Done              |                                                                                                                        |
+| Secure notes: view, create, edit                      | Done              |                                                                                                                        |
+| Favorites                                             | Done              |                                                                                                                        |
+| Cards: view, copy, create, edit                       | Done              |                                                                                                                        |
+| Identities: view, copy, create, edit                  | Done              |                                                                                                                        |
+| SSH keys: view, copy, edit                            | Done              | New keys can be pasted in, not generated                                                                               |
+| Passkeys                                              | Partial           | Used through macOS AutoFill. Editing a passkey item is left to Bitwarden                                               |
+| One-time codes (TOTP)                                 | Done              | Desktop, browser popup and command line                                                                                |
+| URI match rules                                       | Done              |                                                                                                                        |
+| Folders: view, filter, assign, create, rename, delete | Done              | Nested names such as `A/B` show as flat names, not a tree                                                              |
+| Custom fields: view, copy, edit                       | Done              | Linked fields are kept but not editable                                                                                |
+| Password history: view and copy                       | Done              |                                                                                                                        |
+| Attachments: add, download, delete                    | Done              | Desktop item view and `oxvault attach`. The server decides if the account may add files. Not run against a real server |
+| Attachments: list                                     | Done              | Shown in the item detail, with save and delete per file                                                                |
+| Items with master password re-prompt                  | Partial           | Shown with reprompt flag; `openProtected(id, password)` unlocks them. Editing left to official client.                 |
+| Organization and collection items                     | Not possible here | Shown as restricted. Needs organization key handling                                                                   |
 
 ## Sending and sharing
 

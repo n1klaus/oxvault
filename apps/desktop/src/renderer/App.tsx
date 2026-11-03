@@ -977,6 +977,14 @@ function VaultWorkspace({
                   selectionVersion.current++;
                   setSelection({ status: 'unselected' });
                 }}
+                onUpdated={(item) => {
+                  if (!alive.current) return;
+                  setSelection((current) =>
+                    current.status === 'ready' && current.item.id === item.id
+                      ? { status: 'ready', item }
+                      : current,
+                  );
+                }}
                 notify={notify}
               />
             ) : (
