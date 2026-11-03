@@ -68,6 +68,10 @@ const api: VaultApi = {
   deleteSend: (id) => request({ type: 'deleteSend', id }),
   removeSendPassword: (id) => request({ type: 'removeSendPassword', id }),
   copySendLink: (id) => request({ type: 'copySendLink', id }),
+  addAttachment: (id) => request({ type: 'addAttachment', id }),
+  downloadAttachment: (id, attachmentId) =>
+    request({ type: 'downloadAttachment', id, attachmentId }),
+  deleteAttachment: (id, attachmentId) => request({ type: 'deleteAttachment', id, attachmentId }),
 };
 
 contextBridge.exposeInMainWorld('oxvault', api);

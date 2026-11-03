@@ -30,6 +30,11 @@ const confirmations: Record<
     detail: 'Its link stops working for everyone, and the Send cannot be restored.',
     buttons: ['Cancel', 'Delete Send'],
   },
+  deleteAttachment: {
+    message: 'Delete this attachment?',
+    detail: 'The file is removed from Bitwarden and cannot be restored.',
+    buttons: ['Cancel', 'Delete attachment'],
+  },
 };
 
 export function installNativeInteractions(window: BrowserWindow) {
@@ -135,6 +140,27 @@ export function installNativeInteractions(window: BrowserWindow) {
       const [picked] = result.filePaths;
       if (result.canceled || picked === undefined) return null;
       return picked;
+    },
+    /** Opens a native file picker for an attachment. Resolves null when it is cancelled. */
+    async chooseAttachmentPath(): Promise<string | null> {
+      if (confirmation || window.isDestroyed() || !window.isVisible()) return null;
+      const result = await dialog.showOpenDialog(window, {
+        title: 'Choose a file to attach',
+        properties: ['openFile'],
+      });
+      const [picked] = result.filePaths;
+      if (result.canceled || picked === undefined) return null;
+      return picked;
+    },
+    /** Opens a native save dialog for an attachment. Resolves null when it is cancelled. */
+    async chooseSavePath(fileName: string): Promise<string | null> {
+      if (confirmation || window.isDestroyed() || !window.isVisible()) return null;
+      const result = await dialog.showSaveDialog(window, {
+        title: 'Save attachment',
+        defaultPath: fileName || undefined,
+      });
+      if (result.canceled || !result.filePath) return null;
+      return result.filePath;
     },
     async confirm(action: NativeConfirmation) {
       if (confirmation || window.isDestroyed() || !window.isVisible()) return false;

@@ -2,7 +2,12 @@ export const MAX_BROWSER_MESSAGE_BYTES = 900_000;
 
 export type WindowMaterial = 'glass' | 'vibrancy' | 'solid';
 export type WindowCommand = 'search' | 'new' | 'settings';
-export type NativeConfirmation = 'discard' | 'trash' | 'deleteFolder' | 'deleteSend';
+export type NativeConfirmation =
+  | 'discard'
+  | 'trash'
+  | 'deleteFolder'
+  | 'deleteSend'
+  | 'deleteAttachment';
 export type ItemMenuAction =
   | 'copyUsername'
   | 'copyPassword'
@@ -152,6 +157,13 @@ export interface CustomField {
   kind: 'text' | 'hidden' | 'boolean' | 'linked' | 'unknown';
 }
 
+/** A file attached to a vault item. */
+export interface AttachmentFile {
+  id: string;
+  fileName: string;
+  size: number;
+}
+
 /**
  * A copy target beyond the fixed fields: a row from `detailRows`, or a custom
  * field or previous password by position in the item revision the caller showed.
@@ -198,6 +210,8 @@ export interface ItemDetail extends ItemSummary {
   editable: boolean;
   deletable: boolean;
   restorable: boolean;
+  /** Files attached to this item. Empty when the item has no attachments. */
+  attachments: AttachmentFile[];
 }
 
 export interface LoginInput {
@@ -397,6 +411,11 @@ export interface VaultApi {
   connectBrowser(browser: Browser): Promise<Result<void>>;
   browserConnection(): Promise<Result<BrowserConnection>>;
   openExtensionFolder(): Promise<Result<void>>;
+  /** Attaches a file the user picks. Null when they close the picker. */
+  addAttachment(id: string): Promise<Result<ItemDetail | null>>;
+  /** Saves an attachment to a path the user picks. Null when they cancel. */
+  downloadAttachment(id: string, attachmentId: string): Promise<Result<boolean | null>>;
+  deleteAttachment(id: string, attachmentId: string): Promise<Result<ItemDetail>>;
   sends(): Promise<Result<SendSummary[]>>;
   /** Resolves null when they close the file picker without choosing. */
   createSend(draft: SendDraft): Promise<Result<SendSummary[] | null>>;

@@ -341,6 +341,10 @@ async function handleRequest(request: DesktopRequest, fromWindow = false): Promi
       return vault.sends();
     case 'copySendLink':
       return lifecycle.copySendLink(request.id);
+    case 'downloadAttachment':
+      return vault.downloadAttachment(request.id, request.attachmentId, (fileName) =>
+        nativeInteractions.chooseSavePath(fileName),
+      );
     case 'browserSetup':
       return browserSetup(macAutoFill);
     case 'connectBrowser':
@@ -376,6 +380,8 @@ async function mutateVault(
         | 'createSend'
         | 'deleteSend'
         | 'removeSendPassword'
+        | 'addAttachment'
+        | 'deleteAttachment'
         | 'biometricUnlock'
         | 'setBiometrics';
     }
@@ -436,6 +442,12 @@ async function mutateVault(
         return await vault.deleteSend(request.id);
       case 'removeSendPassword':
         return await vault.removeSendPassword(request.id);
+      case 'addAttachment':
+        return await vault.addAttachment(request.id, () =>
+          nativeInteractions.chooseAttachmentPath(),
+        );
+      case 'deleteAttachment':
+        return await vault.deleteAttachment(request.id, request.attachmentId);
     }
   } finally {
     busy = false;

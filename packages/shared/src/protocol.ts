@@ -34,6 +34,13 @@ const challengeAnswer = z.union([
   z.object({ cancel: z.literal(true) }).strict(),
 ]);
 const id = z.string().uuid();
+// Bitwarden attachment ids are short opaque strings, not UUIDs.
+const attachmentId = z
+  .string()
+  .trim()
+  .min(1)
+  .max(200)
+  .regex(/^[^\r\n]+$/, 'An attachment id fits on one line.');
 const position = z.number().int().min(0).max(1_000);
 const revisionDate = z.string().max(100).nullable();
 const copyTarget = z.union([
@@ -187,7 +194,7 @@ export const desktopRequestSchema = z.discriminatedUnion('type', [
   z
     .object({
       type: z.literal('confirm'),
-      action: z.enum(['discard', 'trash', 'deleteFolder', 'deleteSend']),
+      action: z.enum(['discard', 'trash', 'deleteFolder', 'deleteSend', 'deleteAttachment']),
     })
     .strict(),
   z
@@ -256,6 +263,9 @@ export const desktopRequestSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('deleteSend'), id }).strict(),
   z.object({ type: z.literal('removeSendPassword'), id }).strict(),
   z.object({ type: z.literal('copySendLink'), id }).strict(),
+  z.object({ type: z.literal('addAttachment'), id }).strict(),
+  z.object({ type: z.literal('downloadAttachment'), id, attachmentId }).strict(),
+  z.object({ type: z.literal('deleteAttachment'), id, attachmentId }).strict(),
   z
     .object({
       type: z.literal('copy'),

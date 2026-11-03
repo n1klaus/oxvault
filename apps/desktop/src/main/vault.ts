@@ -2,6 +2,12 @@ import { EventEmitter } from 'node:events';
 import { randomInt } from 'node:crypto';
 import { CodeRejectedError, type CliPort, type CliPrompt } from './cli';
 import { fillableUrl, matchesUri, normalizeServer, webUrl, type CipherUri } from './matching';
+import {
+  addAttachmentArgs,
+  attachmentsOf,
+  deleteAttachmentArgs,
+  downloadAttachmentArgs,
+} from './attachments';
 import { UserError, type BrowserVaultQuery } from '@oxvault/shared/protocol';
 import { cardLabel } from '@oxvault/shared/item-drafts';
 import { detailSections } from '@oxvault/shared/item-fields';
@@ -22,6 +28,7 @@ import {
 import type { SessionStore } from './biometrics';
 import type { AccountHint } from './account-hint';
 import type {
+  AttachmentFile,
   BrowserMatches,
   BrowserVaultPage,
   CaptureOffer,
@@ -71,6 +78,7 @@ export interface Cipher {
     [key: string]: unknown;
   } | null;
   passwordHistory?: { password?: string | null; lastUsedDate?: string | null }[] | null;
+  attachments?: unknown;
   fields?: {
     name?: string | null;
     value?: string | null;
@@ -91,6 +99,8 @@ const MAX_CODE_ATTEMPTS = 3;
 /** How long an unanswered save offer stays on the table. */
 const CAPTURE_TIMEOUT_MS = 3 * 60_000;
 const SEND_REFUSED = 'Bitwarden did not accept the Send. Your plan or server may not allow it.';
+const ATTACHMENT_REFUSED =
+  'Bitwarden did not accept the attachment. Your plan or server may not allow it.';
 
 /** A sign-in the browser saw, waiting for the user to accept or ignore it. */
 interface Captured {
@@ -690,6 +700,7 @@ export class Vault extends EventEmitter {
         match: row.match ?? null,
       })),
       notes: cipher.notes ?? '',
+      attachments: attachmentsOf(cipher),
       revisionDate: cipher.revisionDate ?? null,
       createdDate: cipher.creationDate ?? null,
       passwordsHidden: hidesPasswords(cached),
@@ -810,6 +821,85 @@ export class Vault extends EventEmitter {
     const { url } = this.knownSend(id);
     if (!url) throw new UserError('That Send has no link to copy.');
     return url;
+  }
+
+  /** Attaches a file the user picks with `pick`. Resolves null when they cancel. */
+  async addAttachment(id: string, pick: () => Promise<string | null>): Promise<ItemDetail | null> {
+    this.requireUnlocked();
+    const generation = this.generation;
+    this.requireAttachable(this.item(id));
+    const path = await pick();
+    this.assertGeneration(generation);
+    if (!path) return null;
+    try {
+      await this.serially(() =>
+        this.cli.run(addAttachmentArgs(path, id), { session: this.session }),
+      );
+    } catch {
+      this.assertGeneration(generation);
+      throw new UserError(ATTACHMENT_REFUSED);
+    }
+    await this.reloadItem(id, generation);
+    return this.detail(id);
+  }
+
+  /** Saves one attachment to a path the user picks with `pick`. Resolves null when they cancel. */
+  async downloadAttachment(
+    id: string,
+    attachmentId: string,
+    pick: (fileName: string) => Promise<string | null>,
+  ): Promise<boolean | null> {
+    this.requireUnlocked();
+    const file = this.attachment(id, attachmentId);
+    const path = await pick(file.fileName);
+    if (!path) return null;
+    try {
+      await this.serially(() =>
+        this.cli.run(downloadAttachmentArgs(attachmentId, id, path), { session: this.session }),
+      );
+    } catch {
+      throw new UserError('Bitwarden could not save that file.');
+    }
+    return true;
+  }
+
+  /** Deletes one attachment. Returns the updated item. */
+  async deleteAttachment(id: string, attachmentId: string): Promise<ItemDetail> {
+    this.requireUnlocked();
+    const generation = this.generation;
+    this.requireAttachable(this.item(id));
+    this.attachment(id, attachmentId);
+    try {
+      await this.serially(() =>
+        this.cli.run(deleteAttachmentArgs(attachmentId, id), { session: this.session }),
+      );
+    } catch {
+      this.assertGeneration(generation);
+      throw new UserError('Bitwarden could not delete that attachment.');
+    }
+    await this.reloadItem(id, generation);
+    return this.detail(id);
+  }
+
+  private requireAttachable(cipher: Cipher) {
+    if (cipher.deletedDate || !isRemovable(cipher, this.opened.has(cipher.id)))
+      throw new UserError('Update this item in the official Bitwarden client.');
+  }
+
+  private attachment(id: string, attachmentId: string): AttachmentFile {
+    const file = attachmentsOf(this.item(id)).find((entry) => entry.id === attachmentId);
+    if (!file) throw new UserError('That file is no longer attached to this item.');
+    return file;
+  }
+
+  private async reloadItem(id: string, generation: number) {
+    const latest = JSON.parse(
+      await this.cli.run(['get', 'item', id], { session: this.session }),
+    ) as Cipher;
+    this.assertGeneration(generation);
+    this.ciphers.set(latest.id, this.cache(latest));
+    if (this.opened.has(id)) this.opened.set(id, latest);
+    this.publish();
   }
 
   private knownSend(id: string) {
@@ -1542,6 +1632,7 @@ function cacheFields(cipher: Cipher, sharedItems: boolean): Cipher {
       ]),
     ),
     fields: isRestricted(cipher) ? [] : cipher.fields,
+    attachments: isRestricted(cipher) ? [] : (cipher.attachments ?? []),
     passwordHistory: isRestricted(cipher) ? [] : cipher.passwordHistory,
     login: {
       username: isRestricted(cipher) ? null : cipher.login?.username,
