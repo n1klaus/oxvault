@@ -92,6 +92,22 @@ describe('attachment handlers', () => {
     expect(cli.calls.some((call) => call.args[0] === 'create')).toBe(false);
   });
 
+  it('refuses when the item is trashed while the file picker is open', async () => {
+    const { vault } = await unlockedVault(
+      [baseItem()],
+      [
+        [/^create attachment/, ''],
+        [/^delete item/, ''],
+      ],
+    );
+    await expect(
+      vault.addAttachment(ITEM_ID, async () => {
+        await vault.remove(ITEM_ID);
+        return '/tmp/x.pdf';
+      }),
+    ).rejects.toThrow('Update this item in the official Bitwarden client.');
+  });
+
   it('reports one generic message when the server refuses the attachment', async () => {
     const { vault } = await unlockedVault(
       [baseItem()],

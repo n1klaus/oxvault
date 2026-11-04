@@ -831,6 +831,7 @@ export class Vault extends EventEmitter {
     const path = await pick();
     this.assertGeneration(generation);
     if (!path) return null;
+    this.requireAttachable(this.item(id));
     try {
       await this.serially(() =>
         this.cli.run(addAttachmentArgs(path, id), { session: this.session }),
