@@ -40,8 +40,12 @@ export function attachmentsOf(cipher: unknown): AttachmentFile[] {
   // Legacy shape: each attachment id is a top-level key whose value is the row.
   const files: AttachmentFile[] = [];
   for (const [id, row] of Object.entries(record)) {
-    if (row && typeof row === 'object' && typeof (row as CliAttachment).fileName === 'string')
-      files.push(readFile(id, row as CliAttachment)!);
+    if (!row || typeof row !== 'object' || Array.isArray(row)) continue;
+    const shape = row as CliAttachment;
+    const named =
+      (typeof shape.fileName === 'string' && shape.fileName) ||
+      (typeof shape.name === 'string' && Boolean(shape.name));
+    if (named) files.push(readFile(id, shape)!);
   }
   return files;
 }

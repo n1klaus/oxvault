@@ -38,6 +38,16 @@ describe('attachmentsOf', () => {
     ]);
   });
 
+  it('accepts an unrelated object-valued field that looks like a row (residual pin)', () => {
+    expect(attachmentsOf({ id: 'x', login: { fileName: 'nope.txt', size: 5 } })).toEqual([
+      { id: 'login', fileName: 'nope.txt', size: 5 },
+    ]);
+  });
+
+  it('rejects array-valued keys in the legacy scan', () => {
+    expect(attachmentsOf({ key: ['not', 'an', 'object'] })).toEqual([]);
+  });
+
   it('returns an empty list for an item with no attachments', () => {
     expect(attachmentsOf({ id: 'item-3', name: 'No files' })).toEqual([]);
   });
