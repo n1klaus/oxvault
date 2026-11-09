@@ -888,7 +888,9 @@ export class Vault extends EventEmitter {
   }
 
   private attachment(id: string, attachmentId: string): AttachmentFile {
-    const file = attachmentsOf(this.item(id)).find((entry) => entry.id === attachmentId);
+    const opened = this.opened.get(id);
+    const source = opened ?? this.item(id);
+    const file = attachmentsOf(source).find((entry) => entry.id === attachmentId);
     if (!file) throw new UserError('That file is no longer attached to this item.');
     return file;
   }
