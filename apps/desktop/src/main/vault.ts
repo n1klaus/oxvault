@@ -1633,7 +1633,7 @@ function cacheFields(cipher: Cipher, sharedItems: boolean): Cipher {
       ]),
     ),
     fields: isRestricted(cipher) ? [] : cipher.fields,
-    attachments: isRestricted(cipher) ? [] : (cipher.attachments ?? []),
+    attachments: isRestricted(cipher) ? [] : attachmentsOf(cipher),
     passwordHistory: isRestricted(cipher) ? [] : cipher.passwordHistory,
     login: {
       username: isRestricted(cipher) ? null : cipher.login?.username,
