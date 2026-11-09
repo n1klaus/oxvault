@@ -127,6 +127,62 @@ describe('attachment handlers', () => {
     );
   });
 
+  it('surfaces a legacy top-level attachment row in the item detail (legacy-detail)', async () => {
+    const { vault } = await unlockedVault([
+      { ...baseItem(), b857igwl1dzrs2: { fileName: 'legacy.pdf', size: '10' } },
+    ]);
+    expect(vault.detail(ITEM_ID).attachments).toEqual([
+      { id: 'b857igwl1dzrs2', fileName: 'legacy.pdf', size: 10 },
+    ]);
+  });
+
+  it('surfaces a legacy top-level row carrying only name in the item detail (name-only)', async () => {
+    const { vault } = await unlockedVault([
+      { ...baseItem(), b857igwl1dzrs2: { name: 'legacy.pdf', size: '10' } },
+    ]);
+    expect(vault.detail(ITEM_ID).attachments).toEqual([
+      { id: 'b857igwl1dzrs2', fileName: 'legacy.pdf', size: 10 },
+    ]);
+  });
+
+  it('downloads and deletes from the opened copy on an opened re-prompt item (opened-reprompt)', async () => {
+    const cipher = {
+      ...baseItem(),
+      reprompt: 1,
+      attachments: [{ id: 'att-1', fileName: 'codes.txt', size: '10' }],
+    };
+    const { cli, vault } = await unlockedVault(
+      [cipher],
+      [
+        [/^get attachment att-1 --itemid/, ''],
+        [/^delete attachment att-1 --itemid/, ''],
+        [`get item ${ITEM_ID}`, JSON.stringify(cipher)],
+      ],
+    );
+    cli.verifyPassword = async () => true;
+    await vault.openProtected(ITEM_ID, 'pw');
+    await expect(
+      vault.downloadAttachment(ITEM_ID, 'att-1', async () => '/tmp/codes.txt'),
+    ).resolves.toBe(true);
+    await expect(vault.deleteAttachment(ITEM_ID, 'att-1')).resolves.toBeDefined();
+    const download = cli.calls.find(
+      (call) => call.args[0] === 'get' && call.args[1] === 'attachment',
+    );
+    expect(download.args).toEqual([
+      'get',
+      'attachment',
+      'att-1',
+      '--itemid',
+      ITEM_ID,
+      '--output',
+      '/tmp/codes.txt',
+    ]);
+    const remove = cli.calls.find(
+      (call) => call.args[0] === 'delete' && call.args[1] === 'attachment',
+    );
+    expect(remove.args).toEqual(['delete', 'attachment', 'att-1', '--itemid', ITEM_ID]);
+  });
+
   it('downloads one attachment by its own id with the item id', async () => {
     const { cli, vault } = await unlockedVault(
       [attached('att-7', 'photo.jpg', '20')],

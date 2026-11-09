@@ -32,6 +32,12 @@ describe('attachmentsOf', () => {
     ]);
   });
 
+  it('reads a legacy top-level row carrying only name (name-only)', () => {
+    expect(attachmentsOf({ b857igwl1dzrs2: { name: 'legacy.pdf', size: '10' } })).toEqual([
+      { id: 'b857igwl1dzrs2', fileName: 'legacy.pdf', size: 10 },
+    ]);
+  });
+
   it('returns an empty list for an item with no attachments', () => {
     expect(attachmentsOf({ id: 'item-3', name: 'No files' })).toEqual([]);
   });
