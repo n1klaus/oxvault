@@ -113,7 +113,7 @@ function jsonLd(p, html) {
       license: 'https://opensource.org/licenses/MIT',
       isBasedOn: 'https://github.com/dillionverma/bitlatch',
       offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-      author: { '@type': 'Person', name: 'Boden Crouch' },
+      author: { '@type': 'Person', name: 'Nick Nyanjui' },
     });
   } else if (p.slug !== '404') {
     blocks.push({
