@@ -76,7 +76,7 @@ export function startTicker({
     timerHandle = schedule(tick, delay);
   };
 
-  tick();
+  void tick();
 
   return {
     stop() {
