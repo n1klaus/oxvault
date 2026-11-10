@@ -81,7 +81,12 @@ export function parseTotp(value: string): TotpParams | null {
   }
 
   const secret = decodeBase32(text);
-  return secret ? { secret, algorithm: 'SHA-1', digits: 6, period: 30, steam: false } : null;
+  // Bare base32 fallback: require a real key length. Standard TOTP secrets are
+  // >= 80 bits (16 base32 chars); without this floor any base32-alphabet prose
+  // ("not-a-secret") parses as a working-looking authenticator entry.
+  return secret && secret.length >= 10
+    ? { secret, algorithm: 'SHA-1', digits: 6, period: 30, steam: false }
+    : null;
 }
 
 export async function generateTotp(

@@ -8,11 +8,14 @@
  */
 
 export function describeOriginProblem(customUrl?: string | URL | Location): string | null {
+  // One source of truth for the opaque-origin message; README/docs quote it.
+  const opaqueMessage =
+    'OxVault web cannot run from an opaque origin (null). It requires HTTPS or localhost (e.g. https://vault.example.com or http://localhost:8000) under the /oxvault/ deploy path.';
   if (
     (typeof self !== 'undefined' && self.origin === 'null') ||
     (typeof window !== 'undefined' && window.origin === 'null')
   ) {
-    return 'OxVault web cannot run from an opaque origin (null). It requires HTTPS or localhost (e.g. https://vault.example.com or http://localhost:8000) under the /oxvault/ deploy path.';
+    return opaqueMessage;
   }
 
   let url: URL;
@@ -21,7 +24,7 @@ export function describeOriginProblem(customUrl?: string | URL | Location): stri
       url = customUrl;
     } else if (typeof customUrl === 'string') {
       if (customUrl === 'null') {
-        return 'OxVault web cannot run from an opaque origin (null). It requires HTTPS or localhost (e.g. https://vault.example.com or http://localhost:8000) under the /oxvault/ deploy path.';
+        return opaqueMessage;
       }
       url = new URL(customUrl);
     } else if (customUrl && 'href' in customUrl) {
@@ -41,7 +44,7 @@ export function describeOriginProblem(customUrl?: string | URL | Location): stri
     url.protocol === 'file:' ||
     url.protocol === 'data:'
   ) {
-    return 'OxVault web cannot run from an opaque origin (null). It requires HTTPS or localhost (e.g. https://vault.example.com or http://localhost:8000) under the /oxvault/ deploy path.';
+    return opaqueMessage;
   }
 
   const local =

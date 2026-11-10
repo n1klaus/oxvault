@@ -1,21 +1,29 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { DisplayCode } from '../lib/codes';
 
 export interface TotpListProps {
   codes?: DisplayCode[];
-  logins?: DisplayCode[];
 }
 
-export function TotpList({ codes, logins }: TotpListProps) {
+export function TotpList({ codes }: TotpListProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const items = codes ?? logins ?? [];
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const items = codes ?? [];
+
+  // Clear any pending toast timer on unmount so a late setState can't fire.
+  useEffect(() => {
+    return () => {
+      if (toastTimer.current !== null) clearTimeout(toastTimer.current);
+    };
+  }, []);
 
   async function copyCode(id: string, code: string) {
     if (!code) return;
     try {
       await navigator.clipboard.writeText(code);
       setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 1500);
+      if (toastTimer.current !== null) clearTimeout(toastTimer.current);
+      toastTimer.current = setTimeout(() => setCopiedId(null), 1500);
     } catch (err) {
       console.error('Failed to copy code:', err);
     }

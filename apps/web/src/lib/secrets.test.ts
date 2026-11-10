@@ -107,5 +107,30 @@ describe('secrets', () => {
       expect(addFromText('not-a-valid-secret-189')).toEqual([]);
       expect(addFromText(null as unknown as string)).toEqual([]);
     });
+
+    it('rejects short base32-alphabet prose that decodes below the 80-bit key floor', () => {
+      // 'not-a-secret' is base32-alphabet-clean after stripping '-' and would
+      // previously parse as a 6-byte key — a working-looking fake entry.
+      expect(addFromText('not-a-secret')).toEqual([]);
+      // 16 base32 chars = 80 bits: still accepted.
+      expect(addFromText('JBSWY3DPEHPK3PXP')).toHaveLength(1);
+    });
+
+    it('returns empty array for an otpauth URI with malformed percent-encoding', () => {
+      // URIError from decodeURIComponent must not fall through to the
+      // bare-base32 branch — the line was meant to be a URI.
+      expect(addFromText('otpauth://totp/a%zz b?secret=JBSWY3DPEHPK3PXP')).toEqual([]);
+    });
+
+    it('keeps explicit label only for lines without their own label', () => {
+      // Intentional asymmetry: multiline entries with extracted labels keep
+      // them; the fallback label applies to bare lines only.
+      const entries = addFromText(
+        'otpauth://totp/A?secret=JBSWY3DPEHPK3PXP\nJBSWY3DPEHPK3PXP',
+        'Fallback',
+      );
+      expect(entries[0].label).toBe('A');
+      expect(entries[1].label).toBe('Fallback');
+    });
   });
 });

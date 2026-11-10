@@ -97,6 +97,9 @@ already_ported_count=0
 # and under `set -o pipefail` that failure flips the test to false even when the
 # trailer is present -- so only a couple of ports were ever detected as done.
 ported_log="$(git log --format=%B main..HEAD)"
+# NOTE: this capture must stay above the classification loop AND the port loop:
+# porting creates commits that change main..HEAD, so a later capture would see
+# the newly ported commits as already-done.
 
 for sha in "${ALL_COMMITS[@]}"; do
   if [[ -n "${SKIP_SHAS[$sha]:-}" ]]; then

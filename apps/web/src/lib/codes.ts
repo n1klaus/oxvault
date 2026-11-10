@@ -60,7 +60,13 @@ export function startTicker({
     const codes = await currentCodes(entries, now);
     if (stopped) return;
     onCodes(codes);
-    if (codes.length === 0) return;
+    if (codes.length === 0) {
+      // No codes parsed (transient failure, e.g. crypto hiccup). Reschedule a
+      // short retry instead of dying silently — the next entries change or the
+      // retry itself will recover.
+      timerHandle = schedule(tick, 1000);
+      return;
+    }
 
     let minDeadline = Infinity;
     for (const c of codes) {

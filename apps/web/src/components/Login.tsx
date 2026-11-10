@@ -3,10 +3,9 @@ import { addFromText, type TotpEntry } from '../lib/secrets';
 
 export interface LoginProps {
   onAdd?: (entries: TotpEntry[]) => void;
-  onUnlock?: (entries: TotpEntry[]) => void;
 }
 
-export function Login({ onAdd, onUnlock }: LoginProps) {
+export function Login({ onAdd }: LoginProps) {
   const [label, setLabel] = useState('');
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -21,9 +20,8 @@ export function Login({ onAdd, onUnlock }: LoginProps) {
       return;
     }
 
-    const callback = onAdd || onUnlock;
-    if (callback) {
-      callback(parsed);
+    if (onAdd) {
+      onAdd(parsed);
     }
   }
 

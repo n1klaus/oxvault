@@ -86,4 +86,39 @@ describe('codes', () => {
     expect(receivedCodes[0].remaining).toBe(20);
     expect(receivedCodes[0].code).toBe('84755224');
   });
+
+  it('schedules a 1000ms retry instead of dying when no codes parse', async () => {
+    const delays: number[] = [];
+    let cancelled = false;
+    const unparseable: TotpEntry = {
+      id: 'dead-entry',
+      label: 'unparseable',
+      entry: 'zzz!!!',
+      period: 30,
+      digits: 6,
+      algorithm: 'SHA-1',
+    };
+
+    await new Promise<void>((resolve) => {
+      let ticker: { stop: () => void };
+      ticker = startTicker({
+        entries: [unparseable],
+        clock: () => 0,
+        schedule: (_fn, delay) => {
+          delays.push(delay);
+          queueMicrotask(() => {
+            ticker.stop();
+            resolve();
+          });
+          return () => {
+            cancelled = true;
+          };
+        },
+        onCodes: () => {},
+      });
+    });
+
+    expect(delays).toEqual([1000]);
+    expect(cancelled).toBe(true);
+  });
 });

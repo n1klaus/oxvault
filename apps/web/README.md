@@ -27,7 +27,7 @@ pnpm --filter @oxvault/web run build
 # Run TypeScript type check
 pnpm --filter @oxvault/web run check
 
-# Run tests (meaningful once test suites land)
+# Run tests
 pnpm --filter @oxvault/web run test
 ```
 
@@ -37,7 +37,7 @@ The app is a static client bundle that can be hosted from a vault server's own o
 
 ### Deployment Guard
 
-To prevent execution in insecure contexts or unauthorized embedding, `apps/web/src/lib/guard.ts` verifies deployment context at startup:
+To prevent execution in insecure contexts, `apps/web/src/lib/guard.ts` verifies the deployment origin at startup:
 
 - Opaque origins (`null`, `file://`, `data://`) are rejected.
 - Only HTTPS or localhost (`localhost`, `127.0.0.1`, `[::1]`) is permitted.

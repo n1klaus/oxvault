@@ -1590,7 +1590,7 @@ const browserItemTypes = {
 } as const;
 const browserTypes = new Set<number>(Object.values(browserItemTypes));
 const UPDATE_FOR_SHARED =
-  'This build does not support organization-shared items (declined upstream, Bitlatch #21), so this item cannot be edited here. See docs/PARITY.md for the reason.';
+  'This build does not support organization-shared items (declined here; upstream added them as Bitlatch #21), so this item cannot be edited here. See docs/PARITY.md for the reason.';
 /**
  * Items whose secrets stay out of the cache: those that ask for the master
  * password, and shared items when the CLI cannot redact what organizations hide.
