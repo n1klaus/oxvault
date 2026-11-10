@@ -1,122 +1,91 @@
-import { useEffect, useState } from 'react';
-import type { TotpCode } from '../lib/auth';
-import * as OTPAuth from 'otpauth';
+import { useState } from 'react';
+import type { DisplayCode } from '../lib/codes';
 
-export function TotpList({ logins }: { logins: TotpCode[] }) {
-  const [codes, setCodes] = useState<Record<string, string>>({});
-  const [countdowns, setCountdowns] = useState<Record<string, number>>({});
+export interface TotpListProps {
+  codes?: DisplayCode[];
+  logins?: DisplayCode[];
+}
 
-  // Compute TOTP codes and update every second
-  useEffect(() => {
-    const computeAll = () => {
-      const newCodes: Record<string, string> = {};
-      const newCountdowns: Record<string, number> = {};
+export function TotpList({ codes, logins }: TotpListProps) {
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const items = codes ?? logins ?? [];
 
-      for (const login of logins) {
-        try {
-          const otp = new OTPAuth.TOTP({
-            secret: OTPAuth.Secret.fromBase32(login.secret),
-            algorithm: 'SHA1',
-            digits: 6,
-            period: 30,
-          });
-
-          const code = otp.generate();
-          const remaining = Math.ceil(30 - ((Date.now() / 1000) % 30));
-
-          newCodes[login.id] = code;
-          newCountdowns[login.id] = remaining;
-        } catch (err) {
-          console.error(`Failed to generate TOTP for ${login.name}:`, err);
-        }
-      }
-
-      setCodes(newCodes);
-      setCountdowns(newCountdowns);
-    };
-
-    computeAll();
-    const interval = setInterval(computeAll, 1000);
-    return () => clearInterval(interval);
-  }, [logins]);
-
-  async function copyCode(id: string) {
-    const code = codes[id];
+  async function copyCode(id: string, code: string) {
     if (!code) return;
-
     try {
       await navigator.clipboard.writeText(code);
-      // Simple toast could go here
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 1500);
     } catch (err) {
-      console.error('Failed to copy:', err);
+      console.error('Failed to copy code:', err);
     }
   }
 
-  if (logins.length === 0) {
+  if (items.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: 48 }}>
-        <p>No TOTP items found in your vault.</p>
+      <div style={{ textAlign: 'center', padding: 48, background: 'white', borderRadius: 8 }}>
+        <p style={{ color: '#666' }}>No TOTP items active.</p>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: 600, margin: '0 auto' }}>
-      <h1 style={{ marginBottom: 24 }}>Your TOTP Codes</h1>
-
+    <div style={{ maxWidth: 600, margin: '0 auto', width: '100%' }}>
       <div style={{ display: 'grid', gap: 16 }}>
-        {logins.map((login) => (
-          <div
-            key={login.id}
-            style={{
-              background: 'white',
-              padding: 16,
-              borderRadius: 8,
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        {items.map((item) => {
+          const countdown = Math.max(1, Math.min(item.period, item.remaining));
+          return (
+            <div
+              key={item.id}
+              style={{
+                background: 'white',
+                padding: 16,
+                borderRadius: 8,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
               <div>
-                <h3 style={{ marginBottom: 4 }}>{login.name}</h3>
+                <h3 style={{ margin: '0 0 6px 0', fontSize: 16, color: '#333' }}>{item.label}</h3>
+                <div
+                  style={{
+                    fontSize: 28,
+                    fontWeight: 'bold',
+                    letterSpacing: 4,
+                    color: '#2d3748',
+                    fontFamily: 'monospace',
+                  }}
+                >
+                  {item.code || '------'}
+                </div>
                 <span style={{ fontSize: 12, color: '#666' }}>
-                  Expires in {countdowns[login.id] || 30}s
+                  Expires in {countdown}s ({item.period}s period)
                 </span>
               </div>
               <button
-                onClick={() => copyCode(login.id)}
-                disabled={!codes[login.id]}
+                type="button"
+                onClick={() => copyCode(item.id, item.code)}
+                disabled={!item.code}
                 style={{
                   padding: '8px 16px',
-                  background: codes[login.id] ? '#667eea' : '#ccc',
+                  background: copiedId === item.id ? '#48bb78' : '#667eea',
                   color: 'white',
                   border: 'none',
                   borderRadius: 4,
-                  cursor: codes[login.id] ? 'pointer' : 'not-allowed',
+                  cursor: item.code ? 'pointer' : 'not-allowed',
                   minWidth: 80,
+                  fontSize: 14,
+                  fontWeight: 500,
+                  transition: 'background 0.2s ease',
                 }}
               >
-                {codes[login.id] ? 'Copy' : 'Loading...'}
+                {copiedId === item.id ? 'Copied!' : 'Copy'}
               </button>
             </div>
-
-            <div
-              style={{
-                marginTop: 12,
-                padding: 12,
-                background: '#f5f5f5',
-                borderRadius: 4,
-                fontFamily: 'monospace',
-                fontSize: 24,
-                textAlign: 'center',
-                letterSpacing: 4,
-                fontWeight: 600,
-                color: '#333',
-              }}
-            >
-              {codes[login.id] || '••••••'}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

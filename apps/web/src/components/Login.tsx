@@ -1,43 +1,47 @@
 import { useState, type FormEvent } from 'react';
-import { unlock } from '../lib/auth';
-import type { LoginInput } from '@oxvault/shared/types';
+import { addFromText, type TotpEntry } from '../lib/secrets';
 
-/** Default self-hosted Bitwarden-compatible server; override with VITE_DEFAULT_SERVER. */
-const DEFAULT_SERVER =
-  (import.meta.env['VITE_DEFAULT_SERVER'] as string | undefined) ?? 'https://vault.bitwarden.com';
+export interface LoginProps {
+  onAdd?: (entries: TotpEntry[]) => void;
+  onUnlock?: (entries: TotpEntry[]) => void;
+}
 
-export function Login({ onUnlock }: { onUnlock: (session: string) => void }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+export function Login({ onAdd, onUnlock }: LoginProps) {
+  const [label, setLabel] = useState('');
+  const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: FormEvent) {
+  function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    setLoading(true);
 
-    try {
-      const input: LoginInput = {
-        email: email.trim().toLowerCase(),
-        password,
-        server: DEFAULT_SERVER,
-      };
+    const parsed = addFromText(text, label.trim() || undefined);
+    if (parsed.length === 0) {
+      setError('No valid TOTP entries found. Enter a valid TOTP URI or base32 secret.');
+      return;
+    }
 
-      const session = await unlock(input);
-      onUnlock(session);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
-    } finally {
-      setLoading(false);
+    const callback = onAdd || onUnlock;
+    if (callback) {
+      callback(parsed);
     }
   }
 
   return (
     <div
-      style={{ maxWidth: 400, margin: '0 auto', background: 'white', padding: 32, borderRadius: 8 }}
+      style={{
+        maxWidth: 480,
+        margin: '0 auto',
+        background: 'white',
+        padding: 32,
+        borderRadius: 8,
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+      }}
     >
-      <h1 style={{ marginBottom: 24, textAlign: 'center' }}>OxVault Web</h1>
+      <h1 style={{ marginBottom: 8, textAlign: 'center' }}>OxVault Authenticator</h1>
+      <p style={{ marginBottom: 24, fontSize: 14, color: '#666', textAlign: 'center' }}>
+        Local in-memory TOTP authenticator. Secrets are never saved or sent to any server.
+      </p>
 
       {error && (
         <div
@@ -47,6 +51,7 @@ export function Login({ onUnlock }: { onUnlock: (session: string) => void }) {
             borderRadius: 4,
             marginBottom: 16,
             color: '#c00',
+            fontSize: 14,
           }}
         >
           {error}
@@ -55,30 +60,50 @@ export function Login({ onUnlock }: { onUnlock: (session: string) => void }) {
 
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: 16 }}>
-          <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>Email</label>
+          <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: 14 }}>
+            Label (optional)
+          </label>
           <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={{ width: '100%', padding: 8, border: '1px solid #ccc', borderRadius: 4 }}
+            type="text"
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            placeholder="Account name or label"
+            style={{
+              width: '100%',
+              padding: 10,
+              border: '1px solid #ccc',
+              borderRadius: 4,
+              fontSize: 14,
+              boxSizing: 'border-box',
+            }}
           />
         </div>
 
-        <div style={{ marginBottom: 16 }}>
-          <label style={{ display: 'block', marginBottom: 4, fontWeight: 500 }}>Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+        <div style={{ marginBottom: 20 }}>
+          <label style={{ display: 'block', marginBottom: 6, fontWeight: 500, fontSize: 14 }}>
+            TOTP Secrets or URIs (one per line)
+          </label>
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            rows={5}
             required
-            style={{ width: '100%', padding: 8, border: '1px solid #ccc', borderRadius: 4 }}
+            placeholder="Paste otpauth:// URIs or base32 secrets, one per line"
+            style={{
+              width: '100%',
+              padding: 10,
+              border: '1px solid #ccc',
+              borderRadius: 4,
+              fontSize: 13,
+              fontFamily: 'monospace',
+              boxSizing: 'border-box',
+              resize: 'vertical',
+            }}
           />
         </div>
 
         <button
           type="submit"
-          disabled={loading}
           style={{
             width: '100%',
             padding: 12,
@@ -86,18 +111,14 @@ export function Login({ onUnlock }: { onUnlock: (session: string) => void }) {
             color: 'white',
             border: 'none',
             borderRadius: 4,
-            cursor: loading ? 'not-allowed' : 'pointer',
+            cursor: 'pointer',
             fontSize: 16,
             fontWeight: 600,
           }}
         >
-          {loading ? 'Unlocking...' : 'Unlock'}
+          Generate Codes
         </button>
       </form>
-
-      <p style={{ marginTop: 16, fontSize: 14, color: '#666', textAlign: 'center' }}>
-        This page must be served from your vault server's origin to work.
-      </p>
     </div>
   );
 }
