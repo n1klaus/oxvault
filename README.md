@@ -22,7 +22,7 @@
 
 OxVault is an alternative client for your existing Bitwarden vault, designed around a cleaner interface and quicker workflows. Search from the keyboard, fill logins in your browser, and access credentials from Raycast. Keep your account and vault; there's nothing to migrate.
 
-OxVault is an independent project, not affiliated with or endorsed by Bitwarden.
+OxVault is an independent project, not affiliated with or endorsed by Bitwarden. OxVault starts from [bodencrouch/strongroom](https://github.com/bodencrouch/strongroom), which started from [dillionverma/bitlatch](https://github.com/dillionverma/bitlatch) at v0.3.5. Both are MIT licensed; their notices stay in [LICENSE](LICENSE).
 
 ## Highlights
 

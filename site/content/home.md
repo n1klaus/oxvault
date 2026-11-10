@@ -10,7 +10,7 @@ updated: 2026-10-10
 
 OxVault is a desktop app, browser extension, Raycast extension and command line for a Bitwarden vault you already have. It does not replace your account, and it does not store your vault. The official `bw` CLI signs in, syncs and does all the vault cryptography.
 
-It is not made by Bitwarden and not endorsed by Bitwarden. Bitwarden is a trademark of Bitwarden, Inc. It is a fork of [dillionverma/bitlatch](https://github.com/dillionverma/bitlatch), MIT licensed.
+It is not made by Bitwarden and not endorsed by Bitwarden. Bitwarden is a trademark of Bitwarden, Inc. OxVault starts from [bodencrouch/strongroom](https://github.com/bodencrouch/strongroom), which started from [dillionverma/bitlatch](https://github.com/dillionverma/bitlatch) at v0.3.5; both are MIT licensed and their notices stay in the LICENSE.
 
 <p><a class="cta" href="/install/">Install from source</a> <a class="cta alt" href="/features/">See the feature list</a></p>
 
