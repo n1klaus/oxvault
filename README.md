@@ -71,6 +71,10 @@ The extensions connect to the macOS app. Windows and Linux builds cannot yet che
 
 [Download source ZIP](https://github.com/n1klaus/oxvault/releases/download/v0.3.5/oxvault-0.3.5-raycast.zip) · [Setup](apps/raycast/README.md#install-from-source). Store installation coming soon.
 
+## Privacy and network use
+
+OxVault makes outbound requests only to your configured vault server through `bw` and for website icons: the desktop app fetches icons directly from the vault server's own `/icons/<host>/icon.png` endpoint, using `icons.bitwarden.net` and `icons.bitwarden.eu` only for cloud `vault.bitwarden.com` and `vault.bitwarden.eu` accounts. Breach and inactive 2FA lookups are off by default. Full details: [Privacy and network use](https://n1klaus.github.io/oxvault/privacy/).
+
 ## Development
 
 ```sh

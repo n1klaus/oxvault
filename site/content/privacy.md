@@ -24,7 +24,7 @@ The table is what that grep finds in code that runs, as of 2026-10-10.
 | ----------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
 | `https://api.pwnedpasswords.com/range/<prefix>` | The first 5 characters of the SHA-1 hash of a password. Request header `Add-Padding: true`. | Off. Settings switch, or `oxvault health --breaches`                                                          | `packages/shared/src/health.ts`          |
 | `https://api.2fa.directory/v3/totp.json`        | Nothing from your vault. It downloads the whole public list. Matching happens locally.      | Off. `oxvault health --inactive-2fa`                                                                          | `packages/shared/src/health.ts`          |
-| `https://icons.bitwarden.net/<host>/icon.png`   | The hostname of a login's website, from the desktop app                                     | On. A Settings switch turns it off and clears the cache                                                       | `apps/desktop/src/main/website-icons.ts` |
+| `<your vault server>/icons/<host>/icon.png`     | The hostname of a login's website, from the desktop app                                     | On. A Settings switch turns it off and clears the cache                                                       | `apps/desktop/src/main/website-icons.ts` |
 | The Bitwarden server you set, through `bw`      | Whatever `bw` sends to sign in and sync. OxVault does not see or change it                  | On. This is the account itself. Default `https://vault.bitwarden.com`, with an EU option and a custom address | `apps/desktop/src/main/vault.ts`         |
 
 ## Breach lookup
@@ -33,7 +33,7 @@ OxVault hashes each password with SHA-1 on your machine and sends the first 5 he
 
 ## Website icons
 
-The icon fetch is on by default. It sends the hostname of each login's website to `icons.bitwarden.net`, which is Bitwarden's icon service. The request has no cookies and no referrer, redirects are refused, and responses over a size limit are dropped. Icons are cached in memory for 24 hours, and turning the setting off clears the cache. If you do not want your site list to leave the machine, turn it off in Settings. For the launcher bridge, the same icon URL is handed to the launcher app, which loads it.
+The icon fetch is on by default. It sends the hostname of each login's website to the vault server the account is on at `/icons/<host>/icon.png`. Bitwarden's cloud icon services (`icons.bitwarden.net` and `icons.bitwarden.eu`) are used only for `vault.bitwarden.com` and `vault.bitwarden.eu` accounts. A self-hosted server with its own icon backend may leave icons missing if it uses an external redirect, because this client refuses redirects. The request has no cookies and no referrer, and responses over a size limit are dropped. Icons are cached in memory for 24 hours, and turning the setting off clears the cache. If you do not want your site list to leave the machine, turn it off in Settings. For the launcher bridge, the same icon URL is handed to the launcher app, which loads it.
 
 ## Updates
 
