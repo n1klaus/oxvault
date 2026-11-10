@@ -18,6 +18,7 @@ coverage/
 .agents/skills
 .omo
 .qoder
+.codegraph
 
 # SDD scratch workspace
 .superpowers/
