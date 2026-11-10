@@ -16,13 +16,11 @@ This means organization items appear as restricted and cannot be edited in OxVau
 
 Items marked with reprompt require unlocking with the master password before opening. OxVault implements this via Bitlatch #20 (`4f7e028ef`), which adds `openProtected(id, password)` to the API. Users can unlock such items directly without editing the cipher.
 
-### Web Vault (Requires a Vault Server at the Same Origin)
+### Web Application (Local Authenticator)
 
-OxVault includes `apps/web`, a TOTP authenticator for browser-based access. Status: **Partial**. It is a static bundle with no server of its own — a vault server must serve the bundle and an `/api/v1/*` API at the same origin, and no such server ships with OxVault.
+The web app in this repo (`apps/web`) is a local authenticator only. It lets you paste in TOTP secrets to generate one-time codes in the browser with no vault sync, no server calls, and no persistent storage. A full mobile or browser vault needs the official SDK or a server, neither of which ships here.
 
-Vaultwarden's CORS policy blocks external origins — GitHub Pages would fail. The deployment guard (`apps/web/src/lib/guard.ts`) rejects opaque origins, requires HTTPS (except localhost in development), and when `VITE_TRUSTED_ORIGINS` is set, rejects any origin not on that allowlist. `VITE_API_BASE` points the calls at a vault API on a trusted origin, if it is not same-origin.
-
-Scope is intentionally limited: unlock, list TOTP-bearing logins, show code and countdown, copy. No write-back operations, which sidesteps the #21 hazard entirely.
+`apps/web` is licensed under MIT like the rest of the repository because it carries no GPL dependency.
 
 ## Vault items
 
