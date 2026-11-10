@@ -20,7 +20,10 @@ export { decodeBase32, parseTotp };
  */
 export function addFromText(entry: string, label?: string): TotpEntry[] {
   if (!entry || typeof entry !== 'string') return [];
-  const lines = entry.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const lines = entry
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
   const entries: TotpEntry[] = [];
 
   for (let i = 0; i < lines.length; i++) {
@@ -47,9 +50,7 @@ export function addFromText(entry: string, label?: string): TotpEntry[] {
     }
 
     const resolvedLabel =
-      lines.length > 1 && extractedLabel
-        ? extractedLabel
-        : label || extractedLabel || 'Untitled';
+      lines.length > 1 && extractedLabel ? extractedLabel : label || extractedLabel || 'Untitled';
 
     entries.push({
       id: crypto.randomUUID(),

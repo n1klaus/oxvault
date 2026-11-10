@@ -35,7 +35,12 @@ export function describeOriginProblem(customUrl?: string | URL | Location): stri
     return 'OxVault web is running from an unreadable page address.';
   }
 
-  if (!url.origin || url.origin === 'null' || url.protocol === 'file:' || url.protocol === 'data:') {
+  if (
+    !url.origin ||
+    url.origin === 'null' ||
+    url.protocol === 'file:' ||
+    url.protocol === 'data:'
+  ) {
     return 'OxVault web cannot run from an opaque origin (null). It requires HTTPS or localhost (e.g. https://vault.example.com or http://localhost:8000) under the /oxvault/ deploy path.';
   }
 
