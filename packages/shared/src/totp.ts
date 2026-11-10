@@ -23,6 +23,9 @@ export interface TotpCode {
 const BASE32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 const STEAM_ALPHABET = '23456789BCDFGHJKMNPQRTVWXY';
 
+/** Minimum decoded key size: standard TOTP secrets are >= 80 bits. */
+const MIN_SECRET_BYTES = 10;
+
 export function decodeBase32(input: string): Uint8Array | null {
   const clean = input.replace(/[\s=-]/g, '').toUpperCase();
   if (!clean) return null;
@@ -58,7 +61,9 @@ export function parseTotp(value: string): TotpParams | null {
 
   if (/^steam:\/\//i.test(text)) {
     const secret = decodeBase32(text.slice('steam://'.length));
-    return secret ? { secret, algorithm: 'SHA-1', digits: 5, period: 30, steam: true } : null;
+    return secret && secret.length >= MIN_SECRET_BYTES
+      ? { secret, algorithm: 'SHA-1', digits: 5, period: 30, steam: true }
+      : null;
   }
 
   if (/^otpauth:/i.test(text)) {
@@ -70,7 +75,7 @@ export function parseTotp(value: string): TotpParams | null {
     }
     if (url.hostname.toLowerCase() !== 'totp') return null;
     const secret = decodeBase32(url.searchParams.get('secret') ?? '');
-    if (!secret) return null;
+    if (!secret || secret.length < MIN_SECRET_BYTES) return null;
     const algorithm = ALGORITHMS[(url.searchParams.get('algorithm') ?? 'SHA1').toUpperCase()];
     const digits = Number(url.searchParams.get('digits') ?? 6);
     const period = Number(url.searchParams.get('period') ?? 30);
@@ -81,10 +86,10 @@ export function parseTotp(value: string): TotpParams | null {
   }
 
   const secret = decodeBase32(text);
-  // Bare base32 fallback: require a real key length. Standard TOTP secrets are
-  // >= 80 bits (16 base32 chars); without this floor any base32-alphabet prose
-  // ("not-a-secret") parses as a working-looking authenticator entry.
-  return secret && secret.length >= 10
+  // Bare base32 fallback: same floor as the URI and steam branches. Standard
+  // TOTP secrets are >= 80 bits; without this, base32-alphabet prose ("not-a
+  // -secret") parses as a working-looking authenticator entry.
+  return secret && secret.length >= MIN_SECRET_BYTES
     ? { secret, algorithm: 'SHA-1', digits: 6, period: 30, steam: false }
     : null;
 }

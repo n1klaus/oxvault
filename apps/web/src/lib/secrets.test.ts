@@ -116,6 +116,25 @@ describe('secrets', () => {
       expect(addFromText('JBSWY3DPEHPK3PXP')).toHaveLength(1);
     });
 
+    it('applies the 80-bit floor to otpauth and steam URIs too', () => {
+      // A URI whose secret decodes below 10 bytes is rejected, same as a bare
+      // short secret — the prose-paste attack cannot route through URIs.
+      expect(addFromText('otpauth://totp/x?secret=NOTASECRET')).toEqual([]);
+      expect(addFromText('steam://NOTASECRET')).toEqual([]);
+      expect(addFromText('otpauth://totp/x?secret=JBSWY3DPEHPK3PXP')).toHaveLength(1);
+      expect(addFromText('steam://JBSWY3DPEHPK3PXP')).toHaveLength(1);
+    });
+
+    it('notes rejected URI lines without dropping valid siblings', () => {
+      const entries = addFromText(
+        'otpauth://totp/good?secret=JBSWY3DPEHPK3PXP\notpauth://totp/bad?secret=NOTASECRET',
+      );
+      expect(entries).toHaveLength(1);
+      expect(entries[0].label).toBe('good');
+      expect(entries[0].skippedNote).toContain('1 line skipped');
+      expect(entries[0].skippedNote).toContain('secret too short');
+    });
+
     it('returns empty array for an otpauth URI with malformed percent-encoding', () => {
       // URIError from decodeURIComponent must not fall through to the
       // bare-base32 branch — the line was meant to be a URI.

@@ -16,6 +16,9 @@ export interface TickerOptions {
   onCodes: (codes: DisplayCode[]) => void;
 }
 
+/** Delay before retrying when a tick produced no codes (transient failure). */
+const RETRY_DELAY_MS = 1000;
+
 /**
  * Compute the current TOTP codes for the provided entries at nowMs.
  * Clamps remaining countdown to [1, period].
@@ -64,7 +67,7 @@ export function startTicker({
       // No codes parsed (transient failure, e.g. crypto hiccup). Reschedule a
       // short retry instead of dying silently — the next entries change or the
       // retry itself will recover.
-      timerHandle = schedule(tick, 1000);
+      timerHandle = schedule(tick, RETRY_DELAY_MS);
       return;
     }
 

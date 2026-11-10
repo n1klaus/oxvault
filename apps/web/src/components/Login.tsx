@@ -9,16 +9,21 @@ export function Login({ onAdd }: LoginProps) {
   const [label, setLabel] = useState('');
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    setNotice(null);
 
     const parsed = addFromText(text, label.trim() || undefined);
     if (parsed.length === 0) {
       setError('No valid TOTP entries found. Enter a valid TOTP URI or base32 secret.');
       return;
     }
+
+    const skipped = parsed.find((p) => p.skippedNote);
+    if (skipped?.skippedNote) setNotice(skipped.skippedNote);
 
     if (onAdd) {
       onAdd(parsed);
@@ -53,6 +58,23 @@ export function Login({ onAdd }: LoginProps) {
           }}
         >
           {error}
+        </div>
+      )}
+
+      {notice && (
+        <div
+          style={{
+            background: '#fefce8',
+            border: '1px solid #facc15',
+            padding: 12,
+            borderRadius: 4,
+            marginBottom: 16,
+            color: '#854d0e',
+            fontSize: 13,
+            wordBreak: 'break-all',
+          }}
+        >
+          {notice}
         </div>
       )}
 
