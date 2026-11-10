@@ -92,6 +92,12 @@ COMMITS=()
 skipped_count=0
 already_ported_count=0
 
+# Capture the trailer log once before the loop. Piping `git log` straight into
+# `grep -q` makes grep exit on the first match, git log dies with SIGPIPE (141),
+# and under `set -o pipefail` that failure flips the test to false even when the
+# trailer is present -- so only a couple of ports were ever detected as done.
+ported_log="$(git log --format=%B main..HEAD)"
+
 for sha in "${ALL_COMMITS[@]}"; do
   if [[ -n "${SKIP_SHAS[$sha]:-}" ]]; then
     echo "skipping $sha (${SKIP_SHAS[$sha]})"
@@ -107,7 +113,7 @@ for sha in "${ALL_COMMITS[@]}"; do
     continue
   fi
 
-  if git log --format=%B main..HEAD | grep -q "Upstream-Commit: ${sha}" || git log --format=%B main..HEAD | grep -q "Ported from dillionverma/bitlatch@${sha}"; then
+  if grep -q "Upstream-Commit: ${sha}" <<<"$ported_log" || grep -q "Ported from dillionverma/bitlatch@${sha}" <<<"$ported_log"; then
     echo "already ported $sha"
     already_ported_count=$((already_ported_count + 1))
     continue
