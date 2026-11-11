@@ -16,18 +16,31 @@ export function Login({ onAdd }: LoginProps) {
     setError(null);
     setNotice(null);
 
-    const parsed = addFromText(text, label.trim() || undefined);
+    const { entries: parsed, skipped } = addFromText(text, label.trim() || undefined);
     if (parsed.length === 0) {
-      setError('No valid TOTP entries found. Enter a valid TOTP URI or base32 secret.');
+      if (skipped.length > 0) {
+        // Precise reason for an all-rejected paste beats the generic error.
+        setError(
+          `${skipped.length} line${skipped.length > 1 ? 's' : ''} skipped (invalid TOTP parameters): ${skipped[0]}`,
+        );
+      } else {
+        setError('No valid TOTP entries found. Enter a valid TOTP URI or base32 secret.');
+      }
       return;
     }
 
-    const skipped = parsed.find((p) => p.skippedNote);
-    if (skipped?.skippedNote) setNotice(skipped.skippedNote);
+    if (skipped.length > 0) {
+      setNotice(
+        `${skipped.length} line${skipped.length > 1 ? 's' : ''} skipped (invalid TOTP parameters): ${skipped[0]}`,
+      );
+    }
 
     if (onAdd) {
       onAdd(parsed);
     }
+
+    setText('');
+    setLabel('');
   }
 
   return (

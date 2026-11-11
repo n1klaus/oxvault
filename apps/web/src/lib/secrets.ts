@@ -8,20 +8,25 @@ export interface TotpEntry {
   digits: number;
   algorithm: TotpAlgorithm;
   steam?: boolean;
-  /** Set when the paste contained URI lines rejected (e.g. secret too short). */
-  skippedNote?: string;
 }
 
 // Re-export decodeBase32 and parseTotp for convenience
 export { decodeBase32, parseTotp };
 
+/** Result of parsing pasted text: valid entries plus lines rejected by parseTotp. */
+export interface AddFromTextResult {
+  entries: TotpEntry[];
+  /** URI-shaped lines that looked like entries but were rejected. */
+  skipped: string[];
+}
+
 /**
  * Parse one or more TOTP entries from text (TOTP URIs, steam:// URIs, or bare base32 secrets).
- * Returns an array of parsed TotpEntry objects. Malformed entries or strings return an empty array.
+ * Returns the parsed TotpEntry objects plus any URI-shaped lines that were rejected.
  * Values are kept in-memory only and never persisted.
  */
-export function addFromText(entry: string, label?: string): TotpEntry[] {
-  if (!entry || typeof entry !== 'string') return [];
+export function addFromText(entry: string, label?: string): AddFromTextResult {
+  if (!entry || typeof entry !== 'string') return { entries: [], skipped: [] };
   const lines = entry
     .split(/\r?\n/)
     .map((l) => l.trim())
@@ -34,9 +39,9 @@ export function addFromText(entry: string, label?: string): TotpEntry[] {
     const line = lines[i]!;
     const params = parseTotp(line);
     if (!params) {
-      // A URI-shaped line that parseTotp rejected (e.g. secret below the
-      // 80-bit floor) is a rejected entry, not a bare secret — remember it so
-      // the caller can tell the user, instead of silently dropping it.
+      // A URI-shaped line that parseTotp rejected is a rejected entry, not a
+      // bare secret — record it so the caller can tell the user, instead of
+      // silently dropping it.
       if (/^(otpauth|steam):/i.test(line)) rejected.push(line);
       continue;
     }
@@ -59,7 +64,10 @@ export function addFromText(entry: string, label?: string): TotpEntry[] {
         try {
           rawPath = decodeURIComponent(url.pathname.replace(/^\/+/, ''));
         } catch {
-          return [];
+          // Malformed percent-escape: the line was meant to be a URI, so it is
+          // a rejection, not a bare secret — report it and keep other lines.
+          rejected.push(line);
+          continue;
         }
         const issuer = url.searchParams.get('issuer');
         if (rawPath && issuer && !rawPath.toLowerCase().startsWith(issuer.toLowerCase())) {
@@ -91,13 +99,5 @@ export function addFromText(entry: string, label?: string): TotpEntry[] {
     });
   }
 
-  if (rejected.length > 0) {
-    // Per-line feedback: surface rejected URI-shaped lines on the first valid
-    // entry's label so the UI can show what was dropped. With no valid entries
-    // the caller's existing empty-state error already covers it.
-    const note = `${rejected.length} line${rejected.length > 1 ? 's' : ''} skipped (secret too short): ${rejected[0]}`;
-    if (entries.length > 0) entries[0]!.skippedNote = note;
-  }
-
-  return entries;
+  return { entries, skipped: rejected };
 }
