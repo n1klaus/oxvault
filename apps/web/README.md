@@ -4,7 +4,7 @@ A local browser-based authenticator for TOTP (Time-based One-Time Password) code
 
 ## What it is
 
-A local authenticator for TOTP secrets you paste in. Enter `otpauth://` URIs, `steam://` URIs, or raw base32 secrets to generate one-time codes and countdown timers in the browser.
+A local authenticator for TOTP secrets you paste in. Enter `otpauth://` URIs, `steam://` URIs, or raw base32 secrets to generate one-time codes in the browser, with the time remaining until the next code shown beside each one.
 
 ## What it does NOT do
 

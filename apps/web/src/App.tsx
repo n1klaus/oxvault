@@ -3,12 +3,15 @@ import { Login } from './components/Login';
 import { TotpList } from './components/TotpList';
 import { assertSecureDeployment } from './lib/guard';
 import { startTicker, type DisplayCode } from './lib/codes';
-import type { TotpEntry } from './lib/secrets';
+import { skippedNotice, type TotpEntry } from './lib/secrets';
 
 export function App() {
   const [guardError, setGuardError] = useState<string | null>(null);
   const [entries, setEntries] = useState<TotpEntry[]>([]);
   const [codes, setCodes] = useState<DisplayCode[]>([]);
+  // Lives here, not in Login: the codes view replaces the form in the same
+  // render, so a notice held by Login would never be seen.
+  const [skipped, setSkipped] = useState<string[]>([]);
 
   // Guard check on mount
   useEffect(() => {
@@ -24,6 +27,7 @@ export function App() {
     function handleBlur() {
       setEntries([]);
       setCodes([]);
+      setSkipped([]);
     }
     window.addEventListener('blur', handleBlur);
     return () => window.removeEventListener('blur', handleBlur);
@@ -42,9 +46,15 @@ export function App() {
     return () => ticker.stop();
   }, [entries]);
 
+  function handleAdd(nextEntries: TotpEntry[], nextSkipped: string[]) {
+    setSkipped(nextSkipped);
+    setEntries(nextEntries);
+  }
+
   function handleLock() {
     setEntries([]);
     setCodes([]);
+    setSkipped([]);
   }
 
   // Fatal deployment guard panel
@@ -70,8 +80,10 @@ export function App() {
   }
 
   if (entries.length === 0) {
-    return <Login onAdd={setEntries} />;
+    return <Login onAdd={handleAdd} />;
   }
+
+  const notice = skippedNotice(skipped);
 
   return (
     <div style={{ width: '100%', maxWidth: 600, margin: '0 auto', padding: '0 16px' }}>
@@ -100,6 +112,23 @@ export function App() {
           Lock
         </button>
       </div>
+
+      {notice && (
+        <div
+          style={{
+            background: '#fefce8',
+            border: '1px solid #facc15',
+            padding: 12,
+            borderRadius: 4,
+            marginBottom: 16,
+            color: '#854d0e',
+            fontSize: 13,
+            wordBreak: 'break-all',
+          }}
+        >
+          {notice}
+        </div>
+      )}
 
       <TotpList codes={codes} />
     </div>

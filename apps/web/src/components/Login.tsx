@@ -1,42 +1,33 @@
 import { useState, type FormEvent } from 'react';
-import { addFromText, type TotpEntry } from '../lib/secrets';
+import { addFromText, skippedNotice, type TotpEntry } from '../lib/secrets';
 
 export interface LoginProps {
-  onAdd?: (entries: TotpEntry[]) => void;
+  // Rejected lines travel with the entries so the codes view can name them;
+  // Login unmounts on the swap, so its own notice state would be discarded.
+  onAdd?: (entries: TotpEntry[], skipped: string[]) => void;
 }
 
 export function Login({ onAdd }: LoginProps) {
   const [label, setLabel] = useState('');
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    setNotice(null);
 
     const { entries: parsed, skipped } = addFromText(text, label.trim() || undefined);
     if (parsed.length === 0) {
-      if (skipped.length > 0) {
-        // Precise reason for an all-rejected paste beats the generic error.
-        setError(
-          `${skipped.length} line${skipped.length > 1 ? 's' : ''} skipped (invalid TOTP parameters): ${skipped[0]}`,
-        );
-      } else {
-        setError('No valid TOTP entries found. Enter a valid TOTP URI or base32 secret.');
-      }
+      // Precise reason for an all-rejected paste beats the generic error.
+      setError(
+        skippedNotice(skipped) ??
+          'No valid TOTP entries found. Enter a valid TOTP URI or base32 secret.',
+      );
       return;
     }
 
-    if (skipped.length > 0) {
-      setNotice(
-        `${skipped.length} line${skipped.length > 1 ? 's' : ''} skipped (invalid TOTP parameters): ${skipped[0]}`,
-      );
-    }
-
     if (onAdd) {
-      onAdd(parsed);
+      onAdd(parsed, skipped);
     }
 
     setText('');
@@ -71,23 +62,6 @@ export function Login({ onAdd }: LoginProps) {
           }}
         >
           {error}
-        </div>
-      )}
-
-      {notice && (
-        <div
-          style={{
-            background: '#fefce8',
-            border: '1px solid #facc15',
-            padding: 12,
-            borderRadius: 4,
-            marginBottom: 16,
-            color: '#854d0e',
-            fontSize: 13,
-            wordBreak: 'break-all',
-          }}
-        >
-          {notice}
         </div>
       )}
 

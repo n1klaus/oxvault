@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { addFromText, decodeBase32, parseTotp } from './secrets';
+import { addFromText, decodeBase32, parseTotp, skippedNotice } from './secrets';
 
 describe('secrets', () => {
   describe('parseTotp', () => {
@@ -154,6 +154,16 @@ describe('secrets', () => {
       );
       expect(result.entries.map((e) => e.label)).toEqual(['one', 'three']);
       expect(result.skipped).toEqual([bad]);
+    });
+
+    it('gives the codes view a notice for a mixed paste, and none when nothing was skipped', () => {
+      const mixed = addFromText(
+        'otpauth://totp/good?secret=JBSWY3DPEHPK3PXP\notpauth://totp/bad?secret=NOTASECRET',
+      );
+      expect(mixed.entries).toHaveLength(1);
+      expect(skippedNotice(mixed.skipped)).not.toBeNull();
+      expect(skippedNotice(mixed.skipped)).toContain(mixed.skipped[0]);
+      expect(skippedNotice([])).toBeNull();
     });
 
     it('keeps explicit label only for lines without their own label', () => {

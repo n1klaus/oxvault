@@ -13,6 +13,15 @@ export interface TotpEntry {
 // Re-export decodeBase32 and parseTotp for convenience
 export { decodeBase32, parseTotp };
 
+/**
+ * One message for every rejected line, so the paste form, the codes view, and
+ * any caller describe a skip the same way. Returns null when nothing was skipped.
+ */
+export function skippedNotice(skipped: string[]): string | null {
+  if (skipped.length === 0) return null;
+  return `${skipped.length} line${skipped.length > 1 ? 's' : ''} skipped (invalid TOTP parameters): ${skipped[0]}`;
+}
+
 /** Result of parsing pasted text: valid entries plus lines rejected by parseTotp. */
 export interface AddFromTextResult {
   entries: TotpEntry[];
