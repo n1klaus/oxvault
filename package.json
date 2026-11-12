@@ -5,7 +5,7 @@
   "engines": {
     "node": "^22.18.0 || ^24.11.0 || >=26.0.0"
   },
-  "packageManager": "pnpm@11.25.0",
+  "packageManager": "pnpm@12.18.0",
   "name": "@oxvault/workspace",
   "scripts": {
     "dev": "vp run @oxvault/desktop#dev",
