@@ -86,6 +86,46 @@ pnpm run dev
 
 Run `pnpm run check` and `pnpm run build` before submitting changes.
 
+### Bitwarden CLI
+
+OxVault runs your installed Bitwarden CLI rather than shipping its own cryptography. The CLI must start as an unpackaged Node program, because OxVault passes secrets to it through a preload script that packaged and sandboxed builds ignore:
+
+```sh
+npm install -g @bitwarden/cli
+```
+
+A packaged `bw` fails the check with “This Bitwarden CLI cannot receive keys privately”, naming the path it found. The snap package is one of these: `snap install bw` installs `/snap/bin/bw`, a single self-contained binary that ignores `NODE_OPTIONS`, so OxVault skips it and reports the npm CLI instead. Remove it (`snap remove bw`) so the npm copy wins on `PATH`. `OXVAULT_BW_PATH` overrides lookup when you keep the CLI somewhere else.
+
+### Linux sandbox
+
+Electron needs a usable sandbox. Ubuntu 23.10+ restricts unprivileged user namespaces through AppArmor, and Electron does not ship its SUID helper as root-owned, so a plain `pnpm run dev` aborts with:
+
+```
+FATAL:sandbox/linux/suid/client/setuid_sandbox_host.cc:166] The SUID sandbox helper binary was found, but is not configured correctly.
+```
+
+Fix the sandbox once (each Electron reinstall resets it):
+
+```sh
+sudo chown root:root node_modules/electron/dist/chrome-sandbox
+sudo chmod 4755 node_modules/electron/dist/chrome-sandbox
+```
+
+Or lift the namespace restriction for the whole machine until the next reboot (it reopens user namespaces for every process, so prefer the per-binary fix):
+
+```sh
+sudo sysctl kernel.apparmor_restrict_unprivileged_userns=0
+```
+
+For local development only, you can skip the OS sandbox instead:
+
+```sh
+pnpm run dev --no-sandbox
+pnpm run start --no-sandbox
+```
+
+Do not write `--` before the flag: `pnpm run dev -- --no-sandbox` turns it into an app argument and Electron still aborts. Never ship a build that disables the sandbox. After a crash, a stale `~/.config/OxVault/SingletonLock` can make the next launch fail with `SingletonLock: File exists`; delete it.
+
 [Release workflow](.github/workflows/release.yml)
 
 ## License

@@ -1,4 +1,4 @@
-import { access, readFile, stat } from 'node:fs/promises';
+import { access, readFile, realpath, stat } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { homedir, userInfo } from 'node:os';
 import { delimiter, dirname, extname, join, isAbsolute, resolve, sep } from 'node:path';
@@ -18,10 +18,25 @@ export const ENGINE_SETUP_MESSAGE =
     : 'Install the official Bitwarden CLI and add it to PATH, or set OXVAULT_BW_PATH to its full path, then restart OxVault.';
 
 /** Without the preload, keys would sit in the CLI's environment, where other apps can read them. */
-const PRIVATE_CHANNEL_MESSAGE =
-  process.platform === 'darwin'
-    ? 'This Bitwarden CLI cannot receive keys privately. Install the official CLI with “brew install bitwarden-cli”, then restart OxVault.'
-    : 'This Bitwarden CLI cannot receive keys privately. Install the official CLI with “npm install -g @bitwarden/cli”, then restart OxVault.';
+function privateChannelMessage(executable: string) {
+  const install =
+    process.platform === 'darwin'
+      ? 'Install the official CLI with “brew install bitwarden-cli”'
+      : 'Install the official CLI with “npm install -g @bitwarden/cli”';
+  return `The Bitwarden CLI at “${executable}” cannot receive keys privately, so OxVault will not use it. ${install} and check that the npm copy starts before this one, then restart OxVault.`;
+}
+
+/**
+ * Snap's `bw` is a packaged single executable behind a symlink to snapd. A packaged
+ * Node ignores NODE_OPTIONS, so it can never run the bootstrap; it is not a CLI to probe.
+ */
+function isSnapShim(resolved: string) {
+  return (
+    process.platform === 'linux' &&
+    (resolved.startsWith(`${sep}snap${sep}`) ||
+      resolved.startsWith(`${sep}usr${sep}lib${sep}snapd${sep}`))
+  );
+}
 
 /**
  * Puts a warm vault server in front of the one-shot CLI, so reads and writes
@@ -66,11 +81,13 @@ export async function localEngine(options: {
     return unavailable('OxVault is missing one of its files. Reinstall OxVault, then try again.');
   }
   await removeVerifyCopies(options.dataDir);
-  let privateChannelMissing = false;
+  let privateChannelMissing: string | undefined;
   for (const executable of candidates) {
     if (!executable || !isAbsolute(executable)) continue;
     try {
       await access(executable, windows ? constants.R_OK : constants.X_OK);
+      // A path that cannot be resolved is still worth probing as given.
+      if (isSnapShim(await realpath(executable).catch(() => executable))) continue;
       if (!(await stat(executable)).isFile()) continue;
       let cliOptions: CliOptions = { ...options, executable };
       if (windows && extname(executable).toLowerCase() === '.cmd') {
@@ -89,7 +106,7 @@ export async function localEngine(options: {
         cliOptions = { ...options, executable: process.execPath, script };
       } else if (windows && extname(executable).toLowerCase() !== '.exe') continue;
       if (!(await bootstrapRuns(cliOptions))) {
-        privateChannelMissing = true;
+        privateChannelMissing ??= executable;
         continue;
       }
       return { cli: engineCli(cliOptions) };
@@ -97,7 +114,9 @@ export async function localEngine(options: {
       /* Try the next standard installation path. */
     }
   }
-  return unavailable(privateChannelMissing ? PRIVATE_CHANNEL_MESSAGE : ENGINE_SETUP_MESSAGE);
+  return unavailable(
+    privateChannelMissing ? privateChannelMessage(privateChannelMissing) : ENGINE_SETUP_MESSAGE,
+  );
 }
 
 function unavailable(setupError: string): { cli: CliPort; setupError: string } {
