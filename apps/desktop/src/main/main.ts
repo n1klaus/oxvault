@@ -68,13 +68,17 @@ const cliBootstrap = app.isPackaged
   : join(__dirname, 'cli-bootstrap.cjs');
 
 function showWindow() {
-  if (!window) return;
+  if (!window || lifecycle.quitting) return;
   window.show();
   window.focus();
 }
 
 app.on('second-instance', showWindow);
 app.on('activate', showWindow);
+// Every request is rejected once shutdown starts, so never leave the form clickable.
+app.on('before-quit', () => {
+  if (window && !window.isDestroyed()) window.hide();
+});
 // Development restarts must release the warm CLI and secrets through normal shutdown.
 if (!app.isPackaged) {
   for (const signal of ['SIGINT', 'SIGTERM'] as const) process.on(signal, () => app.quit());
