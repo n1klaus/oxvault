@@ -49,6 +49,11 @@ export class DesktopLifecycle {
   constructor() {
     app.on('before-quit', (event) => {
       if (this.phase === 'stopped') return;
+      // Before ready there is nothing to tear down, and Electron rejects globalShortcut unregisterAll.
+      if (!app.isReady()) {
+        this.phase = 'stopped';
+        return;
+      }
       event.preventDefault();
       if (this.quitting) return;
       this.phase = 'stopping';
@@ -200,7 +205,7 @@ export class DesktopLifecycle {
       // Startup may still be acquiring resources. Dispose those too before exiting.
       await this.startup?.catch(() => undefined);
       this.updates?.stop();
-      globalShortcut.unregisterAll();
+      if (app.isReady()) globalShortcut.unregisterAll();
       await Promise.allSettled([
         locking,
         this.vault !== lockedVault ? this.lock() : undefined,
