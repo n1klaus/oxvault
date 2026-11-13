@@ -12,6 +12,7 @@ No release is tagged yet. This list is hand-written from `git log` and goes newe
 
 ## Unreleased
 
+- Create, edit and remove one-time code keys in the desktop and browser popup editors. The key is stored exactly as typed.
 - Sends, import and export, and generator modes in the picker.
 - Editor support for cards, identities, SSH keys and custom fields.
 - Passphrase and username generators on the EFF large word list.

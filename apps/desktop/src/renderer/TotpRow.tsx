@@ -4,7 +4,7 @@ import type { TotpCode } from '@oxvault/shared/totp';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 
-/** Shows the current one-time code for a login. The secret itself stays in the main process. */
+/** Shows the current one-time code for a login, derived in the main process. */
 export function TotpRow({ itemId, disabled }: { itemId: string; disabled: boolean }) {
   const [totp, setTotp] = useState<TotpCode | null>(null);
   const [copied, setCopied] = useState(false);

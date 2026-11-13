@@ -798,6 +798,20 @@ function renderEditor() {
       }),
     );
     form.append(generator);
+    const totp = field(
+      'Authenticator key',
+      draft.totp ?? '',
+      (value) => {
+        draft.totp = value;
+      },
+      'password',
+      2_048,
+    );
+    form.append(
+      button('Reveal authenticator key', () => {
+        totp.type = totp.type === 'password' ? 'text' : 'password';
+      }),
+    );
     const websites = element('div', 'websites');
     form.append(websites);
     const renderWebsites = () => {
@@ -892,7 +906,9 @@ function renderEditor() {
 function newItem(type: 1 | 2) {
   const base = { name: '', notes: '', favorite: false };
   showEditor(
-    type === 2 ? { ...base, type } : { ...base, type, username: '', password: '', uris: [] },
+    type === 2
+      ? { ...base, type }
+      : { ...base, type, username: '', password: '', totp: '', uris: [] },
   );
 }
 document.querySelector('#new-login')!.addEventListener('click', () => newItem(1));

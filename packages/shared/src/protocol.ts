@@ -64,6 +64,8 @@ const loginDraftSchema = z
     type: z.literal(1),
     username: boundedText,
     password: boundedText,
+    // Kept verbatim: an otpauth:// link and a bare secret must both reach Bitwarden as typed.
+    totp: boundedText.optional(),
     uris: z
       .array(
         z.discriminatedUnion('action', [

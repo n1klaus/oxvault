@@ -75,6 +75,7 @@ export function itemDraft(item: ItemDetail): ItemDraft {
     type: 1,
     username: item.username,
     password: item.password,
+    totp: item.totp,
     uris: item.uris.map((row): UriDraft => {
       const match = uriMatchSchema.safeParse(row.match);
       return editableUri(row) && row.uri !== null && match.success

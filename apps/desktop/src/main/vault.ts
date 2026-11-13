@@ -11,7 +11,7 @@ import {
 import { UserError, type BrowserVaultQuery } from '@oxvault/shared/protocol';
 import { cardLabel } from '@oxvault/shared/item-drafts';
 import { detailSections } from '@oxvault/shared/item-fields';
-import { totpFromField, type TotpCode } from '@oxvault/shared/totp';
+import { parseTotp, totpFromField, type TotpCode } from '@oxvault/shared/totp';
 import {
   ES256,
   attestationObject,
@@ -664,8 +664,8 @@ export class Vault extends EventEmitter {
   }
 
   /**
-   * Current one-time code for a login, computed here so the stored secret never
-   * reaches the window or the browser bridge. Null when the item has no usable secret.
+   * Current one-time code for a login, computed in the main process so the code
+   * itself never has to be derived in a window. Null when the item has no usable secret.
    */
   async totp(id: string): Promise<TotpCode | null> {
     // `item()` rejects a locked vault before anything is read.
@@ -713,6 +713,7 @@ export class Vault extends EventEmitter {
         uri: row.uri,
         match: row.match ?? null,
       })),
+      totp: isRestricted(cipher) ? '' : (cipher.login?.totp ?? ''),
       notes: cipher.notes ?? '',
       attachments: attachmentsOf(cipher),
       revisionDate: cipher.revisionDate ?? null,
@@ -1485,7 +1486,22 @@ export class Vault extends EventEmitter {
         }
         return { ...original, uri, match: row.match };
       });
-      cipher.login = { ...cipher.login, username: draft.username, password: draft.password, uris };
+      // Untouched keeps the stored key verbatim, even a legacy value this build cannot read.
+      const stored = cipher.login?.totp ?? '';
+      if (draft.totp !== undefined && draft.totp !== stored) {
+        if (draft.totp !== draft.totp.trim())
+          throw new UserError('Remove the spaces at the start or end of the authenticator key.');
+        if (draft.totp && !parseTotp(draft.totp))
+          throw new UserError('Enter an authenticator key as a secret or an otpauth:// link.');
+      }
+      // Stored exactly as typed: Bitwarden reads otpauth:// links and bare keys alike.
+      cipher.login = {
+        ...cipher.login,
+        username: draft.username,
+        password: draft.password,
+        uris,
+        totp: (draft.totp ?? stored) || null,
+      };
     }
     const payload = Buffer.from(JSON.stringify(cipher)).toString('base64');
     const args = draft.id ? ['edit', 'item', draft.id] : ['create', 'item'];

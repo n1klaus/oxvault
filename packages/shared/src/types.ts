@@ -206,6 +206,8 @@ export interface ItemDetail extends ItemSummary {
   passwordHistory: { password: string; lastUsedDate: string | null }[];
   passkeys: PasskeySummary[];
   uris: { sourceIndex: number; uri: string | null; match: number | null }[];
+  /** The authenticator key exactly as stored, so the editor shows and keeps it unchanged. */
+  totp: string;
   notes: string;
   revisionDate: string | null;
   createdDate: string | null;
@@ -279,7 +281,14 @@ export type ItemDraft = {
   /** Omitted keeps the item's custom fields. */
   fields?: CustomFieldDraft[];
 } & (
-  | { type: 1; username: string; password: string; uris: UriDraft[] }
+  | {
+      type: 1;
+      username: string;
+      password: string;
+      uris: UriDraft[];
+      /** Omitted keeps the stored key; empty removes it; anything else replaces it verbatim. */
+      totp?: string;
+    }
   | { type: 2 }
   | { type: 3; card: CardFields }
   | { type: 4; identity: IdentityFields }

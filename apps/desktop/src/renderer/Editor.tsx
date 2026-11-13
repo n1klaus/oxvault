@@ -18,6 +18,7 @@ import {
   uriMatchOptions,
 } from '@oxvault/shared/item-drafts';
 import { uriMatchSchema } from '@oxvault/shared/protocol';
+import { parseTotp } from '@oxvault/shared/totp';
 import type { Notifier } from './Toasts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,7 +29,7 @@ import {
   InputGroupButton,
 } from '@/components/ui/input-group';
 import { Textarea } from '@/components/ui/textarea';
-import { Field, FieldGroup, FieldLabel, FieldError } from '@/components/ui/field';
+import { Field, FieldGroup, FieldLabel, FieldDescription, FieldError } from '@/components/ui/field';
 import { Switch } from '@/components/ui/switch';
 import { Spinner } from '@/components/ui/spinner';
 import {
@@ -50,7 +51,7 @@ const draftTypes: Record<
   1: {
     label: 'Login',
     save: 'Save login',
-    empty: (base) => ({ ...base, type: 1, username: '', password: '', uris: [] }),
+    empty: (base) => ({ ...base, type: 1, username: '', password: '', totp: '', uris: [] }),
   },
   2: {
     label: 'Secure note',
@@ -129,6 +130,7 @@ export function Editor({
           name: '',
           username: '',
           password: '',
+          totp: '',
           uris: [],
           notes: '',
           favorite: false,
@@ -140,6 +142,7 @@ export function Editor({
   const isNote = draft.type === 2;
   const [busy, setBusy] = useState(false);
   const [revealed, setRevealed] = useState(false);
+  const [totpRevealed, setTotpRevealed] = useState(false);
   const [codeRevealed, setCodeRevealed] = useState(false);
   const [keyWorking, setKeyWorking] = useState(false);
   const [revealedFields, setRevealedFields] = useState<ReadonlySet<number>>(new Set());
@@ -202,7 +205,7 @@ export function Editor({
           : current,
     );
   }
-  function loginField(key: 'username' | 'password', value: string) {
+  function loginField(key: 'username' | 'password' | 'totp', value: string) {
     setDraft((current) => (current.type === 1 ? { ...current, [key]: value } : current));
   }
   function cardField(key: keyof CardFields, value: string) {
@@ -236,6 +239,12 @@ export function Editor({
   async function save(event: FormEvent) {
     event.preventDefault();
     if (operation.current || !alive.current) return;
+    const totp = draft.type === 1 ? draft.totp : undefined;
+    // A stored key this build cannot parse is still kept: only a changed value is checked.
+    if (totp && totp !== (item?.totp ?? '') && !parseTotp(totp)) {
+      setError('Enter an authenticator key as a secret or an otpauth:// link.');
+      return;
+    }
     operation.current = true;
     const request = ++epoch.current;
     setBusy(true);
@@ -519,6 +528,38 @@ export function Editor({
                         </InputGroupButton>
                       </InputGroupAddon>
                     </InputGroup>
+                  </Field>
+                  <Field>
+                    <div className="task-label-actions">
+                      <FieldLabel htmlFor="editor-totp">Authenticator key</FieldLabel>
+                    </div>
+                    <InputGroup>
+                      <InputGroupInput
+                        id="editor-totp"
+                        type={totpRevealed ? 'text' : 'password'}
+                        autoComplete="off"
+                        spellCheck={false}
+                        value={draft.totp ?? ''}
+                        onChange={(event) => loginField('totp', event.target.value)}
+                        disabled={busy}
+                      />
+                      <InputGroupAddon align="inline-end">
+                        <InputGroupButton
+                          size="icon-sm"
+                          aria-label={
+                            totpRevealed ? 'Hide authenticator key' : 'Reveal authenticator key'
+                          }
+                          aria-pressed={totpRevealed}
+                          onClick={() => setTotpRevealed(!totpRevealed)}
+                          disabled={busy}
+                        >
+                          {totpRevealed ? <EyeOff /> : <Eye />}
+                        </InputGroupButton>
+                      </InputGroupAddon>
+                    </InputGroup>
+                    <FieldDescription>
+                      Saved exactly as typed. Clear the field to remove the key.
+                    </FieldDescription>
                   </Field>
                 </>
               )}
