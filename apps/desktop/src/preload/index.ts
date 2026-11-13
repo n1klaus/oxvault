@@ -5,6 +5,7 @@ import type { DesktopRequest } from '@oxvault/shared/protocol';
 const request = (message: DesktopRequest) => ipcRenderer.invoke('oxvault:request', message);
 
 const api: VaultApi = {
+  platform: process.platform,
   lockTimeout: () => request({ type: 'lockTimeout' }),
   setLockTimeout: (minutes) => request({ type: 'setLockTimeout', minutes }),
   macAutoFill: () => request({ type: 'macAutoFill' }),

@@ -5,7 +5,13 @@ import {
   Fingerprint,
   WarningCircle as CircleAlert,
 } from '@phosphor-icons/react';
-import type { ChallengeAnswer, LoginChallenge, Result, VaultState } from '@oxvault/shared/types';
+import type {
+  ChallengeAnswer,
+  HostPlatform,
+  LoginChallenge,
+  Result,
+  VaultState,
+} from '@oxvault/shared/types';
 import { motion, useReducedMotion } from 'motion/react';
 import appIcon from '../../../../assets/brand/macos/icon-1024.png';
 import { Button } from '@/components/ui/button';
@@ -354,10 +360,24 @@ const METHOD_LABELS = {
   email: 'Email me a code',
 } as const;
 
+/** Names the host OS in the new-device copy. Never assume macOS: OxVault runs the same window on Linux and Windows. */
+function deviceName(platform: HostPlatform) {
+  switch (platform) {
+    case 'darwin':
+      return 'Mac';
+    case 'linux':
+      return 'Linux';
+    case 'win32':
+      return 'Windows PC';
+    default:
+      return 'device';
+  }
+}
+
 function describe(challenge: LoginChallenge) {
   if (challenge.kind === 'method') return 'Choose how to confirm it is you.';
   if (challenge.kind === 'new-device')
-    return `This Mac is new to Bitwarden. Enter the verification code emailed to ${challenge.email}.`;
+    return `This ${deviceName(window.oxvault.platform)} is new to Bitwarden. Enter the verification code emailed to ${challenge.email}.`;
   switch (challenge.method) {
     case 'authenticator':
       return 'Enter the code from your authenticator app.';

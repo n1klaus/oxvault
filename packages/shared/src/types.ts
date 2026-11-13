@@ -362,7 +362,23 @@ export type BrowserSetup = Record<Browser, { available: boolean; reason?: string
 
 export type BrowserConnection = 'connected' | 'not-detected' | 'setup-error' | 'unavailable';
 
+/** The operating system the desktop app runs on, as Electron's `process.platform` reports it. */
+export type HostPlatform =
+  | 'darwin'
+  | 'linux'
+  | 'win32'
+  | 'aix'
+  | 'android'
+  | 'cygwin'
+  | 'freebsd'
+  | 'haiku'
+  | 'netbsd'
+  | 'openbsd'
+  | 'sunos';
+
 export interface VaultApi {
+  /** Read-only: the host OS, so the window can name the device in its copy. */
+  platform: HostPlatform;
   lockTimeout(): Promise<Result<LockTimeoutMinutes>>;
   setLockTimeout(minutes: LockTimeoutMinutes): Promise<Result<LockTimeoutMinutes>>;
   macAutoFill(): Promise<Result<MacAutoFillState>>;
