@@ -11,6 +11,7 @@ import {
 import { UserError, type BrowserVaultQuery } from '@oxvault/shared/protocol';
 import { cardLabel } from '@oxvault/shared/item-drafts';
 import { detailSections } from '@oxvault/shared/item-fields';
+import { totpFromField, type TotpCode } from '@oxvault/shared/totp';
 import {
   ES256,
   attestationObject,
@@ -64,6 +65,7 @@ export interface Cipher {
   login?: {
     username?: string | null;
     password?: string | null;
+    totp?: string | null;
     uris?: CipherUri[];
     fido2Credentials?: Fido2Credential[];
     [key: string]: unknown;
@@ -659,6 +661,18 @@ export class Vault extends EventEmitter {
   /** Raycast never receives items that ask for the master password. */
   requireLauncherItem(id: string) {
     if (isRestricted(this.item(id))) throw new UserError('Open this item in OxVault.');
+  }
+
+  /**
+   * Current one-time code for a login, computed here so the stored secret never
+   * reaches the window or the browser bridge. Null when the item has no usable secret.
+   */
+  async totp(id: string): Promise<TotpCode | null> {
+    // `item()` rejects a locked vault before anything is read.
+    const cipher = this.item(id);
+    if (isRestricted(cipher) || cipher.deletedDate) return null;
+    const secret = cipher.login?.totp;
+    return secret ? totpFromField(secret) : null;
   }
 
   detail(id: string): ItemDetail {
@@ -1640,6 +1654,7 @@ function cacheFields(cipher: Cipher, sharedItems: boolean): Cipher {
     login: {
       username: isRestricted(cipher) ? null : cipher.login?.username,
       password: isRestricted(cipher) ? null : cipher.login?.password,
+      totp: isRestricted(cipher) ? null : cipher.login?.totp,
       uris: cipher.login?.uris,
       fido2Credentials: isRestricted(cipher)
         ? cipher.login?.fido2Credentials?.length

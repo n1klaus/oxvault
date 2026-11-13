@@ -188,6 +188,28 @@ export class DesktopLifecycle {
     return this.clipboardQueue;
   }
 
+  copyTotp(id: string) {
+    const epoch = this.epoch;
+    this.clipboardQueue = this.clipboardQueue
+      .catch(() => undefined)
+      .then(async () => {
+        this.assertRunning();
+        if (!this.vault || epoch !== this.epoch)
+          throw new UserError('Vault locked. Try again after unlocking.');
+        const code = await this.vault.totp(id);
+        if (epoch !== this.epoch) throw new UserError('Vault locked. Try again after unlocking.');
+        if (!code) throw new UserError('This item has no one-time code.');
+        this.copiedValue = code.code;
+        await clipboard.writeText(this.copiedValue);
+        if (this.clipboardTimer) clearTimeout(this.clipboardTimer);
+        this.clipboardTimer = setTimeout(
+          () => void this.clearCopiedSecret().catch(() => undefined),
+          30_000,
+        );
+      });
+    return this.clipboardQueue;
+  }
+
   private clearCopiedSecret() {
     if (this.clipboardTimer) clearTimeout(this.clipboardTimer);
     this.clipboardQueue = this.clipboardQueue

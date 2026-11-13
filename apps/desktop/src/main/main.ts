@@ -362,6 +362,10 @@ async function handleRequest(request: DesktopRequest, fromWindow = false): Promi
     }
     case 'copy':
       return lifecycle.copy(request.id, request.field);
+    case 'totp':
+      return vault.totp(request.id);
+    case 'copyTotp':
+      return lifecycle.copyTotp(request.id);
     default:
       return mutateVault(request, fromWindow);
   }

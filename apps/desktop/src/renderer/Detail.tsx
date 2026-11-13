@@ -14,6 +14,7 @@ import { uriMatchOptions } from '@oxvault/shared/item-drafts';
 import { detailRows, inSentence } from '@oxvault/shared/item-fields';
 import type { CardFields, CopyTarget, ItemDetail } from '@oxvault/shared/types';
 import { ItemIcon, displayWebsite, fieldLabels, typeName, type CopyField } from './items';
+import { TotpRow } from './TotpRow';
 import { Attachments } from './Attachments';
 import type { Notifier } from './Toasts';
 import { Button } from '@/components/ui/button';
@@ -322,6 +323,7 @@ export function Detail({
                     </div>
                   )}
                 </div>
+                <TotpRow itemId={item.id} disabled={deleting} />
               </>
             )}
             {item.uris.map((row) => (

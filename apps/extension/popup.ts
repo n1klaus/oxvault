@@ -533,8 +533,10 @@ function renderDetail(item: ItemDetail) {
   }
   if (item.type === 1) {
     addField(item, 'Username', item.username || 'No username', 'username');
-    if (item.password) addSecretField(item, 'Password', item.password, 'password');
-    else addField(item, 'Password', 'No password');
+    const passwordRow = item.password
+      ? addSecretField(item, 'Password', item.password, 'password')
+      : addField(item, 'Password', 'No password');
+    addTotp(item, passwordRow);
     for (const uri of item.uris) {
       const match =
         uriMatchOptions.find(
@@ -598,6 +600,62 @@ function addSecretField(item: ItemSummary, label: string, secret: string, field:
   });
   reveal.setAttribute('aria-label', `Reveal ${inSentence(label)}`);
   row.append(reveal);
+  return row;
+}
+/**
+ * Shows the current one-time code under the password row. The secret stays in
+ * the desktop app. The countdown runs locally and the code is fetched again
+ * only when it expires.
+ */
+function addTotp(item: ItemDetail, after: Element) {
+  const version = viewVersion;
+  const lifetime = generation;
+  const row = element('div', 'field');
+  const text = element('div', 'field-text');
+  const label = element('span', 'field-label', 'Verification code');
+  const value = element('span', 'field-value', '');
+  text.append(label, value);
+  row.append(text);
+  let code = '';
+  let expiresAt = 0;
+  let timer: ReturnType<typeof setInterval> | undefined;
+  const copy = button('Copy', () => {
+    void operation(
+      { type: 'copyTotp', id: item.id },
+      () => feedback('Verification code copied'),
+      'Copying…',
+    );
+  });
+  copy.setAttribute('aria-label', 'Copy verification code');
+  row.append(copy);
+
+  function paint() {
+    const left = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
+    label.textContent = `Verification code · ${left}s`;
+    if (left === 0) void load();
+  }
+  async function load() {
+    if (timer) clearInterval(timer);
+    const response = await send<{ code: string; remaining: number } | null>({
+      type: 'totp',
+      id: item.id,
+    });
+    if (!current(version, lifetime) || (!row.isConnected && code)) return;
+    if (!response.ok || !response.value) {
+      row.remove();
+      return;
+    }
+    code = response.value.code;
+    expiresAt = Date.now() + response.value.remaining * 1000;
+    value.textContent = code.length === 6 ? `${code.slice(0, 3)} ${code.slice(3)}` : code;
+    if (!row.isConnected) after.after(row);
+    paint();
+    timer = setInterval(() => {
+      if (!current(version, lifetime) || !row.isConnected) clearInterval(timer);
+      else paint();
+    }, 1000);
+  }
+  void load();
 }
 function addField(item: ItemSummary, label: string, value: string, field?: CopyField) {
   const row = element('div', 'field');

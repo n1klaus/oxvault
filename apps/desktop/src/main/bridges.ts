@@ -125,6 +125,15 @@ export async function startBridges({
         return startedAt === epoch() && vault.snapshot().status === 'unlocked' ? icon : null;
       }
       if (request.type === 'fill') return vault.fill(request.id, request.url);
+      if (request.type === 'totp') {
+        vault.requireBrowserItem(request.id);
+        return handleRequest(request);
+      }
+      if (request.type === 'copyTotp') {
+        vault.requireBrowserItem(request.id);
+        await handleRequest(request);
+        return null;
+      }
       const unhandled: never = request;
       throw new UserError(`Unsupported browser request: ${String(unhandled)}`);
     };
