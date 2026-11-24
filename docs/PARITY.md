@@ -16,6 +16,10 @@ This means organization items appear as restricted and cannot be edited in OxVau
 
 Items marked with reprompt require unlocking with the master password before opening. OxVault implements this via Bitlatch #20 (`4f7e028ef`), which adds `openProtected(id, password)` to the API. Users can unlock such items directly without editing the cipher.
 
+### One-Time Code Secrets (Implemented)
+
+The desktop main process computes the verification code, and the popup receives the computed code. The stored authenticator key travels to the desktop renderer and the browser popup when an editor opens, the same way a password does, so an existing key can be edited verbatim.
+
 ### Web Application (Local Authenticator)
 
 The web app in this repo (`apps/web`) is a local authenticator only. It lets you paste in TOTP secrets to generate one-time codes in the browser with no vault sync, no server calls, and no persistent storage. A full mobile or browser vault needs the official SDK or a server, neither of which ships here.
