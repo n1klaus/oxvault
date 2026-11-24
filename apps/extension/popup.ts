@@ -6,6 +6,7 @@ import { itemDraft, uriMatchOptions } from '@oxvault/shared/item-drafts';
 import { detailRows, inSentence, typeName } from '@oxvault/shared/item-fields';
 import { browserVaultQuerySchema, uriMatchSchema } from '@oxvault/shared/protocol';
 import { defaultPasswordOptions } from '@oxvault/shared/types';
+import { parseTotp } from '@oxvault/shared/totp';
 import type { BrowserVaultQuery } from '@oxvault/shared/protocol';
 import type {
   BrowserSuggestions,
@@ -898,6 +899,11 @@ function renderEditor() {
   form.append(save);
   form.addEventListener('submit', (event) => {
     event.preventDefault();
+    const totp = draft.type === 1 ? draft.totp : undefined;
+    if (totp && totp !== (editing.item?.totp ?? '') && !parseTotp(totp)) {
+      feedback('Enter an authenticator key as a secret or an otpauth:// link.');
+      return;
+    }
     void operation<BrowserSaveResult>({ type: 'save', draft }, (saved) => {
       clearView();
       void showDetail(saved, true);
