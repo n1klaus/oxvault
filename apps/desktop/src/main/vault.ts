@@ -668,9 +668,12 @@ export class Vault extends EventEmitter {
    * itself never has to be derived in a window. Null when the item has no usable secret.
    */
   async totp(id: string): Promise<TotpCode | null> {
-    // `item()` rejects a locked vault before anything is read.
-    const cipher = this.item(id);
-    if (isRestricted(cipher) || cipher.deletedDate) return null;
+    // `item()` rejects a locked vault before anything else is read.
+    const cached = this.item(id);
+    const opened = this.opened.get(id);
+    const cipher = opened ?? cached;
+    if (cipher.deletedDate) return null;
+    if (!opened && isRestricted(cached)) return null;
     const secret = cipher.login?.totp;
     return secret ? totpFromField(secret) : null;
   }
