@@ -7,30 +7,53 @@ import { Separator } from '@/components/ui/separator';
 /** Shows the current one-time code for a login, derived in the main process. */
 export function TotpRow({ itemId, disabled }: { itemId: string; disabled: boolean }) {
   const [totp, setTotp] = useState<TotpCode | null>(null);
+  const [remaining, setRemaining] = useState(0);
   const [copied, setCopied] = useState(false);
   const alive = useRef(true);
 
   useEffect(() => {
     alive.current = true;
     setTotp(null);
+    setRemaining(0);
     setCopied(false);
-    let timer: ReturnType<typeof setTimeout> | undefined;
+    let ticker: ReturnType<typeof setInterval> | undefined;
+    let expiresAt = 0;
+
     async function refresh() {
+      if (ticker) {
+        clearInterval(ticker);
+        ticker = undefined;
+      }
       try {
         const result = await window.oxvault.totp(itemId);
         if (!alive.current) return;
-        setTotp(result.ok ? result.value : null);
-        // Wake just after the code rolls over, never later than a second from now.
-        const wait = result.ok && result.value ? result.value.remaining * 1000 + 50 : 0;
-        if (wait) timer = setTimeout(() => void refresh(), Math.min(wait, 1000));
+        if (!result.ok || !result.value) {
+          setTotp(null);
+          return;
+        }
+        const value = result.value;
+        setTotp(value);
+        expiresAt = Date.now() + value.remaining * 1000;
+        setRemaining(value.remaining);
+        ticker = setInterval(() => {
+          if (!alive.current) return;
+          const left = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
+          setRemaining(left);
+          if (left === 0) {
+            if (ticker) clearInterval(ticker);
+            ticker = undefined;
+            void refresh();
+          }
+        }, 1000);
       } catch {
         if (alive.current) setTotp(null);
       }
     }
+
     void refresh();
     return () => {
       alive.current = false;
-      if (timer) clearTimeout(timer);
+      if (ticker) clearInterval(ticker);
     };
   }, [itemId]);
 
@@ -56,7 +79,7 @@ export function TotpRow({ itemId, disabled }: { itemId: string; disabled: boolea
       <div className="task-credential" data-credential="totp">
         <div>
           <p id="detail-totp-label" className="text-xs text-muted-foreground">
-            Verification code · {totp.remaining}s
+            Verification code · {remaining}s
           </p>
           <span className="field-value text-sm font-mono" aria-labelledby="detail-totp-label">
             {grouped}
