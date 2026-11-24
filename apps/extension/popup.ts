@@ -634,7 +634,7 @@ function addTotp(item: ItemDetail, after: Element) {
     label.textContent = `Verification code · ${left}s`;
     if (left === 0) void load();
   }
-  async function load() {
+  async function load(attempt = 0) {
     if (timer) clearInterval(timer);
     const response = await send<{ code: string; remaining: number } | null>({
       type: 'totp',
@@ -642,7 +642,11 @@ function addTotp(item: ItemDetail, after: Element) {
     });
     if (!current(version, lifetime) || (!row.isConnected && code)) return;
     if (!response.ok || !response.value) {
-      row.remove();
+      if (attempt === 0) {
+        setTimeout(() => void load(1), 1000);
+      } else {
+        row.remove();
+      }
       return;
     }
     code = response.value.code;
