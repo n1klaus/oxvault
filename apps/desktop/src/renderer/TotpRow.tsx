@@ -13,6 +13,7 @@ export function TotpRow({ itemId, disabled }: { itemId: string; disabled: boolea
 
   useEffect(() => {
     alive.current = true;
+    let cancelled = false;
     setTotp(null);
     setRemaining(0);
     setCopied(false);
@@ -26,7 +27,7 @@ export function TotpRow({ itemId, disabled }: { itemId: string; disabled: boolea
       }
       try {
         const result = await window.oxvault.totp(itemId);
-        if (!alive.current) return;
+        if (cancelled) return;
         if (!result.ok || !result.value) {
           setTotp(null);
           return;
@@ -36,7 +37,7 @@ export function TotpRow({ itemId, disabled }: { itemId: string; disabled: boolea
         expiresAt = Date.now() + value.remaining * 1000;
         setRemaining(value.remaining);
         ticker = setInterval(() => {
-          if (!alive.current) return;
+          if (cancelled) return;
           const left = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
           setRemaining(left);
           if (left === 0) {
@@ -46,12 +47,13 @@ export function TotpRow({ itemId, disabled }: { itemId: string; disabled: boolea
           }
         }, 1000);
       } catch {
-        if (alive.current) setTotp(null);
+        if (!cancelled) setTotp(null);
       }
     }
 
     void refresh();
     return () => {
+      cancelled = true;
       alive.current = false;
       if (ticker) clearInterval(ticker);
     };
