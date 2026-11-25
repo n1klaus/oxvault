@@ -724,7 +724,7 @@ export class Vault extends EventEmitter {
         uri: row.uri,
         match: row.match ?? null,
       })),
-      totp: isRestricted(cipher) ? '' : (cipher.login?.totp ?? ''),
+      totp: isRestricted(cipher) && !opened ? '' : (cipher.login?.totp ?? ''),
       notes: cipher.notes ?? '',
       attachments: attachmentsOf(cipher),
       revisionDate: cipher.revisionDate ?? null,
