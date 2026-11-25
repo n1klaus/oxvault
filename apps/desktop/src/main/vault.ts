@@ -668,6 +668,8 @@ export class Vault extends EventEmitter {
    * itself never has to be derived in a window. Null when the item has no usable secret.
    */
   async totp(id: string): Promise<TotpCode | null> {
+    // Captured before the read so a lock during the async computation is caught.
+    const generation = this.generation;
     // `item()` rejects a locked vault before anything else is read.
     const cached = this.item(id);
     const opened = this.opened.get(id);
@@ -675,7 +677,13 @@ export class Vault extends EventEmitter {
     if (cipher.deletedDate) return null;
     if (!opened && isRestricted(cached)) return null;
     const secret = cipher.login?.totp;
-    return secret ? totpFromField(secret) : null;
+    if (!secret) return null;
+    const code = await totpFromField(secret);
+    // A pending read must not hand a code to the window after the vault locks:
+    // `lock()` changes the generation, while a failed load only clears the session.
+    this.assertGeneration(generation);
+    this.requireUnlocked();
+    return code;
   }
 
   detail(id: string): ItemDetail {
