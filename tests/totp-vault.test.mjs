@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 import { Vault } from '../apps/desktop/src/main/vault.ts';
-import { totpDraftProblem } from '../packages/shared/src/totp.ts';
+import { hasUsableTotp, totpDraftProblem } from '../packages/shared/src/totp.ts';
+import { shouldRetryTotp } from '../apps/extension/lib/transport.ts';
 
 const ITEM_ID = '11111111-1111-1111-1111-111111111111';
 // Synthetic 10-byte base32 key; no real vault data or secret.
@@ -62,6 +63,13 @@ describe('TOTP handlers', () => {
     const vault = new Vault(cli);
     await vault.initialize();
     await expect(vault.totp(ITEM_ID)).rejects.toThrow('Unlock OxVault to continue.');
+  });
+
+  it('rejects a code read that was pending when the vault locked', async () => {
+    const { vault } = await unlockedVault([baseItem()], [['lock', '']]);
+    const pending = vault.totp(ITEM_ID);
+    await vault.lock();
+    await expect(pending).rejects.toThrow('The vault was locked. Please unlock it again.');
   });
 
   it('returns a code for a login with a usable key', async () => {
@@ -126,6 +134,24 @@ describe('TOTP handlers', () => {
       'Enter an authenticator key as a secret or an otpauth:// link.',
     );
     expect(cli.calls.filter((call) => call.args[0] === 'edit').length).toBe(editsBefore);
+  });
+});
+
+describe('hasUsableTotp', () => {
+  it('accepts a stored secret and rejects a key no parse can read', () => {
+    expect(hasUsableTotp(SECRET)).toBe(true);
+    expect(hasUsableTotp('not a real key !!')).toBe(false);
+    expect(hasUsableTotp('')).toBe(false);
+    expect(hasUsableTotp('   ')).toBe(false);
+  });
+});
+
+describe('shouldRetryTotp', () => {
+  it('retries one transport failure and nothing else', () => {
+    expect(shouldRetryTotp(0, { ok: false, transport: true })).toBe(true);
+    expect(shouldRetryTotp(1, { ok: false, transport: true })).toBe(false);
+    expect(shouldRetryTotp(0, { ok: false })).toBe(false);
+    expect(shouldRetryTotp(0, { ok: true })).toBe(false);
   });
 });
 
