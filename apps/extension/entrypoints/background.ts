@@ -18,6 +18,7 @@ import type {
   VaultStatus,
 } from '@oxvault/shared/types';
 import { formValues } from '../form-values';
+import { transportFailure, type TransportResult } from '../lib/transport';
 import type { FormKind } from '../content/forms';
 
 type Native = <T>(request: BrowserRequest) => Promise<Result<T>>;
@@ -151,7 +152,7 @@ async function fillForm(
 export default defineBackground(() => {
   const HOST = 'app.oxvault.vault';
   type Pending = {
-    resolve: (value: Result<unknown>) => void;
+    resolve: (value: TransportResult<unknown>) => void;
     timer: ReturnType<typeof setTimeout>;
   };
   type Lane = { port?: Browser.runtime.Port; pending: Pending[] };
@@ -170,9 +171,9 @@ export default defineBackground(() => {
     const fast = ['open', 'status', 'unlockState', 'lock'].includes(request.type);
     const timeout = fast ? 10_000 : 125_000;
     if (import.meta.env.BROWSER === 'safari') {
-      return new Promise((resolve) => {
+      return new Promise<TransportResult<T>>((resolve) => {
         const timer = setTimeout(
-          () => resolve({ ok: false, error: 'OxVault is not responding.' }),
+          () => resolve(transportFailure<T>('OxVault is not responding.')),
           timeout,
         );
         browser.runtime.sendNativeMessage(HOST, request).then(
@@ -182,7 +183,7 @@ export default defineBackground(() => {
           },
           () => {
             clearTimeout(timer);
-            resolve({ ok: false, error: 'Open OxVault and enable its Safari extension.' });
+            resolve(transportFailure<T>('Open OxVault and enable its Safari extension.'));
           },
         );
       });
@@ -215,7 +216,10 @@ export default defineBackground(() => {
         lane.port = undefined;
         rejectPending(lane);
       }, timeout);
-      lane.pending.push({ resolve: resolve as (result: Result<unknown>) => void, timer });
+      lane.pending.push({
+        resolve: resolve as (result: TransportResult<unknown>) => void,
+        timer,
+      });
       try {
         lane.port.postMessage(request);
       } catch {
@@ -229,10 +233,9 @@ export default defineBackground(() => {
   function rejectPending(lane: Lane) {
     for (const entry of lane.pending) {
       clearTimeout(entry.timer);
-      entry.resolve({
-        ok: false,
-        error: 'OxVault is not responding. Open the desktop app and try again.',
-      });
+      entry.resolve(
+        transportFailure('OxVault is not responding. Open the desktop app and try again.'),
+      );
     }
     lane.pending = [];
   }

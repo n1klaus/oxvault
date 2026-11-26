@@ -2,6 +2,7 @@ import { browser } from 'wxt/browser';
 import '@oxvault/shared/theme.css';
 import './popup.css';
 import { element, mark } from './content/render';
+import { shouldRetryTotp, transportFailure, type TransportResult } from './lib/transport';
 import { itemDraft, uriMatchOptions } from '@oxvault/shared/item-drafts';
 import { detailRows, inSentence, typeName } from '@oxvault/shared/item-fields';
 import { browserVaultQuerySchema, uriMatchSchema } from '@oxvault/shared/protocol';
@@ -18,7 +19,6 @@ import type {
   ItemDetail,
   ItemDraft,
   PasswordOptions,
-  Result,
   VaultStatus,
 } from '@oxvault/shared/types';
 
@@ -125,11 +125,11 @@ let searchTimer: ReturnType<typeof setTimeout> | undefined;
 let statusTimer: ReturnType<typeof setTimeout> | undefined;
 let feedbackTimer: ReturnType<typeof setTimeout> | undefined;
 
-async function send<T>(request: object): Promise<Result<T>> {
+async function send<T>(request: object): Promise<TransportResult<T>> {
   try {
-    return (await browser.runtime.sendMessage(request)) as Result<T>;
+    return (await browser.runtime.sendMessage(request)) as TransportResult<T>;
   } catch {
-    return { ok: false, error: 'Open OxVault on your computer to reconnect.' };
+    return transportFailure('Open OxVault on your computer to reconnect.');
   }
 }
 function feedback(text: string, error = false) {
@@ -651,8 +651,8 @@ function addTotp(item: ItemDetail, after: Element) {
     });
     if (!current(version, lifetime) || (!row.isConnected && code)) return;
     if (!response.ok) {
-      // A failed fetch may be transient; one retry keeps the row from vanishing.
-      if (attempt === 0) {
+      // A transport failure may be transient; one retry keeps the row from vanishing.
+      if (shouldRetryTotp(attempt, response)) {
         totpRetryTimer = setTimeout(() => void load(1), 1000);
       } else {
         row.remove();
@@ -824,7 +824,7 @@ function renderEditor() {
         draft.totp = value;
       },
       'password',
-      2_048,
+      16_384,
     );
     form.append(
       button('Reveal authenticator key', () => {
