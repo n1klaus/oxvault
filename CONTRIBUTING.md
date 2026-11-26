@@ -24,9 +24,9 @@ CI runs `pnpm run check` on every pull request (`.github/workflows/check.yml`).
 
 ## How verification works here
 
-The upstream rule in [AGENTS.md](AGENTS.md) is not to add automated tests. Verification is type checking, builds and manual checks with synthetic data. One test file exists anyway, `tests/matching.test.mjs`, and `pnpm run check` runs it: 930 tests for URL matching and server URL handling.
+[AGENTS.md](AGENTS.md) asks for a focused automated test when it pins a bug that already slipped through. `pnpm run check` runs the matcher suite in `tests/matching.test.mjs` (930 tests for URL matching and server URL handling) and the vitest suites. Verification also includes type checking, builds, and manual checks with synthetic data.
 
-Tests are welcome when they pin a bug that already slipped through. The example: `cacheFields` dropped `login.totp`. A test that fails on that and passes after the fix is the right kind. A test written to raise a coverage number is not.
+The example: `cacheFields` dropped `login.totp`. A test that fails on that and passes after the fix is the right kind. A test written to raise a coverage number is not.
 
 ## Rules that do not bend
 
