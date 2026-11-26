@@ -94,6 +94,10 @@ export function parseTotp(value: string): TotpParams | null {
     : null;
 }
 
+export function hasUsableTotp(value: string): boolean {
+  return parseTotp(value) !== null;
+}
+
 export async function generateTotp(
   params: TotpParams,
   nowMs: number = Date.now(),

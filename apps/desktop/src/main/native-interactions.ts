@@ -1,4 +1,5 @@
 import { dialog, Menu, type BrowserWindow, type MenuItemConstructorOptions } from 'electron';
+import { hasUsableTotp } from '@oxvault/shared/totp';
 import type {
   ItemDetail,
   ItemMenuAction,
@@ -101,7 +102,7 @@ export function installNativeInteractions(window: BrowserWindow) {
         if (item.type === 1) {
           template.push(entry('Copy Username', 'copyUsername', !!item.username));
           template.push(entry('Copy Password', 'copyPassword', !!item.password));
-          template.push(entry('Copy verification code', 'copyTotp', !!item.totp));
+          template.push(entry('Copy verification code', 'copyTotp', hasUsableTotp(item.totp)));
           template.push({ type: 'separator' });
         }
         if (item.type === 3) {
