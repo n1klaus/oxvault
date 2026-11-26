@@ -30,7 +30,7 @@ Status words. **Done** works in OxVault. **Partial** works with limits. **Planne
 | Password history: view and copy                       | Done              |                                                                                             |
 | Attachments: add, download, delete                    | Done              | Desktop app. The server decides if the account may add files. Not run against a real server |
 | Attachments: list                                     | Done              | Shown in the item detail                                                                    |
-| Items with master password re-prompt                  | Not possible here | Shown as restricted. Re-prompt belongs in the official client                               |
+| Items with master password re-prompt                  | Partial           | Open with the master password in the desktop app. Editable only after opening.              |
 | Organization and collection items                     | Not possible here | Shown as restricted. Needs organization key handling                                        |
 
 ## Sending and sharing

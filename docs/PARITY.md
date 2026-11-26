@@ -18,7 +18,7 @@ Items marked with reprompt require unlocking with the master password before ope
 
 ### One-Time Code Secrets (Implemented)
 
-The desktop main process computes the verification code, and the popup receives the computed code. The stored authenticator key travels to the desktop renderer and the browser popup when an editor opens, the same way a password does, so an existing key can be edited verbatim.
+The desktop main process computes the verification code, and the popup receives the computed code. The stored authenticator key travels with the item detail to the desktop renderer and the browser popup, the same way a password does, so an editor can prefill it and save an existing key verbatim.
 
 ### Web Application (Local Authenticator)
 
@@ -44,7 +44,7 @@ The web app in this repo (`apps/web`) is a local authenticator only. It lets you
 | Password history: view and copy                       | Done              |                                                                                                                        |
 | Attachments: add, download, delete                    | Done              | Desktop item view and `oxvault attach`. The server decides if the account may add files. Not run against a real server |
 | Attachments: list                                     | Done              | Shown in the item detail, with save and delete per file                                                                |
-| Items with master password re-prompt                  | Partial           | Shown with reprompt flag; `openProtected(id, password)` unlocks them. Editing left to official client.                 |
+| Items with master password re-prompt                  | Partial           | Shown with reprompt flag; `openProtected(id, password)` unlocks them. Editable only after opening.                     |
 | Organization and collection items                     | Not possible here | Shown as restricted. Needs organization key handling                                                                   |
 
 ## Sending and sharing
