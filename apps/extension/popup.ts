@@ -638,14 +638,14 @@ function addTotp(item: ItemDetail, after: Element) {
   function paint() {
     const left = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
     label.textContent = `Verification code · ${left}s`;
-    if (left === 0) void load();
+    if (left === 0) value.textContent = '';
   }
   async function load(attempt = 0) {
     if (!current(version, lifetime)) return;
     if (timer) clearInterval(timer);
     clearTimeout(totpRetryTimer);
     totpRetryTimer = undefined;
-    const response = await send<{ code: string; remaining: number } | null>({
+    const response = await send<{ code: string; expiresAt: number } | null>({
       type: 'totp',
       id: item.id,
     });
@@ -664,8 +664,14 @@ function addTotp(item: ItemDetail, after: Element) {
       row.remove();
       return;
     }
+    if (response.value.expiresAt <= Date.now()) {
+      // The read landed after its period; show nothing until the next one.
+      value.textContent = '';
+      totpRetryTimer = setTimeout(() => void load(), 25);
+      return;
+    }
     code = response.value.code;
-    expiresAt = Date.now() + response.value.remaining * 1000;
+    expiresAt = response.value.expiresAt;
     value.textContent = code.length === 6 ? `${code.slice(0, 3)} ${code.slice(3)}` : code;
     if (!row.isConnected) after.after(row);
     paint();
@@ -673,6 +679,13 @@ function addTotp(item: ItemDetail, after: Element) {
       if (!current(version, lifetime) || !row.isConnected) clearInterval(timer);
       else paint();
     }, 1000);
+    totpRetryTimer = setTimeout(
+      () => {
+        value.textContent = '';
+        void load();
+      },
+      Math.max(0, expiresAt - Date.now()),
+    );
   }
   void load();
 }

@@ -21,7 +21,7 @@ import { formValues } from '../form-values';
 import { transportFailure, type TransportResult } from '../lib/transport';
 import type { FormKind } from '../content/forms';
 
-type Native = <T>(request: BrowserRequest) => Promise<Result<T>>;
+type Native = <T>(request: BrowserRequest) => Promise<TransportResult<T>>;
 type FrameTarget = { frameId: number; documentId?: string; origin: string; token?: unknown };
 
 /**
@@ -159,7 +159,7 @@ export default defineBackground(() => {
   const control: Lane = { pending: [] };
   const vault: Lane = { pending: [] };
 
-  function native<T>(request: BrowserRequest): Promise<Result<T>> {
+  function native<T>(request: BrowserRequest): Promise<TransportResult<T>> {
     if (
       new TextEncoder().encode(JSON.stringify(request)).byteLength >=
       MAX_BROWSER_MESSAGE_BYTES - 128
@@ -191,7 +191,11 @@ export default defineBackground(() => {
     return sendNative(fast ? control : vault, request, timeout);
   }
 
-  function sendNative<T>(lane: Lane, request: BrowserRequest, timeout: number): Promise<Result<T>> {
+  function sendNative<T>(
+    lane: Lane,
+    request: BrowserRequest,
+    timeout: number,
+  ): Promise<TransportResult<T>> {
     return new Promise((resolve) => {
       if (!lane.port) {
         const port = browser.runtime.connectNative(HOST);
@@ -217,6 +221,7 @@ export default defineBackground(() => {
         rejectPending(lane);
       }, timeout);
       lane.pending.push({
+        // The lane erases T; the runtime value keeps its transport tag.
         resolve: resolve as (result: TransportResult<unknown>) => void,
         timer,
       });

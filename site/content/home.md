@@ -39,5 +39,5 @@ That grep finds the outbound network calls in source. [Privacy and network use](
 ## Where to go next
 
 - [Install](/install/): build from source with pnpm. No release is tagged yet.
-- [Security model](/security/): what the window process never receives.
+- [Security model](/security/): what stays in the main process, and what the window receives.
 - [FAQ](/faq/): is it official, is it safe, why not just use Bitwarden.

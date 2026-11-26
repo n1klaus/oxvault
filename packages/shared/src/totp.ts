@@ -18,6 +18,8 @@ export interface TotpCode {
   /** Seconds until this code stops being valid. */
   remaining: number;
   period: number;
+  /** Epoch milliseconds at which this code stops being valid. */
+  expiresAt: number;
 }
 
 const BASE32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
@@ -133,7 +135,8 @@ export async function generateTotp(
   }
 
   const remaining = params.period - (Math.floor(nowMs / 1000) % params.period);
-  return { code, remaining, period: params.period };
+  const expiresAt = (counter + 1) * params.period * 1000;
+  return { code, remaining, period: params.period, expiresAt };
 }
 
 /** Convenience wrapper: returns null when the stored value is not a usable TOTP secret. */

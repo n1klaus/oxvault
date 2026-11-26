@@ -12,7 +12,7 @@ Each feature below is either computed on your machine from vault data, or decide
 
 | Feature                        | Lives on                           | OxVault                                                                     |
 | ------------------------------ | ---------------------------------- | --------------------------------------------------------------------------- |
-| Authenticator codes (TOTP)     | Client                             | Done: desktop item view, browser popup and `oxvault totp`                   |
+| Authenticator codes (TOTP)     | Client                             | Done: desktop and popup item view, create/edit in both editors, `oxvault totp` |
 | Steam Guard codes              | Client                             | Done, same module                                                           |
 | Reused password report         | Client                             | Done: Settings, Vault health, and `oxvault health`                          |
 | Weak password report           | Client                             | Done: same places                                                           |

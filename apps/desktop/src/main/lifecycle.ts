@@ -184,6 +184,8 @@ export class DesktopLifecycle {
         this.assertRunning();
         if (!this.vault || epoch !== this.epoch)
           throw new UserError('Vault locked. Try again after unlocking.');
+        // Surfaces the re-prompt/open-in-OxVault message before the code lookup.
+        this.vault.detail(id);
         const code = await this.vault.totp(id);
         if (epoch !== this.epoch) throw new UserError('Vault locked. Try again after unlocking.');
         if (!code) throw new UserError('This item has no one-time code.');

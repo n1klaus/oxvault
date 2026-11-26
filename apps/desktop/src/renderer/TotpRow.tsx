@@ -16,72 +16,106 @@ export function TotpRow({
 }) {
   const [totp, setTotp] = useState<TotpCode | null>(null);
   const [remaining, setRemaining] = useState(0);
+  const [expired, setExpired] = useState(false);
   const [copied, setCopied] = useState(false);
-  const alive = useRef(true);
+  const lifetime = useRef({ active: true });
+  const copiedTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
-    alive.current = true;
-    let cancelled = false;
-    setTotp(null);
-    setRemaining(0);
-    setCopied(false);
+    // A fresh object per effect run: a pending copy from a previous itemId fails this check.
+    const mine = { active: true };
+    lifetime.current = mine;
     let ticker: ReturnType<typeof setInterval> | undefined;
+    let next: ReturnType<typeof setTimeout> | undefined;
     let expiresAt = 0;
 
-    async function refresh() {
-      if (ticker) {
-        clearInterval(ticker);
-        ticker = undefined;
-      }
+    setTotp(null);
+    setRemaining(0);
+    setExpired(false);
+    setCopied(false);
+
+    const label = () => {
+      const left = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
+      setRemaining(left);
+      if (left === 0) setExpired(true);
+    };
+
+    const hide = () => {
+      if (ticker) clearInterval(ticker);
+      ticker = undefined;
+      setTotp(null);
+      setRemaining(0);
+    };
+
+    async function refresh(attempt = 0) {
+      clearTimeout(next);
+      next = undefined;
       try {
         const result = await window.oxvault.totp(itemId);
-        if (cancelled) return;
+        if (!mine.active) return;
         if (!result.ok || !result.value) {
-          setTotp(null);
+          // One retry keeps a transient IPC failure from hiding the row.
+          if (attempt === 0) next = setTimeout(() => void refresh(1), 1000);
+          else hide();
           return;
         }
         const value = result.value;
+        if (value.expiresAt <= Date.now()) {
+          // The read landed after its period; show nothing until the next one.
+          setExpired(true);
+          next = setTimeout(() => void refresh(), 25);
+          return;
+        }
+        expiresAt = value.expiresAt;
         setTotp(value);
-        expiresAt = Date.now() + value.remaining * 1000;
-        setRemaining(value.remaining);
-        ticker = setInterval(() => {
-          if (cancelled) return;
-          const left = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
-          setRemaining(left);
-          if (left === 0) {
-            if (ticker) clearInterval(ticker);
-            ticker = undefined;
+        setExpired(false);
+        label();
+        if (ticker) clearInterval(ticker);
+        ticker = setInterval(label, 1000);
+        next = setTimeout(
+          () => {
+            setExpired(true);
             void refresh();
-          }
-        }, 1000);
+          },
+          Math.max(0, expiresAt - Date.now()),
+        );
       } catch {
-        if (!cancelled) setTotp(null);
+        if (!mine.active) return;
+        if (attempt === 0) next = setTimeout(() => void refresh(1), 1000);
+        else hide();
       }
     }
 
     void refresh();
     return () => {
-      cancelled = true;
-      alive.current = false;
+      mine.active = false;
       if (ticker) clearInterval(ticker);
+      clearTimeout(next);
+      clearTimeout(copiedTimer.current);
     };
   }, [itemId]);
 
   if (!totp) return null;
-  const grouped =
-    totp.code.length === 6 ? `${totp.code.slice(0, 3)} ${totp.code.slice(3)}` : totp.code;
+  const grouped = expired
+    ? '······'
+    : totp.code.length === 6
+      ? `${totp.code.slice(0, 3)} ${totp.code.slice(3)}`
+      : totp.code;
 
   async function copy() {
     if (!totp) return;
+    const mine = lifetime.current;
     try {
       // Through the main process, so the clipboard clears after 30 s like a password copy.
       const result = await window.oxvault.copyTotp(itemId);
-      if (!alive.current) return;
+      if (!mine.active) return;
       setCopied(result.ok);
-      if (result.ok) setTimeout(() => alive.current && setCopied(false), 2000);
-      else onError?.(result.error);
+      if (result.ok) {
+        clearTimeout(copiedTimer.current);
+        copiedTimer.current = setTimeout(() => setCopied(false), 2000);
+      } else onError?.(result.error);
     } catch {
-      if (!alive.current) return;
+      if (!mine.active) return;
       setCopied(false);
       onError?.('Could not copy. Try again.');
     }
@@ -99,7 +133,7 @@ export function TotpRow({
             {grouped}
           </span>
           <span role="timer" aria-live="off" className="text-xs text-muted-foreground">
-            {remaining}s left
+            {expired ? 'Expired' : `${remaining}s left`}
           </span>
           <span role="status" className="sr-only">
             {copied ? 'Verification code copied' : ''}

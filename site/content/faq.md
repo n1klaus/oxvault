@@ -14,7 +14,7 @@ No. It is an independent project, not affiliated with, endorsed by or sponsored 
 
 ## Is it safe to use?
 
-It is early, and it has had no independent audit. Vault encryption and sign-in are done by the official `bw` CLI, and OxVault adds no cryptography of its own. The window process never receives your one-time secrets. The code is MIT licensed and small enough to read. Start with the [security model](/security/), then run the greps it lists.
+It is early, and it has had no independent audit. Vault encryption and sign-in are done by the official `bw` CLI, and OxVault adds no cryptography of its own. The current one-time code is computed in the main process. To edit an existing key, the item detail carries the stored key to the desktop window and the extension popup, exactly as it carries a password. The code is MIT licensed and small enough to read. Start with the [security model](/security/), then run the greps it lists.
 
 ## Why not just use Bitwarden?
 

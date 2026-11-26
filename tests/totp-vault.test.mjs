@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 import { Vault } from '../apps/desktop/src/main/vault.ts';
-import { hasUsableTotp, totpDraftProblem } from '../packages/shared/src/totp.ts';
+import { hasUsableTotp, totpDraftProblem, totpFromField } from '../packages/shared/src/totp.ts';
 import { shouldRetryTotp } from '../apps/extension/lib/transport.ts';
 
 const ITEM_ID = '11111111-1111-1111-1111-111111111111';
@@ -100,6 +100,14 @@ describe('TOTP handlers', () => {
     await expect(vault.totp(ITEM_ID)).resolves.toBeNull();
   });
 
+  it('returns a code for a trashed login and still blocks it for the browser', async () => {
+    const trashed = { ...baseItem({ deletedDate: '2026-01-02T00:00:00.000Z' }) };
+    const { vault } = await unlockedVault([], [['list items --trash', JSON.stringify([trashed])]]);
+    await vault.trash();
+    await expect(vault.totp(ITEM_ID)).resolves.toMatchObject({ period: 30 });
+    expect(() => vault.requireBrowserItem(ITEM_ID)).toThrow('Open this item in the desktop app.');
+  });
+
   it('keeps an unchanged legacy key verbatim and rejects a changed invalid key', async () => {
     const legacy = 'not a real key !!';
     const latest = {
@@ -134,6 +142,16 @@ describe('TOTP handlers', () => {
       'Enter an authenticator key as a secret or an otpauth:// link.',
     );
     expect(cli.calls.filter((call) => call.args[0] === 'edit').length).toBe(editsBefore);
+  });
+});
+
+describe('generateTotp', () => {
+  it('expires at the end of the code period', async () => {
+    const now = 1_735_689_612_345;
+    const code = await totpFromField(SECRET, now);
+    const periodMs = 30_000;
+    expect(code.expiresAt).toBe((Math.floor(now / periodMs) + 1) * periodMs);
+    expect(code.expiresAt).toBeGreaterThan(now);
   });
 });
 

@@ -9,7 +9,7 @@ Include the OxVault version, the platform, the `bw` version from `bw --version`,
 ## What is in scope
 
 - OxVault code in this repository: the desktop app, browser extension, Raycast extension and CLI.
-- Leaks of secrets: passwords, one-time secrets, Send contents or session keys reaching a log, the window, the clipboard past its timer, or the network.
+- Unintended exposure of secrets: passwords, one-time secrets, Send contents or session keys reaching a log, the network, the clipboard past its timer, or the window or extension popup beyond the item detail the user opens.
 - A locked vault that still serves reads or fills.
 - Browser fill that releases a credential to the wrong origin.
 - Anything that makes OxVault call a network address outside the list in the README.

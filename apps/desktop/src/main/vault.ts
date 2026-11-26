@@ -674,7 +674,6 @@ export class Vault extends EventEmitter {
     const cached = this.item(id);
     const opened = this.opened.get(id);
     const cipher = opened ?? cached;
-    if (cipher.deletedDate) return null;
     if (!opened && isRestricted(cached)) return null;
     const secret = cipher.login?.totp;
     if (!secret) return null;

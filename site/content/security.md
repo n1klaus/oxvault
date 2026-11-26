@@ -20,7 +20,7 @@ The desktop window is created with `nodeIntegration: false`, `contextIsolation: 
 
 The main process holds the session, runs `bw`, and decides every action. The window sends typed requests. Each request is validated by a strict zod schema in `packages/shared/src/protocol.ts`, and unknown keys are rejected. A copy request names an item and a field (`username`, `password`, `notes`, `website`). It does not carry the value.
 
-The one-time secret of a login is read in the main process. The window asks for `totp` by item id and gets back a code and the seconds remaining, not the secret. `TotpCode` in `packages/shared/src/totp.ts` has three fields: `code`, `remaining`, `period`.
+The one-time secret of a login is read in the main process. The window asks for `totp` by item id and gets back a code, the seconds remaining, and the code's expiry, not the secret. `TotpCode` in `packages/shared/src/totp.ts` has four fields: `code`, `remaining`, `period`, `expiresAt`. To edit an existing key, the item detail also carries the stored key to the desktop window and the extension popup, the same way it carries a password; the editor saves it back verbatim.
 
 ## No custom cryptography
 
