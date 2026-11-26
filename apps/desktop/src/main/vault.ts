@@ -683,6 +683,8 @@ export class Vault extends EventEmitter {
     // `lock()` changes the generation, while a failed load only clears the session.
     this.assertGeneration(generation);
     this.requireUnlocked();
+    // A pending read must not return a code after a master-password item closes.
+    if (opened && !this.opened.has(id)) return null;
     return code;
   }
 
