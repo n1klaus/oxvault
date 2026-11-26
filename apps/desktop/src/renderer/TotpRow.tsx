@@ -93,10 +93,13 @@ export function TotpRow({
       <div className="task-credential" data-credential="totp">
         <div>
           <p id="detail-totp-label" className="text-xs text-muted-foreground">
-            Verification code · {remaining}s
+            Verification code
           </p>
           <span className="field-value text-sm font-mono" aria-labelledby="detail-totp-label">
             {grouped}
+          </span>
+          <span role="timer" aria-live="off" className="text-xs text-muted-foreground">
+            {remaining}s left
           </span>
           <span role="status" className="sr-only">
             {copied ? 'Verification code copied' : ''}
