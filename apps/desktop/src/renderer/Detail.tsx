@@ -323,7 +323,12 @@ export function Detail({
                     </div>
                   )}
                 </div>
-                <TotpRow key={item.revisionDate ?? item.id} itemId={item.id} disabled={deleting} />
+                <TotpRow
+                  key={item.revisionDate ?? item.id}
+                  itemId={item.id}
+                  disabled={deleting}
+                  onError={setError}
+                />
               </>
             )}
             {item.uris.map((row) => (

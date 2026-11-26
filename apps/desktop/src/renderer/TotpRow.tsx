@@ -5,7 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 
 /** Shows the current one-time code for a login, derived in the main process. */
-export function TotpRow({ itemId, disabled }: { itemId: string; disabled: boolean }) {
+export function TotpRow({
+  itemId,
+  disabled,
+  onError,
+}: {
+  itemId: string;
+  disabled: boolean;
+  onError?: (message: string) => void;
+}) {
   const [totp, setTotp] = useState<TotpCode | null>(null);
   const [remaining, setRemaining] = useState(0);
   const [copied, setCopied] = useState(false);
@@ -68,10 +76,14 @@ export function TotpRow({ itemId, disabled }: { itemId: string; disabled: boolea
     try {
       // Through the main process, so the clipboard clears after 30 s like a password copy.
       const result = await window.oxvault.copyTotp(itemId);
+      if (!alive.current) return;
       setCopied(result.ok);
       if (result.ok) setTimeout(() => alive.current && setCopied(false), 2000);
+      else onError?.(result.error);
     } catch {
+      if (!alive.current) return;
       setCopied(false);
+      onError?.('Could not copy. Try again.');
     }
   }
 
@@ -85,6 +97,9 @@ export function TotpRow({ itemId, disabled }: { itemId: string; disabled: boolea
           </p>
           <span className="field-value text-sm font-mono" aria-labelledby="detail-totp-label">
             {grouped}
+          </span>
+          <span role="status" className="sr-only">
+            {copied ? 'Verification code copied' : ''}
           </span>
         </div>
         <div className="task-actions">

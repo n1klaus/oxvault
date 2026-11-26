@@ -11,7 +11,7 @@ import {
 import { UserError, type BrowserVaultQuery } from '@oxvault/shared/protocol';
 import { cardLabel } from '@oxvault/shared/item-drafts';
 import { detailSections } from '@oxvault/shared/item-fields';
-import { parseTotp, totpFromField, type TotpCode } from '@oxvault/shared/totp';
+import { totpDraftProblem, totpFromField, type TotpCode } from '@oxvault/shared/totp';
 import {
   ES256,
   attestationObject,
@@ -1502,10 +1502,8 @@ export class Vault extends EventEmitter {
       // Untouched keeps the stored key verbatim, even a legacy value this build cannot read.
       const stored = cipher.login?.totp ?? '';
       if (draft.totp !== undefined && draft.totp !== stored) {
-        if (draft.totp !== draft.totp.trim())
-          throw new UserError('Remove the spaces at the start or end of the authenticator key.');
-        if (draft.totp && !parseTotp(draft.totp))
-          throw new UserError('Enter an authenticator key as a secret or an otpauth:// link.');
+        const problem = totpDraftProblem(draft.totp);
+        if (problem) throw new UserError(problem);
       }
       // Stored exactly as typed: Bitwarden reads otpauth:// links and bare keys alike.
       cipher.login = {

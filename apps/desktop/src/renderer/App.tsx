@@ -191,7 +191,10 @@ const filters: FilterSpec[] = [
     description: 'Items moved to Trash can be restored.',
   },
 ];
-const copyFields: Record<Exclude<ItemMenuAction, 'edit' | 'trash' | 'restore'>, CopyField> = {
+const copyFields: Record<
+  Exclude<ItemMenuAction, 'edit' | 'trash' | 'restore' | 'copyTotp'>,
+  CopyField
+> = {
   copyUsername: 'username',
   copyPassword: 'password',
   copyCardNumber: 'cardNumber',
@@ -617,6 +620,15 @@ function VaultWorkspace({
       if (!action) return;
       if (action === 'edit') {
         if (detail.editable && !hasModal()) setModal('edit');
+        return;
+      }
+      if (action === 'copyTotp') {
+        const copied = await window.oxvault.copyTotp(item.id);
+        if (current())
+          notify.show(
+            copied.ok ? 'done' : 'error',
+            copied.ok ? 'Verification code copied' : copied.error,
+          );
         return;
       }
       if (action !== 'trash' && action !== 'restore') {

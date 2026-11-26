@@ -13,6 +13,7 @@ export type NativeConfirmation =
 export type ItemMenuAction =
   | 'copyUsername'
   | 'copyPassword'
+  | 'copyTotp'
   | 'copyCardNumber'
   | 'copyCardCode'
   | 'edit'

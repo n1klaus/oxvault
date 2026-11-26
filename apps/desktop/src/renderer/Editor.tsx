@@ -18,7 +18,7 @@ import {
   uriMatchOptions,
 } from '@oxvault/shared/item-drafts';
 import { uriMatchSchema } from '@oxvault/shared/protocol';
-import { parseTotp } from '@oxvault/shared/totp';
+import { totpDraftProblem } from '@oxvault/shared/totp';
 import type { Notifier } from './Toasts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -241,9 +241,12 @@ export function Editor({
     if (operation.current || !alive.current) return;
     const totp = draft.type === 1 ? draft.totp : undefined;
     // A stored key this build cannot parse is still kept: only a changed value is checked.
-    if (totp && totp !== (item?.totp ?? '') && !parseTotp(totp)) {
-      setError('Enter an authenticator key as a secret or an otpauth:// link.');
-      return;
+    if (totp && totp !== (item?.totp ?? '')) {
+      const problem = totpDraftProblem(totp);
+      if (problem) {
+        setError(problem);
+        return;
+      }
     }
     operation.current = true;
     const request = ++epoch.current;

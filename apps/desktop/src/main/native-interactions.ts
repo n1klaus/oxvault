@@ -101,6 +101,7 @@ export function installNativeInteractions(window: BrowserWindow) {
         if (item.type === 1) {
           template.push(entry('Copy Username', 'copyUsername', !!item.username));
           template.push(entry('Copy Password', 'copyPassword', !!item.password));
+          template.push(entry('Copy verification code', 'copyTotp', !!item.totp));
           template.push({ type: 'separator' });
         }
         if (item.type === 3) {

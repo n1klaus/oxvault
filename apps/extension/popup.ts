@@ -6,7 +6,7 @@ import { itemDraft, uriMatchOptions } from '@oxvault/shared/item-drafts';
 import { detailRows, inSentence, typeName } from '@oxvault/shared/item-fields';
 import { browserVaultQuerySchema, uriMatchSchema } from '@oxvault/shared/protocol';
 import { defaultPasswordOptions } from '@oxvault/shared/types';
-import { parseTotp } from '@oxvault/shared/totp';
+import { totpDraftProblem } from '@oxvault/shared/totp';
 import type { BrowserVaultQuery } from '@oxvault/shared/protocol';
 import type {
   BrowserSuggestions,
@@ -81,6 +81,7 @@ type View =
 let view: View = { kind: 'list' };
 let viewVersion = 0;
 let working = false;
+let totpRetryTimer: ReturnType<typeof setTimeout> | undefined;
 function clearView() {
   if (view.kind === 'editor') {
     view.draft.notes = '';
@@ -101,6 +102,8 @@ function clearView() {
     view.item.passwordHistory = [];
     view.item.totp = '';
   }
+  clearTimeout(totpRetryTimer);
+  totpRetryTimer = undefined;
   detail.querySelectorAll('input, textarea').forEach((node) => {
     if (node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement) node.value = '';
   });
@@ -121,7 +124,6 @@ let query: BrowserVaultQuery = { query: '', scope: 'all', itemType: 'all', offse
 let searchTimer: ReturnType<typeof setTimeout> | undefined;
 let statusTimer: ReturnType<typeof setTimeout> | undefined;
 let feedbackTimer: ReturnType<typeof setTimeout> | undefined;
-let totpRetryTimer: ReturnType<typeof setTimeout> | undefined;
 
 async function send<T>(request: object): Promise<Result<T>> {
   try {
@@ -639,6 +641,7 @@ function addTotp(item: ItemDetail, after: Element) {
     if (left === 0) void load();
   }
   async function load(attempt = 0) {
+    if (!current(version, lifetime)) return;
     if (timer) clearInterval(timer);
     clearTimeout(totpRetryTimer);
     totpRetryTimer = undefined;
@@ -648,7 +651,7 @@ function addTotp(item: ItemDetail, after: Element) {
     });
     if (!current(version, lifetime) || (!row.isConnected && code)) return;
     if (!response.ok) {
-      // A transport failure may be transient; one retry keeps the row from vanishing.
+      // A failed fetch may be transient; one retry keeps the row from vanishing.
       if (attempt === 0) {
         totpRetryTimer = setTimeout(() => void load(1), 1000);
       } else {
@@ -911,9 +914,12 @@ function renderEditor() {
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     const totp = draft.type === 1 ? draft.totp : undefined;
-    if (totp && totp !== (editing.item?.totp ?? '') && !parseTotp(totp)) {
-      feedback('Enter an authenticator key as a secret or an otpauth:// link.');
-      return;
+    if (totp && totp !== (editing.item?.totp ?? '')) {
+      const problem = totpDraftProblem(totp);
+      if (problem) {
+        feedback(problem);
+        return;
+      }
     }
     void operation<BrowserSaveResult>({ type: 'save', draft }, (saved) => {
       clearView();

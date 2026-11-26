@@ -156,13 +156,7 @@ export class DesktopLifecycle {
           throw new UserError('Vault locked. Try again after unlocking.');
         const value = copyValue(this.vault.detail(id), field);
         if (!value) throw new UserError('There is nothing to copy.');
-        this.copiedValue = value;
-        await clipboard.writeText(this.copiedValue);
-        if (this.clipboardTimer) clearTimeout(this.clipboardTimer);
-        this.clipboardTimer = setTimeout(
-          () => void this.clearCopiedSecret().catch(() => undefined),
-          30_000,
-        );
+        await this.copySecret(value);
       });
     return this.clipboardQueue;
   }
@@ -177,13 +171,7 @@ export class DesktopLifecycle {
           throw new UserError('Vault locked. Try again after unlocking.');
         const value = this.vault.sendLink(id);
         if (!value) throw new UserError('There is nothing to copy.');
-        this.copiedValue = value;
-        await clipboard.writeText(this.copiedValue);
-        if (this.clipboardTimer) clearTimeout(this.clipboardTimer);
-        this.clipboardTimer = setTimeout(
-          () => void this.clearCopiedSecret().catch(() => undefined),
-          30_000,
-        );
+        await this.copySecret(value);
       });
     return this.clipboardQueue;
   }
@@ -199,15 +187,19 @@ export class DesktopLifecycle {
         const code = await this.vault.totp(id);
         if (epoch !== this.epoch) throw new UserError('Vault locked. Try again after unlocking.');
         if (!code) throw new UserError('This item has no one-time code.');
-        this.copiedValue = code.code;
-        await clipboard.writeText(this.copiedValue);
-        if (this.clipboardTimer) clearTimeout(this.clipboardTimer);
-        this.clipboardTimer = setTimeout(
-          () => void this.clearCopiedSecret().catch(() => undefined),
-          30_000,
-        );
+        await this.copySecret(code.code);
       });
     return this.clipboardQueue;
+  }
+
+  private async copySecret(value: string) {
+    this.copiedValue = value;
+    await clipboard.writeText(value);
+    if (this.clipboardTimer) clearTimeout(this.clipboardTimer);
+    this.clipboardTimer = setTimeout(
+      () => void this.clearCopiedSecret().catch(() => undefined),
+      30_000,
+    );
   }
 
   private clearCopiedSecret() {
