@@ -89,6 +89,7 @@ function clearView() {
     if (view.draft.type === 1) {
       view.draft.password = '';
       view.draft.username = '';
+      view.draft.totp = '';
       view.draft.uris = [];
     }
   }
@@ -98,6 +99,7 @@ function clearView() {
     view.item.details = null;
     view.item.fields = [];
     view.item.passwordHistory = [];
+    view.item.totp = '';
   }
   detail.querySelectorAll('input, textarea').forEach((node) => {
     if (node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement) node.value = '';
@@ -119,6 +121,7 @@ let query: BrowserVaultQuery = { query: '', scope: 'all', itemType: 'all', offse
 let searchTimer: ReturnType<typeof setTimeout> | undefined;
 let statusTimer: ReturnType<typeof setTimeout> | undefined;
 let feedbackTimer: ReturnType<typeof setTimeout> | undefined;
+let totpRetryTimer: ReturnType<typeof setTimeout> | undefined;
 
 async function send<T>(request: object): Promise<Result<T>> {
   try {
@@ -637,17 +640,25 @@ function addTotp(item: ItemDetail, after: Element) {
   }
   async function load(attempt = 0) {
     if (timer) clearInterval(timer);
+    clearTimeout(totpRetryTimer);
+    totpRetryTimer = undefined;
     const response = await send<{ code: string; remaining: number } | null>({
       type: 'totp',
       id: item.id,
     });
     if (!current(version, lifetime) || (!row.isConnected && code)) return;
-    if (!response.ok || !response.value) {
+    if (!response.ok) {
+      // A transport failure may be transient; one retry keeps the row from vanishing.
       if (attempt === 0) {
-        setTimeout(() => void load(1), 1000);
+        totpRetryTimer = setTimeout(() => void load(1), 1000);
       } else {
         row.remove();
       }
+      return;
+    }
+    if (!response.value) {
+      // An item with no usable key is a definitive answer, not a failed fetch.
+      row.remove();
       return;
     }
     code = response.value.code;
@@ -1171,6 +1182,7 @@ window.addEventListener('pagehide', () => {
   clearTimeout(statusTimer);
   clearTimeout(searchTimer);
   clearTimeout(feedbackTimer);
+  clearTimeout(totpRetryTimer);
   items = [];
   suggestions = undefined;
   iconCache.clear();
