@@ -422,7 +422,7 @@ export interface VaultApi {
   saveFolder(id: string | null, name: string): Promise<Result<Folder>>;
   deleteFolder(id: string): Promise<Result<void>>;
   detail(id: string): Promise<Result<ItemDetail>>;
-  /** The current one-time code, computed in the main process so the secret stays there. */
+  /** The current one-time code, computed in the main process. The stored key reaches a window only through `detail()`, for editing. */
   totp(id: string): Promise<Result<TotpCode | null>>;
   /** Copies the current one-time code; the clipboard clears like a password copy. */
   copyTotp(id: string): Promise<Result<void>>;

@@ -7,7 +7,7 @@ import { itemDraft, uriMatchOptions } from '@oxvault/shared/item-drafts';
 import { detailRows, inSentence, typeName } from '@oxvault/shared/item-fields';
 import { browserVaultQuerySchema, uriMatchSchema } from '@oxvault/shared/protocol';
 import { defaultPasswordOptions } from '@oxvault/shared/types';
-import { totpDraftProblem } from '@oxvault/shared/totp';
+import { totpDraftProblem, totpRefreshDelay } from '@oxvault/shared/totp';
 import type { BrowserVaultQuery } from '@oxvault/shared/protocol';
 import type {
   BrowserSuggestions,
@@ -609,9 +609,10 @@ function addSecretField(item: ItemSummary, label: string, secret: string, field:
   return row;
 }
 /**
- * Shows the current one-time code under the password row. The secret stays in
- * the desktop app. The countdown runs locally and the code is fetched again
- * only when it expires.
+ * Shows the current one-time code under the password row. The code is computed
+ * in the desktop app; the stored key reaches this popup only through the item
+ * detail, so an editor can prefill it. The countdown runs locally and the code
+ * is fetched again only when it expires.
  */
 function addTotp(item: ItemDetail, after: Element) {
   const version = viewVersion;
@@ -679,13 +680,10 @@ function addTotp(item: ItemDetail, after: Element) {
       if (!current(version, lifetime) || !row.isConnected) clearInterval(timer);
       else paint();
     }, 1000);
-    totpRetryTimer = setTimeout(
-      () => {
-        value.textContent = '';
-        void load();
-      },
-      Math.max(0, expiresAt - Date.now()),
-    );
+    totpRetryTimer = setTimeout(() => {
+      value.textContent = '';
+      void load();
+    }, totpRefreshDelay(expiresAt));
   }
   void load();
 }

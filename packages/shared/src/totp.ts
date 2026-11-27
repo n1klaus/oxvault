@@ -100,6 +100,14 @@ export function hasUsableTotp(value: string): boolean {
   return parseTotp(value) !== null;
 }
 
+/**
+ * Milliseconds until the next refresh, capped below the `setTimeout` ceiling so
+ * an extreme stored period cannot overflow the timer and refetch in a loop.
+ */
+export function totpRefreshDelay(expiresAt: number, nowMs: number = Date.now()): number {
+  return Math.max(0, Math.min(2_147_000_000, expiresAt - nowMs));
+}
+
 export async function generateTotp(
   params: TotpParams,
   nowMs: number = Date.now(),

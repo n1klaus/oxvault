@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vite-plus/test';
 import { Vault } from '../apps/desktop/src/main/vault.ts';
-import { hasUsableTotp, totpDraftProblem, totpFromField } from '../packages/shared/src/totp.ts';
+import {
+  hasUsableTotp,
+  totpDraftProblem,
+  totpFromField,
+  totpRefreshDelay,
+} from '../packages/shared/src/totp.ts';
 import { shouldRetryTotp } from '../apps/extension/lib/transport.ts';
 
 const ITEM_ID = '11111111-1111-1111-1111-111111111111';
@@ -186,6 +191,16 @@ describe('hasUsableTotp', () => {
     expect(hasUsableTotp('not a real key !!')).toBe(false);
     expect(hasUsableTotp('')).toBe(false);
     expect(hasUsableTotp('   ')).toBe(false);
+  });
+});
+
+describe('totpRefreshDelay', () => {
+  it('caps an extreme expiry below the timer ceiling and never goes negative', () => {
+    const now = 1_735_689_600_000;
+    expect(totpRefreshDelay(now + 30_000, now)).toBe(30_000);
+    expect(totpRefreshDelay(now + 10 ** 12, now)).toBe(2_147_000_000);
+    expect(totpRefreshDelay(now - 1, now)).toBe(0);
+    expect(totpRefreshDelay(Number.MAX_SAFE_INTEGER, now)).toBe(2_147_000_000);
   });
 });
 

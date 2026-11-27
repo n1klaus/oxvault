@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Check, Copy } from '@phosphor-icons/react';
-import type { TotpCode } from '@oxvault/shared/totp';
+import { totpRefreshDelay, type TotpCode } from '@oxvault/shared/totp';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 
@@ -72,13 +72,10 @@ export function TotpRow({
         label();
         if (ticker) clearInterval(ticker);
         ticker = setInterval(label, 1000);
-        next = setTimeout(
-          () => {
-            setExpired(true);
-            void refresh();
-          },
-          Math.max(0, expiresAt - Date.now()),
-        );
+        next = setTimeout(() => {
+          setExpired(true);
+          void refresh();
+        }, totpRefreshDelay(expiresAt));
       } catch {
         if (!mine.active) return;
         if (attempt === 0) next = setTimeout(() => void refresh(1), 1000);
