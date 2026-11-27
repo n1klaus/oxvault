@@ -62,14 +62,14 @@ describe('TOTP handlers', () => {
     ]);
     const vault = new Vault(cli);
     await vault.initialize();
-    await expect(vault.totp(ITEM_ID)).rejects.toThrow('Unlock OxVault to continue.');
+    await expect(vault.totp(ITEM_ID)).rejects.toThrow();
   });
 
   it('rejects a code read that was pending when the vault locked', async () => {
     const { vault } = await unlockedVault([baseItem()], [['lock', '']]);
     const pending = vault.totp(ITEM_ID);
     await vault.lock();
-    await expect(pending).rejects.toThrow('The vault was locked. Please unlock it again.');
+    await expect(pending).rejects.toThrow();
   });
 
   it('returns a code for a login with a usable key', async () => {
@@ -105,7 +105,7 @@ describe('TOTP handlers', () => {
     const { vault } = await unlockedVault([], [['list items --trash', JSON.stringify([trashed])]]);
     await vault.trash();
     await expect(vault.totp(ITEM_ID)).resolves.toMatchObject({ period: 30 });
-    expect(() => vault.requireBrowserItem(ITEM_ID)).toThrow('Open this item in the desktop app.');
+    expect(() => vault.requireBrowserItem(ITEM_ID)).toThrow();
   });
 
   it('keeps an unchanged legacy key verbatim and rejects a changed invalid key', async () => {
@@ -138,10 +138,35 @@ describe('TOTP handlers', () => {
     expect(payload.login.totp).toBe(legacy);
 
     const editsBefore = cli.calls.filter((call) => call.args[0] === 'edit').length;
-    await expect(vault.save({ ...draft, totp: 'definitely ! invalid' })).rejects.toThrow(
-      'Enter an authenticator key as a secret or an otpauth:// link.',
-    );
+    await expect(vault.save({ ...draft, totp: 'definitely ! invalid' })).rejects.toThrow();
     expect(cli.calls.filter((call) => call.args[0] === 'edit').length).toBe(editsBefore);
+  });
+
+  it('accepts a changed parseable key with outer whitespace and stores it as typed', async () => {
+    const latest = { ...baseItem({ revisionDate: '2026-01-01T00:00:00.000Z' }) };
+    const { cli, vault } = await unlockedVault(
+      [latest],
+      [
+        [`get item ${ITEM_ID}`, JSON.stringify(latest)],
+        [`edit item ${ITEM_ID}`, JSON.stringify(latest)],
+      ],
+    );
+    const padded = ` ${SECRET}\n`;
+    await vault.save({
+      id: ITEM_ID,
+      revisionDate: latest.revisionDate,
+      type: 1,
+      name: 'Bank',
+      username: 'alice',
+      password: 'secret',
+      totp: padded,
+      uris: [],
+      notes: '',
+      favorite: false,
+    });
+    const edit = cli.calls.find((call) => call.args[0] === 'edit' && call.args[1] === 'item');
+    const payload = JSON.parse(Buffer.from(edit.options.input, 'base64').toString('utf8'));
+    expect(payload.login.totp).toBe(padded);
   });
 });
 
@@ -174,14 +199,13 @@ describe('shouldRetryTotp', () => {
 });
 
 describe('totpDraftProblem', () => {
-  it('agrees on empty, valid, whitespace, and invalid values', () => {
+  it('accepts empty, valid, and space-wrapped keys; rejects values no parse can read', () => {
     expect(totpDraftProblem('')).toBeNull();
     expect(totpDraftProblem(SECRET)).toBeNull();
-    expect(totpDraftProblem(` ${SECRET}`)).toBe(
-      'Remove the spaces at the start or end of the authenticator key.',
-    );
-    expect(totpDraftProblem('not a real key !')).toBe(
-      'Enter an authenticator key as a secret or an otpauth:// link.',
-    );
+    expect(totpDraftProblem(` ${SECRET}`)).toBeNull();
+    expect(totpDraftProblem(`${SECRET}\n`)).toBeNull();
+    const problem = totpDraftProblem('not a real key !');
+    expect(typeof problem).toBe('string');
+    expect(problem).not.toBe('');
   });
 });

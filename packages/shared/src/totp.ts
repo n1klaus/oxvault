@@ -147,11 +147,10 @@ export async function totpFromField(value: string, nowMs?: number): Promise<Totp
 
 /**
  * The problem with a changed authenticator key, or null when it can be stored.
- * Shared by both editors and the save path so they agree on whitespace and syntax.
+ * Shared by both editors and the save path so they agree on syntax; the stored
+ * value keeps whatever surrounding whitespace the user typed.
  */
 export function totpDraftProblem(value: string): string | null {
   if (!value) return null;
-  if (value !== value.trim())
-    return 'Remove the spaces at the start or end of the authenticator key.';
   return parseTotp(value) ? null : 'Enter an authenticator key as a secret or an otpauth:// link.';
 }
