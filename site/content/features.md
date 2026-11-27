@@ -10,20 +10,20 @@ updated: 2026-10-10
 
 Each feature below is either computed on your machine from vault data, or decided by the Bitwarden server. OxVault provides the first kind fully. For the second kind it sends the request through `bw` and shows the answer. It does not fake an entitlement.
 
-| Feature                        | Lives on                           | OxVault                                                                     |
-| ------------------------------ | ---------------------------------- | --------------------------------------------------------------------------- |
+| Feature                        | Lives on                           | OxVault                                                                        |
+| ------------------------------ | ---------------------------------- | ------------------------------------------------------------------------------ |
 | Authenticator codes (TOTP)     | Client                             | Done: desktop and popup item view, create/edit in both editors, `oxvault totp` |
-| Steam Guard codes              | Client                             | Done, same module                                                           |
-| Reused password report         | Client                             | Done: Settings, Vault health, and `oxvault health`                          |
-| Weak password report           | Client                             | Done: same places                                                           |
-| Unsecured website report       | Client                             | Done: same places                                                           |
-| Exposed password report        | Client plus a public leak lookup   | Done, opt-in: Settings switch and `oxvault health --breaches`               |
-| Inactive two-step report       | Client plus a public list of sites | Done, opt-in: `oxvault health --inactive-2fa`                               |
-| File attachments               | Server                             | Wired: `oxvault attach`. Works where the account or server allows it        |
-| File Sends                     | Server                             | Wired: `oxvault send`. Works where the account or server allows it          |
-| Emergency access               | Server                             | Not built                                                                   |
-| YubiKey and Duo two-step login | Server                             | Nothing to build: set on the account, and sign-in already asks for the code |
-| Priority support               | Bitwarden                          | Not applicable                                                              |
+| Steam Guard codes              | Client                             | Done, same module                                                              |
+| Reused password report         | Client                             | Done: Settings, Vault health, and `oxvault health`                             |
+| Weak password report           | Client                             | Done: same places                                                              |
+| Unsecured website report       | Client                             | Done: same places                                                              |
+| Exposed password report        | Client plus a public leak lookup   | Done, opt-in: Settings switch and `oxvault health --breaches`                  |
+| Inactive two-step report       | Client plus a public list of sites | Done, opt-in: `oxvault health --inactive-2fa`                                  |
+| File attachments               | Server                             | Wired: `oxvault attach`. Works where the account or server allows it           |
+| File Sends                     | Server                             | Wired: `oxvault send`. Works where the account or server allows it             |
+| Emergency access               | Server                             | Not built                                                                      |
+| YubiKey and Duo two-step login | Server                             | Nothing to build: set on the account, and sign-in already asks for the code    |
+| Priority support               | Bitwarden                          | Not applicable                                                                 |
 
 ## One-time codes
 

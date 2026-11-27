@@ -14,24 +14,24 @@ Status words. **Done** works in OxVault. **Partial** works with limits. **Planne
 
 ## Vault items
 
-| Item or feature                                       | Status            | Notes                                                                                       |
-| ----------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------- |
-| Logins: view, create, edit, trash, restore            | Done              |                                                                                             |
-| Secure notes: view, create, edit                      | Done              |                                                                                             |
-| Favorites                                             | Done              |                                                                                             |
-| Cards: view, copy, create, edit                       | Done              |                                                                                             |
-| Identities: view, copy, create, edit                  | Done              |                                                                                             |
-| SSH keys: view, copy, edit                            | Done              | New keys can be pasted in, not generated                                                    |
-| Passkeys                                              | Partial           | Used through macOS AutoFill. Editing a passkey item is left to Bitwarden                    |
+| Item or feature                                       | Status            | Notes                                                                                               |
+| ----------------------------------------------------- | ----------------- | --------------------------------------------------------------------------------------------------- |
+| Logins: view, create, edit, trash, restore            | Done              |                                                                                                     |
+| Secure notes: view, create, edit                      | Done              |                                                                                                     |
+| Favorites                                             | Done              |                                                                                                     |
+| Cards: view, copy, create, edit                       | Done              |                                                                                                     |
+| Identities: view, copy, create, edit                  | Done              |                                                                                                     |
+| SSH keys: view, copy, edit                            | Done              | New keys can be pasted in, not generated                                                            |
+| Passkeys                                              | Partial           | Used through macOS AutoFill. Editing a passkey item is left to Bitwarden                            |
 | One-time codes (TOTP)                                 | Done              | View, copy, create, edit and remove in the desktop app and browser popup; `oxvault totp` reads them |
-| URI match rules                                       | Done              |                                                                                             |
-| Folders: view, filter, assign, create, rename, delete | Done              | Nested names such as `A/B` show as flat names, not a tree                                   |
-| Custom fields: view, copy, edit                       | Done              | Linked fields are kept but not editable                                                     |
-| Password history: view and copy                       | Done              |                                                                                             |
-| Attachments: add, download, delete                    | Done              | Desktop app. The server decides if the account may add files. Not run against a real server |
-| Attachments: list                                     | Done              | Shown in the item detail                                                                    |
-| Items with master password re-prompt                  | Partial           | Open with the master password in the desktop app. Editable only after opening.              |
-| Organization and collection items                     | Not possible here | Shown as restricted. Needs organization key handling                                        |
+| URI match rules                                       | Done              |                                                                                                     |
+| Folders: view, filter, assign, create, rename, delete | Done              | Nested names such as `A/B` show as flat names, not a tree                                           |
+| Custom fields: view, copy, edit                       | Done              | Linked fields are kept but not editable                                                             |
+| Password history: view and copy                       | Done              |                                                                                                     |
+| Attachments: add, download, delete                    | Done              | Desktop app. The server decides if the account may add files. Not run against a real server         |
+| Attachments: list                                     | Done              | Shown in the item detail                                                                            |
+| Items with master password re-prompt                  | Partial           | Open with the master password in the desktop app. Editable only after opening.                      |
+| Organization and collection items                     | Not possible here | Shown as restricted. Needs organization key handling                                                |
 
 ## Sending and sharing
 
